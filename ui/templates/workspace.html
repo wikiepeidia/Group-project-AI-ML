@@ -4,41 +4,87 @@
 
 {% block styles %}
 <style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --accent-gradient: linear-gradient(45deg, #8B5CF6, #06B6D4);
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-sidebar: #ffffff;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --border-color: #e9ecef;
+        --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+        --card-hover-transform: translateY(-2px);
+    }
+
+    [data-theme="dark"] {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --accent-gradient: linear-gradient(45deg, #8B5CF6, #06B6D4);
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #0f0f0f;
+        --bg-sidebar: #2d2d2d;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --border-color: #404040;
+        --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
     body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+        background: var(--bg-secondary);
         height: 100vh;
         overflow: hidden;
+        color: var(--text-primary);
     }
 
     .workspace-container {
         display: flex;
         height: 100vh;
-        background: #f8f9fa;
+        background: var(--bg-secondary);
     }
 
+    /* Sidebar Styles */
     .sidebar {
         width: 280px;
-        background: white;
-        border-right: 1px solid #e9ecef;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.08);
+        position: relative;
+        z-index: 10;
     }
 
     .sidebar-header {
         padding: 20px;
-        border-bottom: 1px solid #e9ecef;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--primary-gradient);
         color: white;
         position: relative;
     }
 
     .sidebar-title {
         font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 8px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
+    }
+
+    .sidebar-subtitle {
+        font-size: 11px;
+        opacity: 0.9;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .user-menu {
@@ -47,75 +93,101 @@
         right: 20px;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
+    }
+
+    .theme-toggle {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+
+    .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: rotate(180deg) scale(1.1);
     }
 
     .user-avatar {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+        background: var(--accent-gradient);
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-weight: 500;
-        font-size: 14px;
+        font-weight: 600;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .logout-btn {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.15);
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 6px 12px;
-        border-radius: 6px;
+        padding: 6px 14px;
+        border-radius: 8px;
         font-size: 12px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: 6px;
+        font-weight: 500;
     }
 
     .logout-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.25);
         color: white;
         text-decoration: none;
+        transform: translateX(-2px);
     }
 
     .search-box {
         position: relative;
-        margin-top: 12px;
+        margin-top: 14px;
     }
 
     .search-input {
         width: 100%;
-        padding: 10px 40px 10px 12px;
+        padding: 11px 42px 11px 14px;
         border: none;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.18);
         color: white;
-        font-size: 14px;
+        font-size: 13px;
         backdrop-filter: blur(10px);
         box-sizing: border-box;
+        font-weight: 400;
     }
 
     .search-input::placeholder {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.75);
     }
 
     .search-input:focus {
         outline: none;
-        background: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.28);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
     }
 
     .search-icon {
         position: absolute;
-        right: 12px;
+        right: 14px;
         top: 50%;
         transform: translateY(-50%);
         color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
     }
 
     .folders-section {
@@ -124,77 +196,119 @@
         padding: 20px;
     }
 
+    .folders-section::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .folders-section::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .folders-section::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
     .folder-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 16px;
-        color: #6c757d;
-        font-size: 14px;
-        font-weight: 500;
+        margin-bottom: 14px;
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
     }
 
     .add-folder-btn {
         background: none;
         border: none;
-        color: #6c757d;
+        color: var(--text-secondary);
         cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
+        padding: 6px;
+        border-radius: 6px;
         transition: all 0.2s;
+        font-size: 14px;
     }
 
     .add-folder-btn:hover {
-        background: #f8f9fa;
-        color: #495057;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        transform: scale(1.1);
     }
 
     .folder-item {
         display: flex;
         align-items: center;
-        padding: 12px 16px;
-        margin-bottom: 8px;
-        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        border-radius: 10px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
+        border: 1px solid transparent;
+    }
+
+    .folder-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 0;
+        background: var(--primary-gradient);
+        border-radius: 0 3px 3px 0;
+        transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .folder-item:hover {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        transform: translateX(4px);
     }
 
     .folder-item.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
         color: white;
+        box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
+    }
+
+    .folder-item.active::before {
+        height: 60%;
     }
 
     .folder-icon {
         margin-right: 12px;
-        font-size: 16px;
+        font-size: 17px;
+        width: 24px;
+        text-align: center;
     }
 
     .folder-name {
         flex: 1;
         font-weight: 500;
+        font-size: 14px;
     }
 
     .folder-count {
-        background: rgba(255, 255, 255, 0.2);
-        color: rgba(255, 255, 255, 0.9);
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 500;
+        background: rgba(255, 255, 255, 0.25);
+        color: rgba(255, 255, 255, 0.95);
+        padding: 3px 10px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 22px;
+        text-align: center;
     }
 
     .folder-item:not(.active) .folder-count {
-        background: #e9ecef;
-        color: #6c757d;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
     }
 
+    /* Main Content Area */
     .main-content {
         flex: 1;
         display: flex;
@@ -203,20 +317,35 @@
     }
 
     .top-bar {
-        height: 60px;
-        background: white;
-        border-bottom: 1px solid #e9ecef;
+        height: 70px;
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 24px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 0 32px;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        z-index: 5;
+    }
+
+    .page-title-wrapper {
+        display: flex;
+        flex-direction: column;
     }
 
     .page-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: #212529;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+        margin-bottom: 2px;
+    }
+
+    .page-subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 400;
     }
 
     .top-actions {
@@ -225,118 +354,215 @@
     }
 
     .btn {
-        padding: 8px 16px;
-        border-radius: 6px;
+        padding: 10px 20px;
+        border-radius: 10px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: 8px;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.5s, height 0.5s;
+    }
+
+    .btn:active::before {
+        width: 300px;
+        height: 300px;
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
         color: white;
-        border: none;
+        box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
     }
 
     .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         color: white;
         text-decoration: none;
     }
 
     .btn-secondary {
-        background: white;
-        color: #6c757d;
-        border: 1px solid #e9ecef;
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
     }
 
     .btn-secondary:hover {
-        background: #f8f9fa;
-        color: #495057;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--text-secondary);
         text-decoration: none;
+        transform: translateY(-1px);
     }
 
+    /* Content Area */
     .content-area {
         flex: 1;
-        padding: 24px;
+        padding: 32px;
         overflow-y: auto;
+        background: var(--bg-secondary);
+    }
+
+    .content-area::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .content-area::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .content-area::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
     }
 
     .content-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
     }
 
     .content-title {
         font-size: 20px;
         font-weight: 600;
-        color: #212529;
+        color: var(--text-primary);
     }
 
     .filter-tabs {
         display: flex;
         gap: 8px;
+        background: var(--bg-primary);
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
     }
 
     .filter-tab {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s;
         border: none;
-        background: none;
-        color: #6c757d;
+        background: transparent;
+        color: var(--text-secondary);
+    }
+
+    .filter-tab:hover {
+        color: var(--text-primary);
+        background: var(--bg-secondary);
     }
 
     .filter-tab.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
         color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
     }
 
+    /* Items Grid */
     .items-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .item-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e9ecef;
-        transition: all 0.2s;
+        background: var(--bg-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .item-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
     }
 
     .item-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
+
+    .item-card:hover::before {
+        transform: scaleX(1);
     }
 
     .item-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     .item-type {
-        padding: 4px 12px;
+        padding: 6px 14px;
         border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
+        font-size: 11px;
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .item-type.workflow {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .item-type.automation {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        color: white;
+    }
+
+    .item-type.integration {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
     }
 
     .item-type.task {
@@ -361,34 +587,36 @@
     .item-menu-btn {
         background: none;
         border: none;
-        color: #6c757d;
+        color: var(--text-secondary);
         cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
+        padding: 6px;
+        border-radius: 6px;
         transition: all 0.2s;
+        font-size: 14px;
     }
 
     .item-menu-btn:hover {
-        background: #f8f9fa;
-        color: #495057;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        transform: rotate(90deg);
     }
 
     .item-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #212529;
-        margin-bottom: 8px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 10px;
         line-height: 1.4;
+        letter-spacing: -0.3px;
     }
 
     .item-description {
-        color: #6c757d;
+        color: var(--text-secondary);
         font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 16px;
+        line-height: 1.6;
+        margin-bottom: 18px;
         display: -webkit-box;
         -webkit-line-clamp: 3;
-        line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -397,13 +625,15 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color);
     }
 
     .item-priority {
-        padding: 4px 8px;
-        border-radius: 4px;
+        padding: 5px 12px;
+        border-radius: 8px;
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
     }
 
     .priority-high {
@@ -417,42 +647,50 @@
     }
 
     .priority-low {
-        background: #e8f5e8;
+        background: #e8f5e9;
         color: #388e3c;
     }
 
     .item-status {
         font-size: 12px;
-        color: #6c757d;
+        color: var(--text-secondary);
         text-transform: uppercase;
-        font-weight: 500;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
 
+    /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 80px 20px;
-        color: #6c757d;
+        padding: 100px 20px;
+        color: var(--text-secondary);
+        animation: fadeIn 0.5s ease;
     }
 
     .empty-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        opacity: 0.5;
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.4;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .empty-title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #495057;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: var(--text-primary);
     }
 
     .empty-description {
-        font-size: 14px;
-        margin-bottom: 24px;
-        max-width: 400px;
+        font-size: 15px;
+        margin-bottom: 32px;
+        max-width: 450px;
         margin-left: auto;
         margin-right: auto;
+        line-height: 1.6;
     }
 
     /* Modals */
@@ -463,76 +701,112 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         z-index: 1000;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(8px);
+        animation: modalFadeIn 0.3s ease;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
     }
 
     .modal-content {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
+        background: var(--bg-primary);
+        border-radius: 20px;
+        padding: 32px;
         width: 90%;
-        max-width: 500px;
-        max-height: 80vh;
+        max-width: 540px;
+        max-height: 85vh;
         overflow-y: auto;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        animation: modalSlideUp 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    @keyframes modalSlideUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
     .modal-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--border-color);
     }
 
     .modal-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #212529;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
     }
 
     .close-btn {
-        background: none;
+        background: var(--bg-secondary);
         border: none;
         font-size: 20px;
-        color: #6c757d;
+        color: var(--text-secondary);
         cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
+        padding: 8px;
+        border-radius: 8px;
         transition: all 0.2s;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .close-btn:hover {
-        background: #f8f9fa;
-        color: #495057;
+        background: #ff5252;
+        color: white;
+        transform: rotate(90deg);
     }
 
     .form-group {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
 
     .form-label {
         display: block;
-        margin-bottom: 6px;
-        font-weight: 500;
-        color: #495057;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
     }
 
     .form-input,
     .form-select,
     .form-textarea {
         width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
+        padding: 12px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
         font-size: 14px;
         transition: all 0.2s;
         box-sizing: border-box;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: inherit;
     }
 
     .form-input:focus,
@@ -540,21 +814,22 @@
     .form-textarea:focus {
         outline: none;
         border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background: var(--bg-primary);
     }
 
     .form-textarea {
         resize: vertical;
-        min-height: 80px;
+        min-height: 100px;
     }
 
     .modal-footer {
         display: flex;
         gap: 12px;
         justify-content: flex-end;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid #e9ecef;
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 2px solid var(--border-color);
     }
 </style>
 {% endblock %}
@@ -564,8 +839,12 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">Workspace</div>
+            <div class="sidebar-title">Retail Automation</div>
+            <div class="sidebar-subtitle">Workflow Hub</div>
             <div class="user-menu">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
                 <div class="user-avatar">{{ user.username[0].upper() if user.username else 'U' }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
@@ -573,7 +852,7 @@
                 </a>
             </div>
             <div class="search-box">
-                <input type="text" class="search-input" placeholder="Search items..." id="searchInput">
+                <input type="text" class="search-input" placeholder="Search workflows..." id="searchInput">
                 <i class="fas fa-search search-icon"></i>
             </div>
         </div>
@@ -581,24 +860,24 @@
         <div class="folders-section">
             <div class="folder-header">
                 <span>WORKSPACES</span>
-                <button class="add-folder-btn" onclick="openModal('createWorkspaceModal')">
+                <button class="add-folder-btn" onclick="openModal('createWorkspaceModal')" title="Create New Workflow">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
 
             <div class="folder-item active" onclick="selectWorkspace('personal')">
                 <div class="folder-icon">
-                    <i class="fas fa-briefcase" style="color: #667eea;"></i>
+                    <i class="fas fa-robot" style="color: #667eea;"></i>
                 </div>
-                <div class="folder-name">Personal Workspace</div>
+                <div class="folder-name">My Automations</div>
                 <div class="folder-count" id="personalCount">0</div>
             </div>
 
             <div class="folder-item" onclick="selectWorkspace('team')">
                 <div class="folder-icon">
-                    <i class="fas fa-users" style="color: #28a745;"></i>
+                    <i class="fas fa-store" style="color: #28a745;"></i>
                 </div>
-                <div class="folder-name">Team Projects</div>
+                <div class="folder-name">Retail Workflows</div>
                 <div class="folder-count" id="teamCount">0</div>
             </div>
 
@@ -611,7 +890,7 @@
             </div>
 
             <div class="folder-header" style="margin-top: 24px;">
-                <span>QUICK ACTIONS</span>
+                <span>QUICK ACCESS</span>
             </div>
 
             <div class="folder-item" onclick="window.location.href='{{ url_for('scenarios') }}'">
@@ -620,13 +899,23 @@
                 </div>
                 <div class="folder-name">Scenarios</div>
             </div>
+
+            <div class="folder-item" onclick="window.location.href='{{ url_for('workspace_builder') }}'">
+                <div class="folder-icon">
+                    <i class="fas fa-project-diagram" style="color: #FF6B6B;"></i>
+                </div>
+                <div class="folder-name">Visual Builder</div>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <div class="page-title">Personal Workspace</div>
+            <div class="page-title-wrapper">
+                <div class="page-title">My Automations</div>
+                <div class="page-subtitle">Streamline your retail operations with AI</div>
+            </div>
             <div class="top-actions">
                 <button class="btn btn-secondary" onclick="openModal('createWorkspaceModal')">
                     <i class="fas fa-folder-plus"></i>
@@ -635,23 +924,23 @@
                 <a href="{{ url_for('workspace_builder') }}" class="btn btn-primary"
                     style="text-decoration: none; color: white;">
                     <i class="fas fa-magic"></i>
-                    Visual Builder
+                    Workflow Builder
                 </a>
                 <button class="btn btn-primary" onclick="openModal('createItemModal')">
                     <i class="fas fa-plus"></i>
-                    Create Item
+                    New Automation
                 </button>
             </div>
         </div>
 
         <div class="content-area">
             <div class="content-header">
-                <div class="content-title">All Items</div>
+                <div class="content-title">All Workflows</div>
                 <div class="filter-tabs">
                     <button class="filter-tab active" onclick="filterItems('all')">All</button>
-                    <button class="filter-tab" onclick="filterItems('task')">Tasks</button>
-                    <button class="filter-tab" onclick="filterItems('note')">Notes</button>
-                    <button class="filter-tab" onclick="filterItems('bug')">Bugs</button>
+                    <button class="filter-tab" onclick="filterItems('workflow')">Workflows</button>
+                    <button class="filter-tab" onclick="filterItems('automation')">Automations</button>
+                    <button class="filter-tab" onclick="filterItems('integration')">Integrations</button>
                 </div>
             </div>
 
@@ -661,15 +950,16 @@
 
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">
-                    <i class="fas fa-clipboard-list"></i>
+                    <i class="fas fa-robot"></i>
                 </div>
-                <div class="empty-title">No items yet</div>
+                <div class="empty-title">No automations yet</div>
                 <div class="empty-description">
-                    Create your first task, note, or bug report to get started with your workspace.
+                    Create your first retail automation workflow to streamline inventory, orders, and customer
+                    management.
                 </div>
                 <button class="btn btn-primary" onclick="openModal('createItemModal')">
                     <i class="fas fa-plus"></i>
-                    Create Your First Item
+                    Create Your First Automation
                 </button>
             </div>
         </div>
@@ -680,7 +970,7 @@
 <div class="modal" id="createItemModal">
     <div class="modal-content">
         <div class="modal-header">
-            <div class="modal-title" id="modalTitle">Create New Item</div>
+            <div class="modal-title" id="modalTitle">Create New Automation</div>
             <button class="close-btn" onclick="closeModal('createItemModal')">
                 <i class="fas fa-times"></i>
             </button>
@@ -688,21 +978,23 @@
 
         <form id="itemForm" onsubmit="saveItem(); return false;">
             <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="itemTitle" name="title" required>
+                <label class="form-label">Workflow Name</label>
+                <input type="text" class="form-input" id="itemTitle" name="title"
+                    placeholder="e.g., Inventory Sync Automation" required>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Description</label>
-                <textarea class="form-textarea" id="itemDescription" name="description" rows="4"></textarea>
+                <textarea class="form-textarea" id="itemDescription" name="description" rows="4"
+                    placeholder="Describe what this automation does..."></textarea>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Type</label>
                 <select class="form-select" id="itemType" name="type" required>
-                    <option value="task">Task</option>
-                    <option value="note">Note</option>
-                    <option value="bug">Bug</option>
+                    <option value="workflow">Workflow</option>
+                    <option value="automation">Automation</option>
+                    <option value="integration">Integration</option>
                 </select>
             </div>
 
@@ -720,13 +1012,13 @@
                 <select class="form-select" id="itemStatus" name="status" required>
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
+                    <option value="completed">Active</option>
                 </select>
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('createItemModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Item</button>
+                <button type="submit" class="btn btn-primary">Save Automation</button>
             </div>
         </form>
     </div>
@@ -765,6 +1057,41 @@
 
 {% block scripts %}
 <script>
+    // Dark Mode Toggle
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const themeIcon = document.getElementById('themeIcon');
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        // Update icon
+        if (newTheme === 'dark') {
+            themeIcon.className = 'fas fa-sun';
+        } else {
+            themeIcon.className = 'fas fa-moon';
+        }
+
+        // Smooth transition effect
+        document.body.style.transition = 'all 0.3s ease';
+    }
+
+    // Load saved theme on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const themeIcon = document.getElementById('themeIcon');
+
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        if (savedTheme === 'dark') {
+            themeIcon.className = 'fas fa-sun';
+        } else {
+            themeIcon.className = 'fas fa-moon';
+        }
+    });
+
     // Global variables
     let currentWorkspaceId = 1;
     let currentEditingItem = null;
@@ -978,15 +1305,17 @@
     // Workspace Navigation
     function selectWorkspace(workspace) {
         document.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
-        event.target.classList.add('active');
+        event.target.closest('.folder-item').classList.add('active');
 
         const titles = {
-            'personal': 'Personal Workspace',
-            'team': 'Team Projects',
-            'archived': 'Archived Items'
+            'personal': { title: 'My Automations', subtitle: 'Personal workflow automations' },
+            'team': { title: 'Retail Workflows', subtitle: 'Team collaboration workflows' },
+            'archived': { title: 'Archived', subtitle: 'Inactive workflows' }
         };
 
-        document.querySelector('.page-title').textContent = titles[workspace] || 'Workspace';
+        const pageData = titles[workspace] || { title: 'Workspace', subtitle: 'Automation workflows' };
+        document.querySelector('.page-title').textContent = pageData.title;
+        document.querySelector('.page-subtitle').textContent = pageData.subtitle;
     }
 
     // Notifications
