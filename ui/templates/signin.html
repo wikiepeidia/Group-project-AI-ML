@@ -9,7 +9,9 @@
     <!-- Left Panel - Branding -->
     <div class="auth-branding">
         <div class="branding-content">
-            <div class="brand-logo">🤖</div>
+            <div class="brand-logo" aria-label="Workflow Automation logo">
+                <i class="fas fa-robot" aria-hidden="true"></i>
+            </div>
             <h1 class="brand-title">Workflow Automation for Retail</h1>
             <p class="brand-subtitle">
                 AI-powered RPA platform for retail businesses. Automate inventory, orders, and customer workflows with
@@ -41,18 +43,15 @@
     <div class="auth-form-panel">
         <div class="auth-form-container">
             <div class="auth-header">
-                <h2 class="auth-title">Chào mừng trở lại!</h2>
-                <p class="auth-subtitle">Đăng nhập để tiếp tục vào workspace của bạn</p>
+                <h2 class="auth-title">Welcome back!</h2>
+                <p class="auth-subtitle">Sign in to continue to your workspace.</p>
             </div>
 
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">
-                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
-                {{ message }}
-            </div>
+            <div class="flash-data" data-flash-category="{{ category }}" data-flash-message="{{ message }}"></div>
             {% endfor %}
             {% endif %}
             {% endwith %}
@@ -61,20 +60,20 @@
                 <div class="form-group">
                     <label for="email" class="form-label">Email</label>
                     <input type="email" id="email" name="email" class="form-input"
-                        placeholder="Nhập địa chỉ email của bạn" required>
+                        placeholder="Enter your email address" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="password" class="form-label">Mật khẩu</label>
-                    <input type="password" id="password" name="password" class="form-input" placeholder="Nhập mật khẩu"
-                        required>
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Enter your password" required>
                 </div>
 
-                <button type="submit" class="auth-btn">Đăng nhập</button>
+                <button type="submit" class="auth-btn">Sign in</button>
             </form>
 
             <div class="divider">
-                <span>hoặc tiếp tục với</span>
+                <span>or continue with</span>
             </div>
 
             <div class="social-login">
@@ -89,19 +88,28 @@
             </div>
 
             <div class="auth-switch">
-                Chưa có tài khoản? <a href="{{ url_for('auth.signup') }}">Đăng ký ngay</a>
+                Don't have an account? <a href="{{ url_for('auth.signup') }}">Create one</a>
             </div>
 
             <!-- Demo Accounts -->
             <div class="demo-section">
-                <div class="demo-title">🎮 Tài khoản demo để thử nghiệm</div>
+                <div class="demo-title">
+                    <i class="fas fa-gamepad" aria-hidden="true"></i>
+                    Try a demo account
+                </div>
                 <div class="demo-accounts">
                     <div class="demo-account" onclick="fillDemo('admin@fun.com', 'admin123')">
-                        <div class="demo-role">👨‍💼 Admin</div>
+                        <div class="demo-role">
+                            <i class="fas fa-user-tie" aria-hidden="true"></i>
+                            Admin
+                        </div>
                         <div class="demo-email">admin@fun.com / admin123</div>
                     </div>
                     <div class="demo-account" onclick="fillDemo('user@fun.com', 'user123')">
-                        <div class="demo-role">👩‍💻 User</div>
+                        <div class="demo-role">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            User
+                        </div>
                         <div class="demo-email">user@fun.com / user123</div>
                     </div>
                 </div>
@@ -113,30 +121,17 @@
 
 {% block scripts %}
 <script>
-    function fillDemo(email, password) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = password;
-    }
-
-    /* xác định page class */
-    document.body.classList.add("signin-page");
-
-    function fillDemo(email, password) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = password;
-    }
-
-    document.body.classList.add("signin-page");
+    document.body.classList.add('auth-page', 'signin-page');
 
     document.addEventListener('DOMContentLoaded', () => {
         const branding = document.querySelector('.auth-branding');
         const formPanel = document.querySelector('.auth-form-panel');
+        const container = document.querySelector('.auth-container');
 
-        // đặt vị trí ban đầu: branding từ trái, form từ phải
+        // Stage panels just off-screen before animating in for a smoother entrance.
         if (branding) branding.classList.add('init-left');
         if (formPanel) formPanel.classList.add('init-right');
 
-        // animate vào giữa
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if (branding) branding.classList.add('animate-in');
@@ -144,43 +139,17 @@
             }, 20);
         });
 
-        // khi click "Đăng ký"
-        document.querySelectorAll('.auth-switch a').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+        document.querySelectorAll('.auth-switch a').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
                 const href = link.href;
-
-                // branding trượt ra trái, form trượt ra phải
                 if (branding) branding.classList.add('slide-left-out');
                 if (formPanel) formPanel.classList.add('slide-right-out');
-                document.querySelector('.auth-container').classList.add('fade-out');
-
+                if (container) container.classList.add('fade-out');
                 setTimeout(() => { window.location = href; }, 450);
             });
         });
     });
-
-    function fillDemo(email, password) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = password;
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-        const branding = document.querySelector('.auth-branding');
-        const formPanel = document.querySelector('.auth-form-panel');
-
-        // trạng thái ban đầu (off-screen)
-        if (branding) branding.classList.add('init-left');
-        if (formPanel) formPanel.classList.add('init-right');
-
-        // chạy animation vào giữa
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if (branding) branding.classList.add('animate-in');
-                if (formPanel) formPanel.classList.add('animate-in');
-            }, 20);
-        });
-    });
-
 </script>
 
 {% endblock %}

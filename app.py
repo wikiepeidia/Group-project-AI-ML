@@ -72,7 +72,7 @@ def signin():
             
             # Redirect based on role
             if user.role == 'admin':
-                return redirect(url_for('workspace_old'))
+                return redirect(url_for('admin_workspace'))
             else:
                 return redirect(url_for('workspace'))
         else:
@@ -97,13 +97,7 @@ def signup():
             flash(message, 'error')
     
     return render_template('signup.html')
-
-@auth_bp.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('Đã đăng xuất thành công!', 'success')
-    return redirect(url_for('index'))
+    
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 
@@ -114,7 +108,7 @@ def index():
      # Check user role and redirect accordingly
         user_data = auth_manager.get_user_by_id(current_user.id)
         if user_data and user_data.get('role') == 'admin':
-            return redirect(url_for('workspace_old'))  # Admin goes to workspace_old
+            return redirect(url_for('admin_workspace'))  # Admin goes to admin workspace
         else:
             return redirect(url_for('workspace'))  # Regular user goes to workspace
     return render_template('index.html')  # Show login page
@@ -127,20 +121,25 @@ def admin_dashboard():
     if not hasattr(current_user, 'role') or current_user.role != 'admin':
         flash('Bạn không có quyền truy cập trang này', 'error')
         return redirect(url_for('workspace'))
-    return render_template('workspace_old.html', user=current_user)
+    return redirect(url_for('admin_workspace'))
+
+@app.route('/admin/workspace')
+@login_required
+def admin_workspace():
+    return render_template('admin_workspace.html', user=current_user)
 
 @app.route('/workspace_old')
 @login_required
-def workspace_old():
-    return render_template('workspace_old.html', user=current_user)
+def workspace_old_redirect():
+    return redirect(url_for('admin_workspace'))
 
 @app.route('/workspace')
 @login_required
 def workspace():
-     # Redirect admin users to admin dashboard (workspace_old)
+     # Redirect admin users to admin dashboard (admin workspace)
     #user_data = auth_manager.get_user_by_id(current_user.id)
     #if user_data and user_data.get('role') == 'admin':
-        #return redirect(url_for('workspace_old'))
+        #return redirect(url_for('admin_workspace'))
     return render_template('workspace.html', user=current_user)  # Regular users see user dashboard
 
 
@@ -336,7 +335,8 @@ def delete_scenario(scenario_id):
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out successfully.', 'info')
+    # Use 'success' category so the alert renders with success styling in templates
+    flash('You have been logged out successfully.', 'success')
     return redirect(url_for('auth.signin'))
 
 # Admin API Routes

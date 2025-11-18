@@ -11,25 +11,48 @@
         box-sizing: border-box;
     }
 
+    :root {
+        --admin-bg: #1e1e1e;
+        --admin-panel: #252526;
+        --admin-panel-alt: #2a2d2e;
+        --admin-border: #2d2d2d;
+        --admin-text: #cccccc;
+        --admin-text-dim: #a0a0a0;
+        --admin-activity: #333333;
+        --admin-accent: #007acc;
+    }
+
+    html[data-theme='light'] {
+        --admin-bg: #f5f7fb;
+        --admin-panel: #ffffff;
+        --admin-panel-alt: #edf2ff;
+        --admin-border: #dbe3f0;
+        --admin-text: #1f2937;
+        --admin-text-dim: #4b5563;
+        --admin-activity: #ffffff;
+        --admin-accent: #2563eb;
+    }
+
     body {
         font-family: 'Inter', sans-serif;
-        background: #1e1e1e;
-        color: #cccccc;
-        height: 100vh;
-        overflow: hidden;
+        background: var(--admin-bg);
+        color: var(--admin-text);
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
 
     .workspace-container {
         display: flex;
-        height: 100vh;
-        background: #1e1e1e;
+        min-height: 100vh;
+        background: var(--admin-bg);
     }
 
     /* Activity Bar */
     .activity-bar {
         width: 48px;
-        background: #333333;
-        border-right: 1px solid #2d2d2d;
+        background: var(--admin-activity);
+        border-right: 1px solid var(--admin-border);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -46,17 +69,17 @@
         border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s ease;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
         position: relative;
     }
 
     .activity-item:hover {
-        background: #2a2d2e;
-        color: #ffffff;
+        background: var(--admin-panel-alt);
+        color: var(--admin-text);
     }
 
     .activity-item.active {
-        background: #007acc;
+        background: var(--admin-accent);
         color: #ffffff;
     }
 
@@ -68,7 +91,7 @@
         transform: translateY(-50%);
         width: 2px;
         height: 24px;
-        background: #007acc;
+        background: var(--admin-accent);
     }
 
     .activity-spacer {
@@ -96,8 +119,8 @@
     /* Sidebar */
     .sidebar {
         width: 300px;
-        background: #252526;
-        border-right: 1px solid #2d2d2d;
+        background: var(--admin-panel);
+        border-right: 1px solid var(--admin-border);
         display: flex;
         flex-direction: column;
         transition: width 0.3s ease;
@@ -110,18 +133,81 @@
 
     .sidebar-header {
         padding: 0.75rem 1rem;
-        border-bottom: 1px solid #2d2d2d;
+        border-bottom: 1px solid var(--admin-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .sidebar-header .user-menu {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .sidebar-header .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .theme-toggle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #3a3a3a;
+        background: transparent;
+        color: #a0a0a0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+        background: #2a2d2e;
+        color: #ffffff;
+        border-color: #4a4a4a;
+    }
+
+    .logout-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        text-decoration: none;
+        border: 1px solid transparent;
+        background: linear-gradient(135deg, #ff6b6b, #f06595);
+        color: #ffffff;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+        opacity: 0.9;
+        box-shadow: 0 6px 18px rgba(240, 101, 149, 0.3);
+        text-decoration: none;
     }
 
     .sidebar-title {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #cccccc;
+        color: var(--admin-text);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+
+    .sidebar-subtitle {
+        font-size: 0.8rem;
+        color: var(--admin-text-dim);
+        letter-spacing: 0.3px;
     }
 
     .sidebar-actions {
@@ -137,13 +223,13 @@
         justify-content: center;
         border-radius: 2px;
         cursor: pointer;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
         transition: all 0.2s ease;
     }
 
     .sidebar-action:hover {
-        background: #2a2d2e;
-        color: #ffffff;
+        background: var(--admin-panel-alt);
+        color: var(--admin-text);
     }
 
     .sidebar-content {
@@ -169,7 +255,7 @@
     }
 
     .tree-item-content:hover {
-        background: #2a2d2e;
+        background: var(--admin-panel-alt);
     }
 
     .tree-item.selected .tree-item-content {
@@ -209,7 +295,7 @@
     }
 
     .tree-badge {
-        background: #007acc;
+        background: var(--admin-accent);
         color: #ffffff;
         font-size: 0.7rem;
         padding: 0.1rem 0.4rem;
@@ -234,8 +320,8 @@
     /* Context Menu */
     .context-menu {
         position: absolute;
-        background: #2d2d2d;
-        border: 1px solid #3e3e3e;
+        background: var(--admin-panel);
+        border: 1px solid var(--admin-border);
         border-radius: 4px;
         padding: 0.25rem 0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -268,12 +354,12 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: #1e1e1e;
+        background: var(--admin-bg);
     }
 
     .tab-bar {
-        background: #2d2d2d;
-        border-bottom: 1px solid #2d2d2d;
+        background: var(--admin-panel);
+        border-bottom: 1px solid var(--admin-border);
         display: flex;
         align-items: center;
         min-height: 35px;
@@ -284,24 +370,24 @@
         display: flex;
         align-items: center;
         padding: 0.5rem 1rem;
-        border-right: 1px solid #2d2d2d;
+        border-right: 1px solid var(--admin-border);
         cursor: pointer;
         font-size: 0.85rem;
-        background: #2d2d2d;
-        color: #a0a0a0;
+        background: var(--admin-panel);
+        color: var(--admin-text-dim);
         transition: all 0.2s ease;
         white-space: nowrap;
     }
 
     .tab:hover {
-        background: #2a2d2e;
-        color: #ffffff;
+        background: var(--admin-panel-alt);
+        color: var(--admin-text);
     }
 
     .tab.active {
-        background: #1e1e1e;
-        color: #ffffff;
-        border-bottom: 2px solid #007acc;
+        background: var(--admin-bg);
+        color: var(--admin-text);
+        border-bottom: 2px solid var(--admin-accent);
     }
 
     .tab-icon {
@@ -332,7 +418,7 @@
 
     .editor-area {
         flex: 1;
-        background: #1e1e1e;
+        background: var(--admin-bg);
         position: relative;
         overflow: hidden;
     }
@@ -359,13 +445,13 @@
     .welcome-title {
         font-size: 2rem;
         font-weight: 700;
-        color: #ffffff;
+        color: var(--admin-text);
         margin-bottom: 0.5rem;
     }
 
     .welcome-subtitle {
         font-size: 1.2rem;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
         margin-bottom: 2rem;
         max-width: 500px;
         line-height: 1.6;
@@ -379,8 +465,8 @@
     }
 
     .action-card {
-        background: #252526;
-        border: 1px solid #2d2d2d;
+        background: var(--admin-panel);
+        border: 1px solid var(--admin-border);
         border-radius: 8px;
         padding: 1.5rem;
         width: 200px;
@@ -391,8 +477,8 @@
     }
 
     .action-card:hover {
-        background: #2a2d2e;
-        border-color: #007acc;
+        background: var(--admin-panel-alt);
+        border-color: var(--admin-accent);
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0, 122, 204, 0.2);
     }
@@ -483,25 +569,25 @@
     }
 
     .modal-content {
-        background: #2d2d2d;
+        background: var(--admin-panel);
         border-radius: 8px;
         width: 90%;
         max-width: 500px;
         max-height: 80vh;
         overflow: hidden;
-        border: 1px solid #404040;
+        border: 1px solid var(--admin-border);
     }
 
     .modal-header {
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid #404040;
+        border-bottom: 1px solid var(--admin-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
     .modal-header h3 {
-        color: #ffffff;
+        color: var(--admin-text);
         margin: 0;
         font-size: 1.1rem;
     }
@@ -509,7 +595,7 @@
     .modal-close {
         background: none;
         border: none;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
         font-size: 1.5rem;
         cursor: pointer;
         padding: 0;
@@ -521,7 +607,7 @@
     }
 
     .modal-close:hover {
-        color: #ffffff;
+        color: var(--admin-text);
     }
 
     .modal-body {
@@ -532,7 +618,7 @@
 
     .modal-footer {
         padding: 1rem 1.5rem;
-        border-top: 1px solid #404040;
+        border-top: 1px solid var(--admin-border);
         display: flex;
         gap: 1rem;
         justify-content: flex-end;
@@ -545,7 +631,7 @@
     .form-group label {
         display: block;
         margin-bottom: 0.5rem;
-        color: #cccccc;
+        color: var(--admin-text);
         font-size: 0.9rem;
         font-weight: 500;
     }
@@ -555,10 +641,10 @@
     .form-group textarea {
         width: 100%;
         padding: 0.75rem;
-        background: #1e1e1e;
-        border: 1px solid #404040;
+        background: var(--admin-bg);
+        border: 1px solid var(--admin-border);
         border-radius: 4px;
-        color: #ffffff;
+        color: var(--admin-text);
         font-size: 0.9rem;
         transition: border-color 0.3s ease;
     }
@@ -567,7 +653,7 @@
     .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
-        border-color: #007acc;
+        border-color: var(--admin-accent);
     }
 
     .form-row {
@@ -593,21 +679,21 @@
     }
 
     .btn-primary {
-        background: #007acc;
+        background: var(--admin-accent);
         color: #ffffff;
     }
 
     .btn-primary:hover {
-        background: #005a9e;
+        filter: brightness(0.9);
     }
 
     .btn-secondary {
-        background: #404040;
-        color: #cccccc;
+        background: var(--admin-panel-alt);
+        color: var(--admin-text);
     }
 
     .btn-secondary:hover {
-        background: #4a4a4a;
+        background: var(--admin-panel);
     }
 
     .btn-danger {
@@ -631,8 +717,8 @@
         top: 0;
         width: 300px;
         height: 100vh;
-        background: #252526;
-        border-left: 1px solid #2d2d2d;
+        background: var(--admin-panel);
+        border-left: 1px solid var(--admin-border);
         z-index: 1500;
         display: flex;
         flex-direction: column;
@@ -646,14 +732,14 @@
 
     .panel-header {
         padding: 1rem;
-        border-bottom: 1px solid #2d2d2d;
+        border-bottom: 1px solid var(--admin-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
     .panel-header h4 {
-        color: #ffffff;
+        color: var(--admin-text);
         margin: 0;
         font-size: 1rem;
     }
@@ -661,7 +747,7 @@
     .panel-close {
         background: none;
         border: none;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
         font-size: 1.2rem;
         cursor: pointer;
         padding: 0;
@@ -673,7 +759,7 @@
     }
 
     .panel-close:hover {
-        color: #ffffff;
+        color: var(--admin-text);
     }
 
     .panel-content {
@@ -732,15 +818,15 @@
         align-items: center;
         justify-content: center;
         padding: 2rem;
-        color: #a0a0a0;
+        color: var(--admin-text-dim);
     }
 
     .loading:before {
         content: '';
         width: 20px;
         height: 20px;
-        border: 2px solid #404040;
-        border-top: 2px solid #007acc;
+        border: 2px solid var(--admin-border);
+        border-top: 2px solid var(--admin-accent);
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin-right: 0.5rem;
@@ -780,6 +866,12 @@
 {% endblock %}
 
 {% block content %}
+{% set first_initial = (current_user.first_name|default(''))[:1] %}
+{% set last_initial = (current_user.last_name|default(''))[:1] %}
+{% set user_initials = (first_initial ~ last_initial)|upper %}
+{% if not user_initials %}
+{% set user_initials = ((current_user.email|default('A'))[:1])|upper %}
+{% endif %}
 <div class="workspace-container">
     <!-- Activity Bar -->
     <div class="activity-bar">
@@ -806,7 +898,7 @@
 
         <div class="user-menu">
             <div class="user-avatar" title="{{ current_user.first_name }} {{ current_user.last_name }}">
-                {{ current_user.first_name[0].upper() }}{{ current_user.last_name[0].upper() }}
+                {{ user_initials }}
             </div>
         </div>
     </div>
@@ -819,10 +911,10 @@
                 <div class="sidebar-subtitle">System Management</div>
             </div>
             <div class="user-menu">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-                    <i class="fas fa-moon" id="themeIcon"></i>
+                <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme">
+                    <i class="fas fa-moon"></i>
                 </button>
-                <div class="user-avatar">{{ user.username[0].upper() if user.username else 'A' }}</div>
+                <div class="user-avatar">{{ user_initials }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout
@@ -853,7 +945,7 @@
                             <div class="tree-icon">
                                 <i class="fas fa-folder"></i>
                             </div>
-                            <div class="tree-label">📋 Todo Lists</div>
+                            <div class="tree-label">Todo Lists</div>
                             <div class="tree-badge">5</div>
                         </div>
                         <div class="tree-children">
@@ -886,7 +978,7 @@
                             <div class="tree-icon">
                                 <i class="fas fa-sticky-note"></i>
                             </div>
-                            <div class="tree-label">📝 Notes</div>
+                            <div class="tree-label">Notes</div>
                             <div class="tree-badge">7</div>
                         </div>
                     </div>
@@ -902,7 +994,7 @@
                     <div class="tree-icon workspace-type-team">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="tree-label">🏢 Development Team</div>
+                    <div class="tree-label">Development Team</div>
                     <div class="tree-badge">8</div>
                 </div>
             </div>
@@ -916,7 +1008,7 @@
                     <div class="tree-icon workspace-type-project">
                         <i class="fas fa-project-diagram"></i>
                     </div>
-                    <div class="tree-label">🚀 Fun Work Hub</div>
+                    <div class="tree-label">Fun Work Hub</div>
                     <div class="tree-badge">15</div>
                 </div>
             </div>
@@ -930,7 +1022,7 @@
                     <div class="tree-icon workspace-type-scenario">
                         <i class="fas fa-theater-masks"></i>
                     </div>
-                    <div class="tree-label">🎭 Marketing Campaign</div>
+                    <div class="tree-label">Marketing Campaign</div>
                     <div class="tree-badge">6</div>
                 </div>
             </div>
@@ -955,7 +1047,9 @@
         <!-- Editor Area -->
         <div class="editor-area">
             <div class="welcome-screen">
-                <div class="welcome-logo">🚀</div>
+                <div class="welcome-logo" aria-label="Fun Work Hub emblem">
+                    <i class="fas fa-rocket" aria-hidden="true"></i>
+                </div>
                 <h1 class="welcome-title">Chào mừng đến Fun Work Hub</h1>
                 <p class="welcome-subtitle">
                     Workspace thông minh giúp bạn tổ chức công việc hiệu quả với hệ thống phân lớp và kênh liên kết mạnh
@@ -1185,37 +1279,6 @@
 
 {% block scripts %}
 <script>
-    // Dark Mode Toggle
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        const themeIcon = document.getElementById('themeIcon');
-
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-
-        if (newTheme === 'dark') {
-            themeIcon.className = 'fas fa-sun';
-        } else {
-            themeIcon.className = 'fas fa-moon';
-        }
-
-        document.body.style.transition = 'all 0.3s ease';
-    }
-
-    // Load saved theme on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        if (savedTheme === 'dark') {
-            document.getElementById('themeIcon').className = 'fas fa-sun';
-        } else {
-            document.getElementById('themeIcon').className = 'fas fa-moon';
-        }
-    });
-
     // Global variables
     let currentWorkspaceId = 1; // Default to first workspace
     let currentEditingItem = null;

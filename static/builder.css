@@ -10,14 +10,14 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #1a1a1a;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
   color: #fff;
 }
 
 .builder-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   background: #1a1a1a;
 }
 

@@ -229,6 +229,17 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visual-logo i,
+        .nav-logo i {
+            background: inherit;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         /* Navigation */
@@ -259,6 +270,9 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .nav-links {
@@ -315,7 +329,10 @@
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-container">
-            <div class="nav-logo">🤖 Workflow Automation for Retail</div>
+            <div class="nav-logo" aria-label="Workflow Automation for Retail">
+                <i class="fas fa-robot" aria-hidden="true"></i>
+                <span>Workflow Automation for Retail</span>
+            </div>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#pricing">Pricing</a></li>
@@ -399,7 +416,9 @@
                             <div style="background: #dc3545; height: 15px; border-radius: 4px;"></div>
                         </div>
                         <div class="visual-main">
-                            <div class="visual-logo">🤖</div>
+                            <div class="visual-logo" aria-label="Workflow Automation emblem">
+                                <i class="fas fa-robot" aria-hidden="true"></i>
+                            </div>
                             <div style="color: #cccccc; font-size: 0.9rem;">
                                 Your retail automation<br>
                                 <span style="color: #00d4aa;">starts here</span>

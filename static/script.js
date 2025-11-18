@@ -2,36 +2,81 @@
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDarkMode();
+    initializeTheme();
     setupFormHandlers();
     setupDemoAccounts();
     setupNotifications();
 });
 
 /**
- * Dark Mode Functionality
+ * Theme Preferences (system + manual override)
  */
-function initializeDarkMode() {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    // Load saved preference
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode === 'true') {
-        document.body.classList.add('dark-mode');
-        if (darkModeToggle) darkModeToggle.checked = true;
-    } else if (prefersDark.matches && !savedMode) {
-        document.body.classList.add('dark-mode');
-        if (darkModeToggle) darkModeToggle.checked = true;
-    }
-    
-    // Toggle handler
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('change', function() {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', this.checked);
-        });
-    }
+function initializeTheme() {
+    const html = document.documentElement;
+    const toggles = document.querySelectorAll('[data-theme-toggle]');
+    const preferenceKey = 'theme-preference';
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)');
+    const preferenceOrder = ['system', 'dark', 'light'];
+    let currentPreference = localStorage.getItem(preferenceKey) || 'system';
+
+    const getEffectiveTheme = (preference) => {
+        if (preference === 'system') {
+            return systemPreference.matches ? 'dark' : 'light';
+        }
+        return preference;
+    };
+
+    const updateToggleButton = (button, preference, appliedTheme) => {
+        const icon = button.querySelector('i');
+        const labelMap = {
+            system: 'System theme',
+            dark: 'Dark mode',
+            light: 'Light mode'
+        };
+        const iconMap = {
+            system: 'fa-desktop',
+            dark: 'fa-moon',
+            light: 'fa-sun'
+        };
+        const normalizedPreference = preferenceOrder.includes(preference) ? preference : 'system';
+        const currentIndex = Math.max(preferenceOrder.indexOf(normalizedPreference), 0);
+        const nextPreference = preferenceOrder[(currentIndex + 1) % preferenceOrder.length];
+        if (icon) {
+            icon.className = `fas ${iconMap[normalizedPreference]}`;
+        }
+        button.dataset.themePreference = normalizedPreference;
+        button.dataset.themeApplied = appliedTheme;
+        button.setAttribute('aria-label', `${labelMap[normalizedPreference]} (click to switch to ${labelMap[nextPreference]})`);
+        button.title = `${labelMap[normalizedPreference]} • Currently ${appliedTheme}\nClick to switch to ${labelMap[nextPreference]}`;
+    };
+
+    const applyTheme = (preference) => {
+        const effectiveTheme = getEffectiveTheme(preference);
+        html.setAttribute('data-theme', effectiveTheme);
+        html.classList.toggle('theme-dark', effectiveTheme === 'dark');
+        document.body.classList.toggle('dark-mode', effectiveTheme === 'dark');
+        toggles.forEach((button) => updateToggleButton(button, preference, effectiveTheme));
+    };
+
+    const cyclePreference = () => {
+        const currentIndex = Math.max(preferenceOrder.indexOf(currentPreference), 0);
+        const nextPreference = preferenceOrder[(currentIndex + 1) % preferenceOrder.length];
+        currentPreference = nextPreference;
+        localStorage.setItem(preferenceKey, currentPreference);
+        applyTheme(currentPreference);
+    };
+
+    toggles.forEach((button) => {
+        button.addEventListener('click', cyclePreference);
+    });
+
+    systemPreference.addEventListener('change', () => {
+        if (currentPreference === 'system') {
+            applyTheme('system');
+        }
+    });
+
+    applyTheme(currentPreference);
 }
 
 /**
@@ -179,14 +224,16 @@ function checkPasswordStrength(password) {
  * Notification System
  */
 function setupNotifications() {
-    // Check for Flask flash messages
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        const type = alert.classList.contains('alert-success') ? 'success' :
-                     alert.classList.contains('alert-error') ? 'error' :
-                     alert.classList.contains('alert-warning') ? 'warning' : 'info';
-        
-        showNotification(alert.textContent, type);
+    const flashNodes = document.querySelectorAll('[data-flash-message]');
+    flashNodes.forEach(node => {
+        const message = node.dataset.flashMessage;
+        const category = node.dataset.flashCategory || 'info';
+        const allowed = ['success', 'error', 'warning', 'info'];
+        const normalizedType = allowed.includes(category) ? category : 'info';
+        if (message) {
+            showNotification(message, normalizedType);
+        }
+        node.remove();
     });
 }
 
@@ -195,39 +242,65 @@ function setupNotifications() {
  */
 function showNotification(message, type = 'info') {
     let container = document.querySelector('.notification-container');
-    
+
     if (!container) {
         container = document.createElement('div');
         container.className = 'notification-container';
         document.body.appendChild(container);
     }
-    
+
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
+
     const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠',
-        info: 'ℹ'
+        success: 'fas fa-check-circle',
+        error: 'fas fa-times-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
     };
-    
-    notification.innerHTML = `
-        <span>${icons[type]}</span>
-        <span>${message}</span>
-    `;
-    
+
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'notification-icon';
+    const iconElement = document.createElement('i');
+    iconElement.className = icons[type] || icons.info;
+    iconElement.setAttribute('aria-hidden', 'true');
+    iconWrapper.appendChild(iconElement);
+
+    const messageElement = document.createElement('div');
+    messageElement.className = 'notification-message';
+    messageElement.textContent = message || '';
+
+    const closeButton = document.createElement('button');
+    closeButton.className = 'notification-close';
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Dismiss notification');
+    closeButton.textContent = '×';
+
+    notification.appendChild(iconWrapper);
+    notification.appendChild(messageElement);
+    notification.appendChild(closeButton);
+
     container.appendChild(notification);
-    
-    // Show animation
-    setTimeout(() => notification.classList.add('show'), 10);
-    
-    // Auto remove after 4 seconds
-    setTimeout(() => {
+
+    requestAnimationFrame(() => {
+        notification.classList.add('show');
+    });
+
+    const removeNotification = () => {
         notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 4000);
-    
+        setTimeout(() => notification.remove(), 250);
+    };
+
+    closeButton.addEventListener('click', removeNotification);
+
+    let dismissTimer = setTimeout(removeNotification, 5000);
+    notification.addEventListener('mouseenter', () => clearTimeout(dismissTimer));
+    notification.addEventListener('mouseleave', () => {
+        dismissTimer = setTimeout(removeNotification, 2000);
+    });
+
     return notification;
 }
 
