@@ -14,8 +14,8 @@
             <div class="sidebar-title">Retail Automation</div>
             <div class="sidebar-subtitle">Workflow Hub</div>
             <div class="user-menu">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-                    <i class="fas fa-moon" id="themeIcon"></i>
+                <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme">
+                    <i class="fas fa-moon"></i>
                 </button>
                 <div class="user-avatar">{{ user.username[0].upper() if user.username else 'U' }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
