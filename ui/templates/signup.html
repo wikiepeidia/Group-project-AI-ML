@@ -2,6 +2,8 @@
 
 {% block title %}Sign Up - Workflow Automation for Retail{% endblock %}
 
+{% block body_class %}auth-page{% endblock %}
+
 {% block styles %}{% endblock %}
 
 {% block content %}
@@ -57,15 +59,6 @@
                 <h2 class="auth-title">Create Your Account</h2>
                 <p class="auth-subtitle">Start automating your retail workflows today</p>
             </div>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="flash-data" data-flash-category="{{ category }}" data-flash-message="{{ message }}"></div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
 
             <form method="POST" action="{{ url_for('auth.signup') }}" id="signupForm">
                 <div class="form-row">
@@ -149,8 +142,6 @@
 
 {% block scripts %}
 <script>
-    document.body.classList.add('auth-page');
-
     function checkPasswordStrength() {
         const password = document.getElementById('password').value;
         const strengthFill = document.getElementById('strengthFill');
@@ -235,8 +226,6 @@
     document.getElementById('confirm_password').addEventListener('input', checkFormValid);
     document.getElementById('terms').addEventListener('change', checkFormValid);
     document.getElementById('signupForm').addEventListener('input', checkFormValid);
-
-    document.body.classList.add('signup-page');
 
     document.addEventListener('DOMContentLoaded', () => {
         const branding = document.querySelector('.auth-branding');

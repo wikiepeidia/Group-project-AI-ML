@@ -11,7 +11,16 @@
     {% block styles %}{% endblock %}
 </head>
 
-<body>
+<body class="{% block body_class %}{% endblock %}">
+    <div id="flash-message-root" aria-hidden="true" hidden>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-data" data-flash-category="{{ category }}" data-flash-message="{{ message }}"></div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
     {% block content %}{% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>

@@ -2,6 +2,8 @@
 
 {% block title %}Workflow Builder - Workflow Automation for Retail{% endblock %}
 
+{% block body_class %}builder-page{% endblock %}
+
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
 {% endblock %}
@@ -15,8 +17,12 @@
                 <div class="sidebar-subtitle">Design automations for retail</div>
             </div>
             <div class="user-menu">
-                <div class="user-avatar">{{ current_user.first_name if current_user and current_user.first_name else
-                    'WA' }}</div>
+                <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                {% set avatar_source = (current_user.first_name or current_user.last_name or current_user.email or 'WA')
+                %}
+                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Sign out
@@ -138,11 +144,11 @@
                 </div>
             </div>
             <div class="canvas-actions">
-                <button class="btn btn-secondary" type="button">
+                <button class="action-btn" type="button">
                     <i class="fas fa-undo"></i>
                     Undo
                 </button>
-                <button class="btn btn-primary" type="button">
+                <button class="action-btn primary" type="button">
                     <i class="fas fa-save"></i>
                     Save workflow
                 </button>
@@ -234,7 +240,7 @@
                 <input type="text" id="nodeCondition" class="form-input" placeholder="order.total &gt;= 5000000">
             </div>
 
-            <button class="btn btn-primary" type="button">
+            <button class="action-btn primary full-width" type="button">
                 <i class="fas fa-save"></i>
                 Save changes
             </button>
@@ -266,6 +272,21 @@
         const propertyPanel = document.getElementById('propertyPanel');
         const selectedNodeTitle = document.getElementById('selectedNodeTitle');
         const closePropertyPanel = document.getElementById('closePropertyPanel');
+        const nodeNameInput = document.getElementById('nodeName');
+        const nodeDescriptionInput = document.getElementById('nodeDescription');
+        const canvas = document.getElementById('workflowCanvas');
+        const dropZone = document.getElementById('dropZone');
+        const builderState = {
+            nodeCounter: document.querySelectorAll('.workflow-node').length,
+            selectedNode: null
+        };
+        const categoryColors = {
+            trigger: '#8bc34a',
+            ai: '#00bcd4',
+            logic: '#ff9800',
+            integration: '#9c27b0',
+            custom: '#667eea'
+        };
 
         if (toolSearch) {
             toolSearch.addEventListener('input', function (event) {
@@ -277,18 +298,232 @@
             });
         }
 
-        document.querySelectorAll('.workflow-node').forEach(function (node) {
-            node.addEventListener('click', function () {
-                if (selectedNodeTitle) {
-                    selectedNodeTitle.textContent = node.dataset.title || 'Node properties';
+        function serializeTool(tool) {
+            return {
+                name: tool.querySelector('.tool-name')?.textContent.trim() || 'Custom block',
+                description: tool.querySelector('.tool-description')?.textContent.trim() || 'Describe this step...',
+                icon: tool.querySelector('.tool-icon i')?.className || 'fas fa-puzzle-piece',
+                category: tool.dataset.category || 'custom'
+            };
+        }
+
+        function getCategoryColor(category) {
+            return categoryColors[category] || categoryColors.custom;
+        }
+
+        function updateDropZoneVisibility() {
+            if (!dropZone || !canvas) {
+                return;
+            }
+            const hasNodes = canvas.querySelectorAll('.workflow-node').length > 0;
+            dropZone.style.display = hasNodes ? 'none' : 'flex';
+        }
+
+        function attachNodeInteractions(node) {
+            if (!node) {
+                return;
+            }
+
+            node.addEventListener('click', function (event) {
+                // Avoid treating drag gestures as clicks
+                if (event.target.closest('.node-menu')) {
+                    return;
                 }
+                selectNode(node);
+            });
+
+            enableNodeDragging(node);
+        }
+
+        function enableNodeDragging(node) {
+            const handle = node.querySelector('.node-header');
+            if (!handle || !canvas) {
+                return;
+            }
+
+            handle.addEventListener('mousedown', function (event) {
+                if (event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                const canvasRect = canvas.getBoundingClientRect();
+                const nodeRect = node.getBoundingClientRect();
+                const offsetX = event.clientX - nodeRect.left;
+                const offsetY = event.clientY - nodeRect.top;
+
+                node.classList.add('dragging');
+
+                function onMouseMove(moveEvent) {
+                    const currentCanvasRect = canvas.getBoundingClientRect();
+                    const newLeft = moveEvent.clientX - currentCanvasRect.left - offsetX;
+                    const newTop = moveEvent.clientY - currentCanvasRect.top - offsetY;
+                    node.style.left = `${Math.max(0, newLeft)}px`;
+                    node.style.top = `${Math.max(0, newTop)}px`;
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    node.classList.remove('dragging');
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        function selectNode(node) {
+            if (!node) {
+                return;
+            }
+            document.querySelectorAll('.workflow-node').forEach(function (item) {
+                item.classList.remove('selected');
+            });
+            node.classList.add('selected');
+            builderState.selectedNode = node;
+
+            if (selectedNodeTitle) {
+                selectedNodeTitle.textContent = node.dataset.title || 'Node properties';
+            }
+
+            if (nodeNameInput) {
+                nodeNameInput.value = node.dataset.title || '';
+            }
+
+            if (nodeDescriptionInput) {
+                nodeDescriptionInput.value = node.querySelector('.node-content')?.textContent.trim() || '';
+            }
+
+            if (propertyPanel) {
                 propertyPanel.classList.add('open');
+            }
+        }
+
+        function bindPropertyInputs() {
+            if (nodeNameInput) {
+                nodeNameInput.addEventListener('input', function (event) {
+                    if (!builderState.selectedNode) {
+                        return;
+                    }
+                    const value = event.target.value || 'Untitled block';
+                    const titleEl = builderState.selectedNode.querySelector('.node-title');
+                    if (titleEl) {
+                        titleEl.textContent = value;
+                    }
+                    builderState.selectedNode.dataset.title = value;
+                    if (selectedNodeTitle) {
+                        selectedNodeTitle.textContent = value;
+                    }
+                });
+            }
+
+            if (nodeDescriptionInput) {
+                nodeDescriptionInput.addEventListener('input', function (event) {
+                    if (!builderState.selectedNode) {
+                        return;
+                    }
+                    const value = event.target.value || 'Describe this step...';
+                    const contentEl = builderState.selectedNode.querySelector('.node-content');
+                    if (contentEl) {
+                        contentEl.textContent = value;
+                    }
+                });
+            }
+        }
+
+        function createWorkflowNode(toolData, position) {
+            if (!canvas) {
+                return null;
+            }
+
+            const node = document.createElement('div');
+            node.className = 'workflow-node';
+            node.dataset.title = toolData.name;
+            node.dataset.category = toolData.category;
+            node.style.top = `${position.y - 40}px`;
+            node.style.left = `${position.x - 100}px`;
+            node.style.position = 'absolute';
+
+            node.innerHTML = `
+                <div class="node-header">
+                    <div class="node-icon" style="background: ${getCategoryColor(toolData.category)};">
+                        <i class="${toolData.icon}"></i>
+                    </div>
+                    <div class="node-title">${toolData.name}</div>
+                    <div class="node-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                </div>
+                <div class="node-content">${toolData.description}</div>
+                <div class="node-connections">
+                    <div class="connection-point input"></div>
+                    <div class="connection-point output"></div>
+                </div>
+            `;
+
+            canvas.appendChild(node);
+            builderState.nodeCounter += 1;
+            attachNodeInteractions(node);
+            updateDropZoneVisibility();
+            selectNode(node);
+            return node;
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            if (!canvas) {
+                return;
+            }
+
+            const payload = event.dataTransfer.getData('application/json');
+            if (!payload) {
+                return;
+            }
+            const toolData = JSON.parse(payload);
+            const canvasRect = canvas.getBoundingClientRect();
+            const position = {
+                x: event.clientX - canvasRect.left,
+                y: event.clientY - canvasRect.top
+            };
+            createWorkflowNode(toolData, position);
+        }
+
+        if (canvas) {
+            canvas.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            canvas.addEventListener('drop', handleDrop);
+        }
+
+        if (dropZone) {
+            dropZone.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        toolItems.forEach(function (tool) {
+            tool.addEventListener('dragstart', function (event) {
+                const payload = serializeTool(tool);
+                event.dataTransfer.setData('application/json', JSON.stringify(payload));
+                event.dataTransfer.effectAllowed = 'copy';
+                canvas?.classList.add('drag-active');
+            });
+
+            tool.addEventListener('dragend', function () {
+                canvas?.classList.remove('drag-active');
             });
         });
 
-        if (closePropertyPanel) {
+        if (closePropertyPanel && propertyPanel) {
             closePropertyPanel.addEventListener('click', function () {
                 propertyPanel.classList.remove('open');
+                if (builderState.selectedNode) {
+                    builderState.selectedNode.classList.remove('selected');
+                    builderState.selectedNode = null;
+                }
             });
         }
 
@@ -300,6 +535,13 @@
                 btn.classList.add('active');
             });
         });
+
+        document.querySelectorAll('.workflow-node').forEach(function (node) {
+            attachNodeInteractions(node);
+        });
+
+        bindPropertyInputs();
+        updateDropZoneVisibility();
     });
 </script>
 {% endblock %}

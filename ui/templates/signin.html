@@ -2,6 +2,8 @@
 
 {% block title %}Sign In - Workflow Automation for Retail{% endblock %}
 
+{% block body_class %}auth-page{% endblock %}
+
 {% block styles %}{% endblock %}
 
 {% block content %}
@@ -46,15 +48,6 @@
                 <h2 class="auth-title">Welcome back!</h2>
                 <p class="auth-subtitle">Sign in to continue to your workspace.</p>
             </div>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="flash-data" data-flash-category="{{ category }}" data-flash-message="{{ message }}"></div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
 
             <form method="POST" action="{{ url_for('auth.signin') }}">
                 <div class="form-group">
@@ -121,14 +114,18 @@
 
 {% block scripts %}
 <script>
-    document.body.classList.add('auth-page', 'signin-page');
+    function fillDemo(email, password) {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        if (emailInput) emailInput.value = email;
+        if (passwordInput) passwordInput.value = password;
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         const branding = document.querySelector('.auth-branding');
         const formPanel = document.querySelector('.auth-form-panel');
         const container = document.querySelector('.auth-container');
 
-        // Stage panels just off-screen before animating in for a smoother entrance.
         if (branding) branding.classList.add('init-left');
         if (formPanel) formPanel.classList.add('init-right');
 
@@ -142,11 +139,10 @@
         document.querySelectorAll('.auth-switch a').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
-                const href = link.href;
                 if (branding) branding.classList.add('slide-left-out');
                 if (formPanel) formPanel.classList.add('slide-right-out');
                 if (container) container.classList.add('fade-out');
-                setTimeout(() => { window.location = href; }, 450);
+                setTimeout(() => { window.location = link.href; }, 450);
             });
         });
     });
