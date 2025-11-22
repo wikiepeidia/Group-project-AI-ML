@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* DataForSEO-inspired Landing Design */
+        :root {
+            --body-bg: #f6f8fb;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --hero-bg: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            --nav-bg: rgba(255, 255, 255, 0.9);
+            --nav-border: rgba(148, 163, 184, 0.35);
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --card-muted: #f1f5f9;
+            --card-shadow: 0 25px 60px rgba(15, 23, 42, 0.12);
+        }
+
+        [data-theme="dark"] {
+            --body-bg: #0f0f0f;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --hero-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            --nav-bg: rgba(15, 15, 15, 0.9);
+            --nav-border: rgba(15, 15, 15, 0.5);
+            --card-bg: #252526;
+            --card-border: #404040;
+            --card-muted: #333333;
+            --card-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,15 +44,16 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #0f0f0f;
-            color: #ffffff;
+            background: var(--body-bg);
+            color: var(--text-primary);
             line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* Hero Section */
         .hero {
             min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: var(--hero-bg);
             display: flex;
             align-items: center;
             position: relative;
@@ -69,7 +96,7 @@
 
         .hero-content p {
             font-size: 1.25rem;
-            color: #a0a0a0;
+            color: var(--text-secondary);
             margin-bottom: 2rem;
             line-height: 1.6;
         }
@@ -106,13 +133,23 @@
 
         .btn-secondary {
             background: transparent;
-            color: #cccccc;
-            border: 1px solid #404040;
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
         }
 
         .btn-secondary:hover {
-            background: #2d2d2d;
+            background: var(--card-muted);
             border-color: #00d4aa;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            color: #cccccc;
+            border-color: #404040;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
             color: #ffffff;
         }
 
@@ -126,7 +163,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            color: #cccccc;
+            color: var(--text-secondary);
         }
 
         .feature-icon {
@@ -151,12 +188,13 @@
             width: 100%;
             max-width: 500px;
             height: 400px;
-            background: linear-gradient(135deg, #252526, #2d2d2d);
+            background: var(--card-bg);
             border-radius: 12px;
-            border: 1px solid #404040;
+            border: 1px solid var(--card-border);
             padding: 1.5rem;
             position: relative;
             overflow: hidden;
+            box-shadow: var(--card-shadow);
         }
 
         .visual-header {
@@ -193,7 +231,7 @@
 
         .visual-title {
             margin-left: 1rem;
-            color: #cccccc;
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
@@ -205,14 +243,14 @@
 
         .visual-sidebar {
             width: 150px;
-            background: #333333;
+            background: var(--card-muted);
             border-radius: 6px;
             padding: 1rem;
         }
 
         .visual-main {
             flex: 1;
-            background: #1e1e1e;
+            background: var(--body-bg);
             border-radius: 6px;
             padding: 1rem;
             display: flex;
@@ -248,10 +286,11 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(15, 15, 15, 0.9);
+            background: var(--nav-bg);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 1rem 0;
+            border-bottom: 1px solid var(--nav-border);
         }
 
         .nav-container {
@@ -282,7 +321,7 @@
         }
 
         .nav-links a {
-            color: #cccccc;
+            color: var(--text-secondary);
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s ease;
@@ -295,6 +334,36 @@
         .nav-actions {
             display: flex;
             gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-muted);
+            transform: translateY(-2px);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            border-color: #404040;
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.08);
         }
 
         /* Responsive */
@@ -340,6 +409,9 @@
                 <li><a href="#contact">Contact</a></li>
             </ul>
             <div class="nav-actions">
+                <button class="theme-toggle" id="landingThemeToggle" type="button" aria-label="Switch to dark mode">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
                 <a href="{{ url_for('auth.signin') }}" class="btn btn-secondary">Sign In</a>
                 <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Get Started</a>
             </div>
@@ -429,6 +501,39 @@
             </div>
         </div>
     </section>
+
+    <script>
+        (function () {
+            const storageKey = 'landing-theme';
+            const root = document.documentElement;
+            const toggleButton = document.getElementById('landingThemeToggle');
+
+            const applyTheme = (theme) => {
+                root.setAttribute('data-theme', theme);
+                if (toggleButton) {
+                    toggleButton.innerHTML = theme === 'dark'
+                        ? '<i class="fas fa-sun" aria-hidden="true"></i>'
+                        : '<i class="fas fa-moon" aria-hidden="true"></i>';
+                    toggleButton.setAttribute('aria-label', theme === 'dark'
+                        ? 'Switch to light mode'
+                        : 'Switch to dark mode');
+                }
+                localStorage.setItem(storageKey, theme);
+            };
+
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                applyTheme(stored);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark');
+            }
+
+            toggleButton?.addEventListener('click', () => {
+                const nextTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                applyTheme(nextTheme);
+            });
+        })();
+    </script>
 </body>
 
 </html>

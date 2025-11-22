@@ -2,6 +2,8 @@
 
 {% block title %}Workflows - Workflow Automation for Retail{% endblock %}
 
+{% block body_class %}workspace-page{% endblock %}
+
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
 {% endblock %}
@@ -17,7 +19,8 @@
                 <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme">
                     <i class="fas fa-moon"></i>
                 </button>
-                <div class="user-avatar">{{ user.username[0].upper() if user.username else 'U' }}</div>
+                {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
+                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout

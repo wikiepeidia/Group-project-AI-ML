@@ -68,7 +68,7 @@ def signin():
                         user_data['last_name'],user_data.get('role','user'))
             print(">>> Đăng nhập:", user.email, "role =", user.role)
             login_user(user)
-            flash('Đăng nhập thành công!', 'success')
+            flash('Login Successful!', 'success')
             
             # Redirect based on role
             if user.role == 'admin':

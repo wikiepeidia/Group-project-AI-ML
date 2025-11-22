@@ -2,8 +2,10 @@
 
 {% block title %}Automation Scenarios - Workflow Automation for Retail{% endblock %}
 
+{% block body_class %}scenarios-page{% endblock %}
+
 {% block styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='scenarios.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='scenarios.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -13,7 +15,8 @@
         <div class="sidebar-header">
             <div class="sidebar-title">Search</div>
             <div class="user-menu">
-                <div class="user-avatar">{{ user.username[0].upper() if user.username else 'U' }}</div>
+                {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
+                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
                 <a href="{{ url_for('logout') }}" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout
