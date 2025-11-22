@@ -225,12 +225,6 @@ __marimo__/
 # User uploaded files (invoice images)
 uploads/
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-*.sqlite-journal
-
 # Log files
 *.log
 logs/
@@ -281,8 +275,15 @@ evaluate_models.py
 # ======================================================
 
 # Development database files (keep structure files, ignore runtime DBs)
-fun_work_hub.db
-workspace_management.db
+#fun_work_hub.db
+#workspace_management.db
+
+# Database files
+#*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
 *.db-journal
 *.db-wal
 *.db-shm
