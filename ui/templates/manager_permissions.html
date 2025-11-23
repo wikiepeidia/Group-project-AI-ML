@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Quyền User{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Manager</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('manager_permissions') }}">
+                            <i class="fas fa-user-shield"></i> Quản lý Quyền
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('workspace') }}">
+                            <i class="fas fa-briefcase"></i> Workspace
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Quản lý Quyền User</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadUsers()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Permission Types Info -->
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Các loại quyền:</h6>
+                <ul class="mb-0">
+                    <li><strong>export</strong>: Xuất dữ liệu</li>
+                    <li><strong>import</strong>: Nhập dữ liệu</li>
+                    <li><strong>view_reports</strong>: Xem báo cáo</li>
+                    <li><strong>manage_data</strong>: Quản lý dữ liệu</li>
+                    <li><strong>create_scenarios</strong>: Tạo scenarios</li>
+                    <li><strong>delete_items</strong>: Xóa items</li>
+                </ul>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Quyền hiện tại</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal: Grant Permission -->
+<div class="modal fade" id="grantPermissionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cấp Quyền</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="grantUserId">
+                <div class="mb-3">
+                    <label class="form-label">User: <strong id="grantUserName"></strong></label>
+                </div>
+                <div class="mb-3">
+                    <label for="permissionTypeSelect" class="form-label">Chọn quyền</label>
+                    <select class="form-select" id="permissionTypeSelect">
+                        <option value="export">Export - Xuất dữ liệu</option>
+                        <option value="import">Import - Nhập dữ liệu</option>
+                        <option value="view_reports">View Reports - Xem báo cáo</option>
+                        <option value="manage_data">Manage Data - Quản lý dữ liệu</option>
+                        <option value="create_scenarios">Create Scenarios - Tạo scenarios</option>
+                        <option value="delete_items">Delete Items - Xóa items</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="grantPermission()">Cấp Quyền</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    color: #fff;
+    padding: 10px 20px;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: #495057;
+}
+
+.badge-permission {
+    font-size: 0.75rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+</style>
+
+<script>
+let usersData = [];
+
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/manager/users-permissions');
+        const data = await response.json();
+        
+        if (data.success) {
+            usersData = data.users;
+            renderUsersTable();
+        } else {
+            showAlert('error', data.message);
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi tải danh sách user: ' + error.message);
+    }
+}
+
+function renderUsersTable() {
+    const tbody = document.getElementById('usersTableBody');
+    
+    if (usersData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không có user nào</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = usersData.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td><span class="badge bg-${user.role === 'admin' ? 'danger' : user.role === 'manager' ? 'warning' : 'info'}">${user.role}</span></td>
+            <td>
+                ${user.permissions.filter(p => p).map(p => `
+                    <span class="badge bg-success badge-permission">
+                        ${p}
+                        <button class="btn-close btn-close-white" style="font-size: 0.5rem;" onclick="revokePermission(${user.id}, '${p}')" title="Revoke"></button>
+                    </span>
+                `).join('') || '<em class="text-muted">Chưa có quyền</em>'}
+            </td>
+            <td>
+                ${user.role === 'user' ? `
+                    <button class="btn btn-sm btn-primary" onclick="openGrantModal(${user.id}, '${user.name}')">
+                        <i class="fas fa-plus"></i> Cấp quyền
+                    </button>
+                ` : '<span class="text-muted">N/A</span>'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openGrantModal(userId, userName) {
+    document.getElementById('grantUserId').value = userId;
+    document.getElementById('grantUserName').textContent = userName;
+    new bootstrap.Modal(document.getElementById('grantPermissionModal')).show();
+}
+
+async function grantPermission() {
+    const userId = parseInt(document.getElementById('grantUserId').value);
+    const permissionType = document.getElementById('permissionTypeSelect').value;
+    
+    try {
+        const response = await fetch('/api/manager/permissions/grant', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_id: userId, permission_type: permissionType})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', 'Cấp quyền thành công!');
+            bootstrap.Modal.getInstance(document.getElementById('grantPermissionModal')).hide();
+            loadUsers();
+        } else {
+            showAlert('error', data.message);
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+async function revokePermission(userId, permissionType) {
+    if (!confirm(`Bạn chắc chắn muốn thu hồi quyền "${permissionType}"?`)) return;
+    
+    try {
+        const response = await fetch('/api/manager/permissions/revoke', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_id: userId, permission_type: permissionType})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', 'Thu hồi quyền thành công!');
+            loadUsers();
+        } else {
+            showAlert('error', data.message);
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('main').insertBefore(alertDiv, document.querySelector('main').firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+// Load users on page load
+document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+{% endblock %}

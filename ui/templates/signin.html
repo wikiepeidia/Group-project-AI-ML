@@ -1,151 +1,431 @@
 {% extends "base.html" %}
 
-{% block title %}Sign In - Workflow Automation for Retail{% endblock %}
+{% block title %}Sign In - Fun Work Hub{% endblock %}
 
-{% block body_class %}auth-page{% endblock %}
+{% block styles %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-{% block styles %}{% endblock %}
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .auth-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 20px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .auth-left {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 40px;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .brand-logo {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .brand-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .brand-subtitle {
+        font-size: 16px;
+        line-height: 1.6;
+        opacity: 0.9;
+        margin-bottom: 40px;
+    }
+
+    .feature-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .auth-right {
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow-y: auto;
+        max-height: 90vh;
+    }
+
+    .auth-header {
+        margin-bottom: 40px;
+    }
+
+    .auth-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .auth-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .auth-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .divider {
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: #e0e0e0;
+    }
+
+    .divider::before {
+        left: 0;
+    }
+
+    .divider::after {
+        right: 0;
+    }
+
+    .divider span {
+        background: #fff;
+        padding: 0 10px;
+        color: #999;
+        font-size: 13px;
+    }
+
+    .social-login {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .social-btn {
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: #333;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .social-btn:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+
+    .auth-switch {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-top: 20px;
+    }
+
+    .auth-switch a {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .demo-section {
+        margin-top: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        border-radius: 12px;
+    }
+
+    .demo-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .demo-accounts {
+        display: grid;
+        gap: 10px;
+    }
+
+    .demo-account {
+        padding: 12px 16px;
+        background: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .demo-account:hover {
+        border-color: #667eea;
+        transform: translateX(4px);
+    }
+
+    .demo-role {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .demo-email {
+        font-size: 12px;
+        color: #666;
+        font-family: monospace;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    @media (max-width: 768px) {
+        .auth-container {
+            grid-template-columns: 1fr;
+        }
+
+        .auth-left {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="auth-container">
-    <!-- Left Panel - Branding -->
-    <div class="auth-branding">
-        <div class="branding-content">
-            <div class="brand-logo" aria-label="Workflow Automation logo">
-                <i class="fas fa-robot" aria-hidden="true"></i>
+    <div class="auth-left">
+        <div class="brand-logo">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h1 class="brand-title">Fun Work Hub</h1>
+        <p class="brand-subtitle">
+            Hệ thống quản lý thông minh giúp bạn tổ chức công việc hiệu quả với hệ thống phân lớp và kênh liên kết mạnh
+            mẽ
+        </p>
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-users"></i></div>
+                <span>Quản lý khách hàng</span>
             </div>
-            <h1 class="brand-title">Workflow Automation for Retail</h1>
-            <p class="brand-subtitle">
-                AI-powered RPA platform for retail businesses. Automate inventory, orders, and customer workflows with
-                our visual builder.
-            </p>
-
-            <div class="brand-features">
-                <div class="feature-item">
-                    <i class="fas fa-sitemap feature-icon"></i>
-                    <span>Visual workflow builder</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-network-wired feature-icon"></i>
-                    <span>Smart channel integration</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-theater-masks feature-icon"></i>
-                    <span>Flexible scenario management</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-users feature-icon"></i>
-                    <span>Efficient team collaboration</span>
-                </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-box"></i></div>
+                <span>Quản lý sản phẩm & kho</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-magic"></i></div>
+                <span>Tự động hóa thông minh</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <span>Báo cáo & thống kê</span>
             </div>
         </div>
     </div>
 
-    <!-- Right Panel - Auth Form -->
-    <div class="auth-form-panel">
-        <div class="auth-form-container">
-            <div class="auth-header">
-                <h2 class="auth-title">Welcome back!</h2>
-                <p class="auth-subtitle">Sign in to continue to your workspace.</p>
+    <div class="auth-right">
+        <div class="auth-header">
+            <h2 class="auth-title">Chào mừng trở lại!</h2>
+            <p class="auth-subtitle">Đăng nhập để tiếp tục sử dụng workspace</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.signin') }}" id="loginForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="Nhập địa chỉ email"
+                    required>
             </div>
 
-            <form method="POST" action="{{ url_for('auth.signin') }}">
-                <div class="form-group">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" class="form-input"
-                        placeholder="Enter your email address" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-input"
-                        placeholder="Enter your password" required>
-                </div>
-
-                <button type="submit" class="auth-btn">Sign in</button>
-            </form>
-
-            <div class="divider">
-                <span>or continue with</span>
+            <div class="form-group">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Nhập mật khẩu"
+                    required>
             </div>
 
-            <div class="social-login">
-                <a href="#" class="social-btn">
-                    <i class="fab fa-google"></i>
-                    Google
-                </a>
-                <a href="#" class="social-btn">
-                    <i class="fab fa-github"></i>
-                    GitHub
-                </a>
-            </div>
+            <button type="submit" class="auth-btn">Đăng nhập</button>
+        </form>
 
-            <div class="auth-switch">
-                Don't have an account? <a href="{{ url_for('auth.signup') }}">Create one</a>
-            </div>
+        <div class="divider">
+            <span>hoặc tiếp tục với</span>
+        </div>
 
-            <!-- Demo Accounts -->
-            <div class="demo-section">
-                <div class="demo-title">
-                    <i class="fas fa-gamepad" aria-hidden="true"></i>
-                    Try a demo account
-                </div>
-                <div class="demo-accounts">
-                    <div class="demo-account" onclick="fillDemo('admin@fun.com', 'admin123')">
-                        <div class="demo-role">
-                            <i class="fas fa-user-tie" aria-hidden="true"></i>
-                            Admin
-                        </div>
-                        <div class="demo-email">admin@fun.com / admin123</div>
+        <div class="social-login">
+            <a href="#" class="social-btn">
+                <i class="fab fa-google"></i>
+                Google
+            </a>
+            <a href="#" class="social-btn">
+                <i class="fab fa-github"></i>
+                GitHub
+            </a>
+        </div>
+
+        <div class="auth-switch">
+            Chưa có tài khoản? <a href="{{ url_for('auth.signup') }}">Tạo tài khoản</a>
+        </div>
+
+        <div class="demo-section">
+            <div class="demo-title">
+                <i class="fas fa-gamepad"></i>
+                Thử ngay với tài khoản demo
+            </div>
+            <div class="demo-accounts">
+                <div class="demo-account" onclick="fillDemo('admin@fun.com', 'admin123')">
+                    <div class="demo-role">
+                        <i class="fas fa-crown"></i>
+                        Admin
                     </div>
-                    <div class="demo-account" onclick="fillDemo('user@fun.com', 'user123')">
-                        <div class="demo-role">
-                            <i class="fas fa-user" aria-hidden="true"></i>
-                            User
-                        </div>
-                        <div class="demo-email">user@fun.com / user123</div>
+                    <div class="demo-email">admin@fun.com / admin123</div>
+                </div>
+                <div class="demo-account" onclick="fillDemo('manager@fun.com', 'manager123')">
+                    <div class="demo-role">
+                        <i class="fas fa-user-shield"></i>
+                        Manager
                     </div>
+                    <div class="demo-email">manager@fun.com / manager123</div>
+                </div>
+                <div class="demo-account" onclick="fillDemo('user@fun.com', 'user123')">
+                    <div class="demo-role">
+                        <i class="fas fa-user"></i>
+                        User
+                    </div>
+                    <div class="demo-email">user@fun.com / user123</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
     function fillDemo(email, password) {
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        if (emailInput) emailInput.value = email;
-        if (passwordInput) passwordInput.value = password;
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const branding = document.querySelector('.auth-branding');
-        const formPanel = document.querySelector('.auth-form-panel');
-        const container = document.querySelector('.auth-container');
-
-        if (branding) branding.classList.add('init-left');
-        if (formPanel) formPanel.classList.add('init-right');
-
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if (branding) branding.classList.add('animate-in');
-                if (formPanel) formPanel.classList.add('animate-in');
-            }, 20);
-        });
-
-        document.querySelectorAll('.auth-switch a').forEach((link) => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (branding) branding.classList.add('slide-left-out');
-                if (formPanel) formPanel.classList.add('slide-right-out');
-                if (container) container.classList.add('fade-out');
-                setTimeout(() => { window.location = link.href; }, 450);
-            });
-        });
-    });
 </script>
-
 {% endblock %}

@@ -1,264 +1,392 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - Workflow Automation for Retail{% endblock %}
+{% block title %}Sign Up - Fun Work Hub{% endblock %}
 
-{% block body_class %}auth-page{% endblock %}
+{% block styles %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-{% block styles %}{% endblock %}
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .auth-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 20px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .auth-left {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 40px;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .brand-logo {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .brand-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .brand-subtitle {
+        font-size: 16px;
+        line-height: 1.6;
+        opacity: 0.9;
+        margin-bottom: 40px;
+    }
+
+    .benefit-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .benefit-item {
+        display: flex;
+        gap: 16px;
+    }
+
+    .benefit-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .benefit-content h4 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .benefit-content p {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .auth-right {
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    .auth-header {
+        margin-bottom: 30px;
+    }
+
+    .auth-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .auth-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .auth-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .auth-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .divider {
+        text-align: center;
+        margin: 24px 0;
+        position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: #e0e0e0;
+    }
+
+    .divider::before {
+        left: 0;
+    }
+
+    .divider::after {
+        right: 0;
+    }
+
+    .divider span {
+        background: #fff;
+        padding: 0 10px;
+        color: #999;
+        font-size: 13px;
+    }
+
+    .social-login {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .social-btn {
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: #333;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .social-btn:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+
+    .auth-switch {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-top: 20px;
+    }
+
+    .auth-switch a {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    @media (max-width: 768px) {
+        .auth-container {
+            grid-template-columns: 1fr;
+        }
+
+        .auth-left {
+            display: none;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="auth-container">
-    <!-- Left Panel - Branding -->
-    <div class="auth-branding">
-        <div class="branding-content">
-            <div class="brand-logo" aria-label="Workflow Automation logo">
-                <i class="fas fa-robot" aria-hidden="true"></i>
+    <div class="auth-left">
+        <div class="brand-logo">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h1 class="brand-title">Tham gia Fun Work Hub</h1>
+        <p class="brand-subtitle">
+            Tạo tài khoản và bắt đầu quản lý công việc của bạn hiệu quả hơn
+        </p>
+        <div class="benefit-list">
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-users"></i></div>
+                <div class="benefit-content">
+                    <h4>Quản lý toàn diện</h4>
+                    <p>Khách hàng, sản phẩm, nhập xuất kho</p>
+                </div>
             </div>
-            <h1 class="brand-title">Join Workflow Automation for Retail</h1>
-            <p class="brand-subtitle">
-                Create your first automated workflow and start streamlining your retail operations
-            </p>
-
-            <div class="signup-benefits">
-                <div class="benefit-item">
-                    <i class="fas fa-sitemap benefit-icon"></i>
-                    <div class="benefit-content">
-                        <h4>Free workflow builder</h4>
-                        <p>Start automating with visual drag-and-drop</p>
-                    </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-magic"></i></div>
+                <div class="benefit-content">
+                    <h4>Tự động hóa AI</h4>
+                    <p>Nhập hàng tự động, báo cáo thông minh</p>
                 </div>
-                <div class="benefit-item">
-                    <i class="fas fa-store benefit-icon"></i>
-                    <div class="benefit-content">
-                        <h4>Retail integrations</h4>
-                        <p>Connect to POS, inventory, and e-commerce</p>
-                    </div>
-                </div>
-                <div class="benefit-item">
-                    <i class="fas fa-robot benefit-icon"></i>
-                    <div class="benefit-content">
-                        <h4>AI-powered automation</h4>
-                        <p>Smart workflow recommendations</p>
-                    </div>
-                </div>
-                <div class="benefit-item">
-                    <i class="fas fa-shield-alt benefit-icon"></i>
-                    <div class="benefit-content">
-                        <h4>Enterprise security</h4>
-                        <p>Data encrypted and fully protected</p>
-                    </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="benefit-content">
+                    <h4>Bảo mật cao</h4>
+                    <p>Dữ liệu được mã hóa và bảo vệ toàn diện</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Right Panel - Auth Form -->
-    <div class="auth-form-panel">
-        <div class="auth-form-container">
-            <div class="auth-header">
-                <h2 class="auth-title">Create Your Account</h2>
-                <p class="auth-subtitle">Start automating your retail workflows today</p>
-            </div>
+    <div class="auth-right">
+        <div class="auth-header">
+            <h2 class="auth-title">Tạo tài khoản mới</h2>
+            <p class="auth-subtitle">Bắt đầu hành trình quản lý thông minh</p>
+        </div>
 
-            <form method="POST" action="{{ url_for('auth.signup') }}" id="signupForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first_name" class="form-label">First name</label>
-                        <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Jane"
-                            required>
-                    </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-                    <div class="form-group">
-                        <label for="last_name" class="form-label">Last name</label>
-                        <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe"
-                            required>
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="jane@example.com"
+        <form method="POST" action="{{ url_for('auth.signup') }}" id="signupForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">Họ</label>
+                    <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Nguyễn Văn"
                         required>
                 </div>
 
-                <div class="form-group full-width">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-input"
-                        placeholder="Minimum 8 characters" required minlength="8" oninput="checkPasswordStrength()">
-                    <div class="password-strength">
-                        <div class="strength-bar">
-                            <div class="strength-fill" id="strengthFill"></div>
-                        </div>
-                        <div class="strength-text" id="strengthText">Start typing to check password strength</div>
-                    </div>
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Tên</label>
+                    <input type="text" id="last_name" name="last_name" class="form-input" placeholder="A" required>
                 </div>
-
-                <div class="form-group full-width">
-                    <label for="confirm_password" class="form-label">Confirm password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-input"
-                        placeholder="Re-enter your password" required>
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="terms" name="terms" class="checkbox-input" required>
-                    <label for="terms" class="checkbox-label">
-                        I agree to the <a href="#" target="_blank">Terms of Service</a>
-                        and <a href="#" target="_blank">Privacy Policy</a> of Workflow Automation for Retail
-                    </label>
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="newsletter" name="newsletter" class="checkbox-input">
-                    <label for="newsletter" class="checkbox-label">
-                        I want to receive updates about new features and automation tips via email
-                    </label>
-                </div>
-
-                <button type="submit" class="auth-btn" id="submitBtn" disabled>Create account</button>
-            </form>
-
-            <div class="divider">
-                <span>or sign up with</span>
             </div>
 
-            <div class="social-login">
-                <a href="#" class="social-btn">
-                    <i class="fab fa-google"></i>
-                    Google
-                </a>
-                <a href="#" class="social-btn">
-                    <i class="fab fa-github"></i>
-                    GitHub
-                </a>
+            <div class="form-group full-width">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="example@email.com" required>
             </div>
 
-            <div class="auth-switch">
-                Already have an account? <a href="{{ url_for('auth.signin') }}">Sign in</a>
+            <div class="form-group full-width">
+                <label for="phone" class="form-label">Số điện thoại (tùy chọn)</label>
+                <input type="tel" id="phone" name="phone" class="form-input" placeholder="0123456789">
             </div>
+
+            <div class="form-group full-width">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Ít nhất 6 ký tự"
+                    required minlength="6">
+            </div>
+
+            <button type="submit" class="auth-btn">Tạo tài khoản</button>
+        </form>
+
+        <div class="divider">
+            <span>hoặc đăng ký với</span>
+        </div>
+
+        <div class="social-login">
+            <a href="#" class="social-btn">
+                <i class="fab fa-google"></i>
+                Google
+            </a>
+            <a href="#" class="social-btn">
+                <i class="fab fa-github"></i>
+                GitHub
+            </a>
+        </div>
+
+        <div class="auth-switch">
+            Đã có tài khoản? <a href="{{ url_for('auth.signin') }}">Đăng nhập</a>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    function checkPasswordStrength() {
-        const password = document.getElementById('password').value;
-        const strengthFill = document.getElementById('strengthFill');
-        const strengthText = document.getElementById('strengthText');
-
-        if (password.length === 0) {
-            strengthFill.className = 'strength-fill';
-            strengthText.textContent = 'Start typing to check password strength';
-            strengthText.style.color = '#a0a0a0';
-            return;
-        }
-
-        let score = 0;
-        let feedback = [];
-
-        // Length check
-        if (password.length >= 8) score += 1;
-        else feedback.push('at least 8 characters');
-
-        // Uppercase check
-        if (/[A-Z]/.test(password)) score += 1;
-        else feedback.push('an uppercase letter');
-
-        // Lowercase check
-        if (/[a-z]/.test(password)) score += 1;
-        else feedback.push('a lowercase letter');
-
-        // Number check
-        if (/\d/.test(password)) score += 1;
-        else feedback.push('a number');
-
-        // Special character check
-        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
-        else feedback.push('a special character');
-
-        // Update strength indicator
-        if (score <= 2) {
-            strengthFill.className = 'strength-fill strength-weak';
-            strengthText.textContent = 'Weak – Add: ' + feedback.slice(0, 3).join(', ');
-            strengthText.style.color = '#ef4444';
-        } else if (score === 3) {
-            strengthFill.className = 'strength-fill strength-fair';
-            strengthText.textContent = 'Fair – Add: ' + feedback.slice(0, 2).join(', ');
-            strengthText.style.color = '#f59e0b';
-        } else if (score === 4) {
-            strengthFill.className = 'strength-fill strength-good';
-            strengthText.textContent = feedback.length ? 'Good – Add: ' + feedback.join(', ') : 'Good password';
-            strengthText.style.color = '#10b981';
-        } else {
-            strengthFill.className = 'strength-fill strength-strong';
-            strengthText.textContent = 'Strong – Password looks great';
-            strengthText.style.color = '#00d4aa';
-        }
-
-        checkFormValid();
-    }
-
-    function checkFormValid() {
-        const form = document.getElementById('signupForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm_password').value;
-        const terms = document.getElementById('terms').checked;
-
-        const isValid = form.checkValidity() &&
-            password === confirmPassword &&
-            password.length >= 8 &&
-            terms;
-
-        submitBtn.disabled = !isValid;
-
-        // Check password match
-        const confirmInput = document.getElementById('confirm_password');
-        if (confirmPassword && password !== confirmPassword) {
-            confirmInput.setCustomValidity('Passwords do not match');
-        } else {
-            confirmInput.setCustomValidity('');
-        }
-    }
-
-    // Add event listeners
-    document.getElementById('confirm_password').addEventListener('input', checkFormValid);
-    document.getElementById('terms').addEventListener('change', checkFormValid);
-    document.getElementById('signupForm').addEventListener('input', checkFormValid);
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const branding = document.querySelector('.auth-branding');
-        const formPanel = document.querySelector('.auth-form-panel');
-
-        // Stagger panels off-screen for a subtle entrance animation.
-        if (branding) branding.classList.add('init-right');
-        if (formPanel) formPanel.classList.add('init-left');
-
-        // Animate into place after the initial paint.
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if (branding) branding.classList.add('animate-in');
-                if (formPanel) formPanel.classList.add('animate-in');
-            }, 20);
-        });
-
-        // Redirect with a slide transition when switching to the sign-in view.
-        document.querySelectorAll('.auth-switch a').forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                const href = this.href;
-                if (branding) branding.classList.add('slide-right-out');
-                if (formPanel) formPanel.classList.add('slide-left-out');
-                const container = document.querySelector('.auth-container');
-                if (container) container.classList.add('fade-out');
-
-                setTimeout(() => { window.location = href; }, 450);
-            });
-        });
-    });
-
-    // Password helpers remain available globally for inline handlers.
-</script>
-
 {% endblock %}

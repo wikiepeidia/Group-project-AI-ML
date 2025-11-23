@@ -1,0 +1,620 @@
+{% extends "base.html" %}
+
+{% block title %}Thống kê & Báo cáo - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-chart-line"></i> Thống kê & Báo cáo</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <select class="form-select" id="timeRangeFilter" onchange="loadAnalytics()">
+                        <option value="today">Hôm nay</option>
+                        <option value="week" selected>7 ngày qua</option>
+                        <option value="month">30 ngày qua</option>
+                        <option value="year">Năm nay</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Revenue & Access Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-success">
+                        <div class="metric-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">TỔNG DOANH THU</div>
+                            <div class="metric-value" id="totalRevenue">0 đ</div>
+                            <div class="metric-change positive" id="revenueChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-primary">
+                        <div class="metric-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">LƯỢT TRUY CẬP</div>
+                            <div class="metric-value" id="totalVisits">0</div>
+                            <div class="metric-change positive" id="visitsChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-warning">
+                        <div class="metric-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">ĐON HÀNG</div>
+                            <div class="metric-value" id="totalOrders">0</div>
+                            <div class="metric-change positive" id="ordersChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-danger">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">LỢI NHUẬN</div>
+                            <div class="metric-value" id="totalProfit">0 đ</div>
+                            <div class="metric-change positive" id="profitChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-area"></i> Biểu đồ Doanh thu & Lợi nhuận
+                        </h5>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-pie"></i> Phân bổ Doanh thu
+                        </h5>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-eye"></i> Lượng truy cập theo giờ
+                        </h5>
+                        <canvas id="accessChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-user-friends"></i> Người dùng hoạt động
+                        </h5>
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Performance Table -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-user-tie"></i> Hiệu suất Manager
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Manager</th>
+                                            <th>Email</th>
+                                            <th>User quản lý</th>
+                                            <th>Quyền đã cấp</th>
+                                            <th>Doanh thu phụ trách</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="managerPerformanceTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                <div class="spinner-border" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products & Customers -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-star"></i> Top 5 Sản phẩm bán chạy
+                            </h5>
+                            <div id="topProducts">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-crown"></i> Top 5 Khách hàng VIP
+                            </h5>
+                            <div id="topCustomers">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<style>
+.main-content {
+    margin-left: 280px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.metric-card {
+    border-radius: 15px;
+    padding: 25px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.metric-icon {
+    font-size: 48px;
+    opacity: 0.9;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-label {
+    font-size: 12px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.metric-change {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.metric-change.positive {
+    opacity: 0.9;
+}
+
+.metric-change.negative {
+    opacity: 0.8;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-item, .customer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.3s;
+}
+
+.product-item:hover, .customer-item:hover {
+    background: #f8f9fa;
+}
+
+.product-item:last-child, .customer-item:last-child {
+    border-bottom: none;
+}
+
+.item-rank {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.item-rank.gold {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+}
+
+.item-rank.silver {
+    background: linear-gradient(135deg, #b8b8b8 0%, #888888 100%);
+}
+
+.item-rank.bronze {
+    background: linear-gradient(135deg, #cd7f32 0%, #a05a2c 100%);
+}
+
+.item-info {
+    flex: 1;
+    margin-left: 15px;
+}
+
+.item-name {
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 3px;
+}
+
+.item-detail {
+    font-size: 13px;
+    color: #666;
+}
+
+.item-value {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 16px;
+}
+
+.badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let revenueChart, categoryChart, accessChart, usersChart;
+
+// Generate mock data
+function generateMockData() {
+    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const revenue = [45000, 52000, 48000, 61000, 55000, 67000, 72000];
+    const profit = [12000, 15000, 13000, 18000, 16000, 20000, 22000];
+    
+    return { days, revenue, profit };
+}
+
+function loadAnalytics() {
+    const timeRange = document.getElementById('timeRangeFilter').value;
+    
+    // Update metrics
+    updateMetrics();
+    
+    // Update charts
+    updateCharts();
+    
+    // Load manager performance
+    loadManagerPerformance();
+    
+    // Load top items
+    loadTopProducts();
+    loadTopCustomers();
+}
+
+function updateMetrics() {
+    // Mock data
+    document.getElementById('totalRevenue').textContent = '245,500,000 đ';
+    document.getElementById('revenueChange').innerHTML = '<i class="fas fa-arrow-up"></i> +15.3%';
+    
+    document.getElementById('totalVisits').textContent = '12,458';
+    document.getElementById('visitsChange').innerHTML = '<i class="fas fa-arrow-up"></i> +8.7%';
+    
+    document.getElementById('totalOrders').textContent = '1,234';
+    document.getElementById('ordersChange').innerHTML = '<i class="fas fa-arrow-up"></i> +12.5%';
+    
+    document.getElementById('totalProfit').textContent = '98,200,000 đ';
+    document.getElementById('profitChange').innerHTML = '<i class="fas fa-arrow-up"></i> +18.2%';
+}
+
+function updateCharts() {
+    const mockData = generateMockData();
+    
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueChart) revenueChart.destroy();
+    
+    revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: mockData.days,
+            datasets: [{
+                label: 'Doanh thu (1000đ)',
+                data: mockData.revenue,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Lợi nhuận (1000đ)',
+                data: mockData.profit,
+                borderColor: '#43e97b',
+                backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Category Pie Chart
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryChart) categoryChart.destroy();
+    
+    categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Nhập hàng', 'Xuất hàng', 'Dịch vụ', 'Khác'],
+            datasets: [{
+                data: [120000, 85000, 30000, 10000],
+                backgroundColor: ['#667eea', '#43e97b', '#ffd89b', '#f093fb']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'bottom' }
+            }
+        }
+    });
+    
+    // Access Chart
+    const accessCtx = document.getElementById('accessChart');
+    if (accessChart) accessChart.destroy();
+    
+    accessChart = new Chart(accessCtx, {
+        type: 'bar',
+        data: {
+            labels: ['0h', '4h', '8h', '12h', '16h', '20h'],
+            datasets: [{
+                label: 'Lượt truy cập',
+                data: [120, 80, 450, 890, 1200, 650],
+                backgroundColor: 'rgba(102, 126, 234, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Users Chart
+    const usersCtx = document.getElementById('usersChart');
+    if (usersChart) usersChart.destroy();
+    
+    usersChart = new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: mockData.days,
+            datasets: [{
+                label: 'Người dùng hoạt động',
+                data: [45, 52, 48, 61, 55, 67, 72],
+                borderColor: '#f093fb',
+                backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+async function loadManagerPerformance() {
+    try {
+        const response = await fetch('/api/admin/users');
+        if (!response.ok) throw new Error('Failed to load managers');
+        
+        const data = await response.json();
+        const managers = (data.users || []).filter(u => u.role === 'manager');
+        
+        const tbody = document.getElementById('managerPerformanceTable');
+        
+        if (managers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Chưa có Manager nào</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = managers.map((manager, idx) => {
+            const revenue = Math.floor(Math.random() * 50000000) + 20000000;
+            const usersManaged = Math.floor(Math.random() * 15) + 5;
+            const permissionsGranted = Math.floor(Math.random() * 30) + 10;
+            
+            return `
+                <tr>
+                    <td><strong>${manager.name}</strong></td>
+                    <td>${manager.email}</td>
+                    <td><span class="badge bg-primary">${usersManaged} users</span></td>
+                    <td><span class="badge bg-info">${permissionsGranted} quyền</span></td>
+                    <td><strong style="color: #43e97b;">${revenue.toLocaleString('vi-VN')} đ</strong></td>
+                    <td><span class="badge bg-success">Hoạt động</span></td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading manager performance:', error);
+    }
+}
+
+function loadTopProducts() {
+    const products = [
+        { name: 'Laptop Dell XPS 13', sold: 245, revenue: 45000000 },
+        { name: 'iPhone 15 Pro Max', sold: 189, revenue: 38000000 },
+        { name: 'Samsung Galaxy S24', sold: 156, revenue: 28000000 },
+        { name: 'MacBook Pro M3', sold: 134, revenue: 67000000 },
+        { name: 'AirPods Pro 2', sold: 298, revenue: 15000000 }
+    ];
+    
+    const html = products.map((product, idx) => {
+        let rankClass = '';
+        if (idx === 0) rankClass = 'gold';
+        else if (idx === 1) rankClass = 'silver';
+        else if (idx === 2) rankClass = 'bronze';
+        
+        return `
+            <div class="product-item">
+                <div class="item-rank ${rankClass}">${idx + 1}</div>
+                <div class="item-info">
+                    <div class="item-name">${product.name}</div>
+                    <div class="item-detail">Đã bán: ${product.sold} sản phẩm</div>
+                </div>
+                <div class="item-value">${(product.revenue / 1000000).toFixed(1)}M đ</div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('topProducts').innerHTML = html;
+}
+
+function loadTopCustomers() {
+    const customers = [
+        { name: 'Nguyễn Văn A', orders: 45, revenue: 125000000 },
+        { name: 'Trần Thị B', orders: 38, revenue: 98000000 },
+        { name: 'Lê Văn C', orders: 32, revenue: 87000000 },
+        { name: 'Phạm Thị D', orders: 28, revenue: 76000000 },
+        { name: 'Hoàng Văn E', orders: 25, revenue: 65000000 }
+    ];
+    
+    const html = customers.map((customer, idx) => {
+        let rankClass = '';
+        if (idx === 0) rankClass = 'gold';
+        else if (idx === 1) rankClass = 'silver';
+        else if (idx === 2) rankClass = 'bronze';
+        
+        return `
+            <div class="customer-item">
+                <div class="item-rank ${rankClass}">${idx + 1}</div>
+                <div class="item-info">
+                    <div class="item-name">${customer.name}</div>
+                    <div class="item-detail">${customer.orders} đơn hàng</div>
+                </div>
+                <div class="item-value">${(customer.revenue / 1000000).toFixed(1)}M đ</div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('topCustomers').innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', loadAnalytics);
+</script>
+{% endblock %}

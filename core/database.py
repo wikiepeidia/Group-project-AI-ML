@@ -90,6 +90,114 @@ class Database:
             FOREIGN KEY (to_workspace_id) REFERENCES workspaces (id)
         )''')
         
+        # User permissions table
+        c.execute('''CREATE TABLE IF NOT EXISTS user_permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            permission_type TEXT NOT NULL,
+            granted_by INTEGER,
+            granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            revoked BOOLEAN DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (granted_by) REFERENCES users (id),
+            UNIQUE(user_id, permission_type)
+        )''')
+        
+        # Customers table (Khách hàng)
+        c.execute('''CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            phone TEXT,
+            email TEXT,
+            address TEXT,
+            notes TEXT,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+        
+        # Products table (Sản phẩm)
+        c.execute('''CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT,
+            unit TEXT DEFAULT 'cái',
+            price REAL DEFAULT 0,
+            stock_quantity INTEGER DEFAULT 0,
+            description TEXT,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+        
+        # Import transactions (Nhập hàng)
+        c.execute('''CREATE TABLE IF NOT EXISTS import_transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            supplier_name TEXT,
+            total_amount REAL DEFAULT 0,
+            notes TEXT,
+            status TEXT DEFAULT 'completed',
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+        
+        # Import transaction details
+        c.execute('''CREATE TABLE IF NOT EXISTS import_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            import_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            unit_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            FOREIGN KEY (import_id) REFERENCES import_transactions (id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        )''')
+        
+        # Export transactions (Xuất hàng)
+        c.execute('''CREATE TABLE IF NOT EXISTS export_transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            customer_id INTEGER,
+            total_amount REAL DEFAULT 0,
+            notes TEXT,
+            status TEXT DEFAULT 'completed',
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers (id),
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+        
+        # Export transaction details
+        c.execute('''CREATE TABLE IF NOT EXISTS export_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            export_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            unit_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            FOREIGN KEY (export_id) REFERENCES export_transactions (id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        )''')
+        
+        # SE Automation configs (Scenarios & Events)
+        c.execute('''CREATE TABLE IF NOT EXISTS se_automations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            config TEXT,
+            enabled BOOLEAN DEFAULT 1,
+            last_run TIMESTAMP,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+        
         self._create_demo_data(c)
         conn.commit()
         conn.close()
@@ -98,6 +206,7 @@ class Database:
         # Demo users có role rõ ràng
         demo_users = [
             ('admin@fun.com', 'admin123', 'Admin User', None, 'admin'),
+            ('manager@fun.com', 'manager123', 'Manager User', None, 'manager'),
             ('user@fun.com', 'user123', 'Regular User', None, 'user')
         ]
         
@@ -383,3 +492,84 @@ class Database:
         
         conn.commit()
         conn.close()
+    
+    # Permission methods
+    def grant_permission(self, user_id, permission_type, granted_by):
+        """Grant a permission to a user (Manager/Admin only)"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            c.execute('''INSERT OR REPLACE INTO user_permissions 
+                        (user_id, permission_type, granted_by, granted_at, revoked) 
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)''', 
+                     (user_id, permission_type, granted_by))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise Exception(f'Failed to grant permission: {str(e)}')
+        finally:
+            conn.close()
+    
+    def revoke_permission(self, user_id, permission_type):
+        """Revoke a permission from a user"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            c.execute('''UPDATE user_permissions SET revoked = 1 
+                        WHERE user_id = ? AND permission_type = ?''', 
+                     (user_id, permission_type))
+            conn.commit()
+            return c.rowcount > 0
+        finally:
+            conn.close()
+    
+    def get_user_permissions(self, user_id):
+        """Get all active permissions for a user"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('''SELECT permission_type, granted_at, granted_by 
+                    FROM user_permissions 
+                    WHERE user_id = ? AND revoked = 0''', (user_id,))
+        permissions = []
+        for row in c.fetchall():
+            permissions.append({
+                'permission_type': row[0],
+                'granted_at': row[1],
+                'granted_by': row[2]
+            })
+        conn.close()
+        return permissions
+    
+    def has_permission(self, user_id, permission_type):
+        """Check if user has a specific permission"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('''SELECT COUNT(*) FROM user_permissions 
+                    WHERE user_id = ? AND permission_type = ? AND revoked = 0''', 
+                 (user_id, permission_type))
+        count = c.fetchone()[0]
+        conn.close()
+        return count > 0
+    
+    def get_all_users_with_permissions(self):
+        """Get all users with their permissions (for Manager/Admin view)"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('''SELECT u.id, u.name, u.email, u.role, 
+                           GROUP_CONCAT(CASE WHEN p.revoked = 0 THEN p.permission_type END) as permissions
+                    FROM users u
+                    LEFT JOIN user_permissions p ON u.id = p.user_id
+                    GROUP BY u.id
+                    ORDER BY u.name''')
+        users = []
+        for row in c.fetchall():
+            users.append({
+                'id': row[0],
+                'name': row[1],
+                'email': row[2],
+                'role': row[3],
+                'permissions': row[4].split(',') if row[4] else []
+            })
+        conn.close()
+        return users

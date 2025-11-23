@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Gói Manager - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-credit-card"></i> Quản lý Gói Manager</h1>
+                <button class="btn btn-danger" onclick="checkExpiredSubscriptions()">
+                    <i class="fas fa-sync"></i> Kiểm tra hết hạn
+                </button>
+            </div>
+
+            <!-- Subscription Plans -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="plan-card">
+                        <div class="plan-header bg-secondary">
+                            <i class="fas fa-gift"></i>
+                            <h4>Trial</h4>
+                        </div>
+                        <div class="plan-price">
+                            <span class="amount">0đ</span>
+                            <span class="period">/30 ngày</span>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature"><i class="fas fa-check"></i> Dùng thử miễn phí</div>
+                            <div class="feature"><i class="fas fa-check"></i> Đầy đủ quyền Manager</div>
+                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ cơ bản</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="plan-card">
+                        <div class="plan-header bg-primary">
+                            <i class="fas fa-calendar-day"></i>
+                            <h4>Monthly</h4>
+                        </div>
+                        <div class="plan-price">
+                            <span class="amount">500K</span>
+                            <span class="period">/tháng</span>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature"><i class="fas fa-check"></i> Gia hạn linh hoạt</div>
+                            <div class="feature"><i class="fas fa-check"></i> Đầy đủ quyền Manager</div>
+                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ ưu tiên</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="plan-card popular">
+                        <div class="plan-badge">PHỔ BIẾN</div>
+                        <div class="plan-header bg-warning">
+                            <i class="fas fa-calendar-alt"></i>
+                            <h4>Quarterly</h4>
+                        </div>
+                        <div class="plan-price">
+                            <span class="amount">1.2M</span>
+                            <span class="period">/3 tháng</span>
+                            <div class="plan-save">Tiết kiệm 300K</div>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature"><i class="fas fa-check"></i> Giảm 20%</div>
+                            <div class="feature"><i class="fas fa-check"></i> Đầy đủ quyền Manager</div>
+                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ VIP</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="plan-card">
+                        <div class="plan-header bg-success">
+                            <i class="fas fa-calendar"></i>
+                            <h4>Yearly</h4>
+                        </div>
+                        <div class="plan-price">
+                            <span class="amount">4M</span>
+                            <span class="period">/năm</span>
+                            <div class="plan-save">Tiết kiệm 2M</div>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature"><i class="fas fa-check"></i> Giảm 33%</div>
+                            <div class="feature"><i class="fas fa-check"></i> Đầy đủ quyền Manager</div>
+                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ 24/7</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Subscriptions -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users"></i> Manager đang hoạt động
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Manager</th>
+                                    <th>Email</th>
+                                    <th>Gói hiện tại</th>
+                                    <th>Ngày bắt đầu</th>
+                                    <th>Ngày hết hạn</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subscriptionsTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="spinner-border" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-history"></i> Lịch sử thanh toán
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Manager</th>
+                                    <th>Gói</th>
+                                    <th>Số tiền</th>
+                                    <th>Phương thức</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentHistoryTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Extend Subscription Modal -->
+<div class="modal fade" id="extendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gia hạn gói Manager</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="extendUserId">
+                <div class="mb-3">
+                    <label class="form-label">Manager</label>
+                    <input type="text" class="form-control" id="extendUserName" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Gói gia hạn <span class="text-danger">*</span></label>
+                    <select class="form-select" id="extendPlan">
+                        <option value="monthly">Monthly - 500,000đ (30 ngày)</option>
+                        <option value="quarterly" selected>Quarterly - 1,200,000đ (90 ngày)</option>
+                        <option value="yearly">Yearly - 4,000,000đ (365 ngày)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phương thức thanh toán</label>
+                    <select class="form-select" id="paymentMethod">
+                        <option value="bank_transfer">Chuyển khoản</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="momo">MoMo</option>
+                        <option value="vnpay">VNPay</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mã giao dịch (tùy chọn)</label>
+                    <input type="text" class="form-control" id="transactionId" placeholder="VD: TXN123456">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="processExtension()">
+                    <i class="fas fa-check"></i> Xác nhận gia hạn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.main-content {
+    margin-left: 280px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.plan-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+    position: relative;
+}
+
+.plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.plan-card.popular {
+    border: 3px solid #ffd89b;
+}
+
+.plan-badge {
+    position: absolute;
+    top: 15px;
+    right: -35px;
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+    color: white;
+    padding: 5px 40px;
+    font-size: 11px;
+    font-weight: bold;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.plan-header {
+    padding: 25px;
+    color: white;
+    text-align: center;
+}
+
+.plan-header i {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.plan-header h4 {
+    margin: 0;
+    font-weight: 700;
+}
+
+.plan-price {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.amount {
+    font-size: 36px;
+    font-weight: bold;
+    color: #1a1a2e;
+}
+
+.period {
+    font-size: 16px;
+    color: #666;
+}
+
+.plan-save {
+    margin-top: 10px;
+    color: #43e97b;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.plan-features {
+    padding: 25px;
+}
+
+.feature {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+}
+
+.feature i {
+    color: #43e97b;
+    font-size: 18px;
+}
+
+.badge-expiring {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.badge-expired {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+</style>
+
+<script>
+async function loadSubscriptions() {
+    try {
+        const response = await fetch('/api/admin/subscriptions');
+        if (!response.ok) throw new Error('Failed to load subscriptions');
+        
+        const data = await response.json();
+        renderSubscriptionsTable(data.subscriptions || []);
+    } catch (error) {
+        showAlert('error', 'Lỗi tải danh sách: ' + error.message);
+    }
+}
+
+async function loadPaymentHistory() {
+    try {
+        const response = await fetch('/api/admin/subscription-history');
+        if (!response.ok) throw new Error('Failed to load history');
+        
+        const data = await response.json();
+        renderPaymentHistory(data.history || []);
+    } catch (error) {
+        console.error('Error loading payment history:', error);
+    }
+}
+
+function renderSubscriptionsTable(subscriptions) {
+    const tbody = document.getElementById('subscriptionsTable');
+    
+    if (subscriptions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Chưa có Manager nào</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = subscriptions.map(sub => {
+        const endDate = new Date(sub.end_date);
+        const now = new Date();
+        const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+        
+        let statusBadge = '';
+        if (sub.status === 'expired') {
+            statusBadge = '<span class="badge badge-expired">Hết hạn</span>';
+        } else if (daysLeft <= 7) {
+            statusBadge = `<span class="badge badge-expiring">Còn ${daysLeft} ngày</span>`;
+        } else {
+            statusBadge = `<span class="badge bg-success">Hoạt động (${daysLeft} ngày)</span>`;
+        }
+        
+        const planNames = {
+            trial: 'Trial',
+            monthly: 'Monthly',
+            quarterly: 'Quarterly',
+            yearly: 'Yearly'
+        };
+        
+        return `
+            <tr>
+                <td><strong>${sub.user_name}</strong></td>
+                <td>${sub.user_email}</td>
+                <td><span class="badge bg-primary">${planNames[sub.subscription_type] || sub.subscription_type}</span></td>
+                <td>${new Date(sub.start_date).toLocaleDateString('vi-VN')}</td>
+                <td>${endDate.toLocaleDateString('vi-VN')}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-success" onclick="openExtendModal(${sub.user_id}, '${sub.user_name}')">
+                        <i class="fas fa-plus"></i> Gia hạn
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderPaymentHistory(history) {
+    const tbody = document.getElementById('paymentHistoryTable');
+    
+    if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Chưa có lịch sử thanh toán</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = history.slice(0, 10).map(payment => {
+        const planNames = {
+            trial: 'Trial',
+            monthly: 'Monthly',
+            quarterly: 'Quarterly',
+            yearly: 'Yearly'
+        };
+        
+        return `
+            <tr>
+                <td>${new Date(payment.payment_date).toLocaleDateString('vi-VN')}</td>
+                <td>${payment.user_name}</td>
+                <td>${planNames[payment.subscription_type] || payment.subscription_type}</td>
+                <td><strong>${payment.amount.toLocaleString('vi-VN')}đ</strong></td>
+                <td>${payment.payment_method || 'N/A'}</td>
+                <td><span class="badge bg-success">${payment.status}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function openExtendModal(userId, userName) {
+    document.getElementById('extendUserId').value = userId;
+    document.getElementById('extendUserName').value = userName;
+    new bootstrap.Modal(document.getElementById('extendModal')).show();
+}
+
+async function processExtension() {
+    const userId = document.getElementById('extendUserId').value;
+    const plan = document.getElementById('extendPlan').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const transactionId = document.getElementById('transactionId').value;
+    
+    try {
+        const response = await fetch('/api/admin/extend-subscription', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: parseInt(userId),
+                subscription_type: plan,
+                payment_method: paymentMethod,
+                transaction_id: transactionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', '✅ Gia hạn thành công!');
+            bootstrap.Modal.getInstance(document.getElementById('extendModal')).hide();
+            loadSubscriptions();
+            loadPaymentHistory();
+        } else {
+            showAlert('error', data.message || 'Lỗi gia hạn');
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+async function checkExpiredSubscriptions() {
+    if (!confirm('Bạn có chắc muốn kiểm tra và hạ cấp các Manager hết hạn?')) return;
+    
+    try {
+        const response = await fetch('/api/admin/check-expired-subscriptions', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', `✅ Đã hạ cấp ${data.demoted_count} Manager hết hạn!`);
+            loadSubscriptions();
+        } else {
+            showAlert('error', data.message || 'Lỗi kiểm tra');
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.minWidth = '300px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadSubscriptions();
+    loadPaymentHistory();
+});
+</script>
+{% endblock %}

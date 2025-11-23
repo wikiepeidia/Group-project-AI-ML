@@ -1,237 +1,254 @@
 {% extends "base.html" %}
 
-{% block title %}Workflows - Workflow Automation for Retail{% endblock %}
-
-{% block body_class %}workspace-page{% endblock %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
-{% endblock %}
+{% block title %}Workspace - Không gian sáng tạo{% endblock %}
 
 {% block content %}
-<div class="workspace-container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-title">Retail Automation</div>
-            <div class="sidebar-subtitle">Workflow Hub</div>
-            <div class="user-menu">
-                <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme">
-                    <i class="fas fa-moon"></i>
-                </button>
-                {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
-                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </a>
-            </div>
-            <div class="search-box">
-                <input type="text" class="search-input" placeholder="Search workflows..." id="searchInput">
-                <i class="fas fa-search search-icon"></i>
-            </div>
-        </div>
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
 
-        <div class="folders-section">
-            <div class="folder-header">
-                <span>WORKSPACES</span>
-                <button class="add-folder-btn" onclick="openModal('createWorkspaceModal')" title="Create New Workflow">
-                    <i class="fas fa-plus"></i>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-paint-brush"></i> Workspace - Không gian sáng tạo</h1>
+                <button class="btn btn-primary" onclick="openCreateProjectModal()">
+                    <i class="fas fa-plus"></i> Tạo dự án mới
                 </button>
             </div>
 
-            <div class="folder-item active" onclick="selectWorkspace('personal')">
-                <div class="folder-icon">
-                    <i class="fas fa-robot" style="color: #667eea;"></i>
+            <div class="alert alert-success">
+                <h5><i class="fas fa-rocket"></i> Chào mừng đến Workspace!</h5>
+                <p class="mb-0">Đây là không gian tự do để bạn sáng tạo bot, AI agent, workflow mà <strong>không cần gợi ý hay template có sẵn</strong>. Hãy thỏa sức sáng tạo theo ý tưởng của riêng bạn!</p>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="card border-primary h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">AI Agent Builder</h5>
+                            <p class="card-text">Tạo AI agent tùy chỉnh với khả năng xử lý ngôn ngữ tự nhiên</p>
+                            <button class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">
+                                <i class="fas fa-plus"></i> Tạo Agent
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="folder-name">My Automations</div>
-                <div class="folder-count" id="personalCount">0</div>
-            </div>
-
-            <div class="folder-item" onclick="selectWorkspace('team')">
-                <div class="folder-icon">
-                    <i class="fas fa-store" style="color: #28a745;"></i>
+                <div class="col-md-4">
+                    <div class="card border-success h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-project-diagram fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Workflow Designer</h5>
+                            <p class="card-text">Thiết kế luồng làm việc tự động với giao diện kéo thả</p>
+                            <button class="btn btn-success" onclick="alert('Chức năng đang phát triển')">
+                                <i class="fas fa-plus"></i> Tạo Workflow
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="folder-name">Retail Workflows</div>
-                <div class="folder-count" id="teamCount">0</div>
-            </div>
-
-            <div class="folder-item" onclick="selectWorkspace('archived')">
-                <div class="folder-icon">
-                    <i class="fas fa-archive" style="color: #6c757d;"></i>
-                </div>
-                <div class="folder-name">Archived</div>
-                <div class="folder-count" id="archivedCount">0</div>
-            </div>
-
-            <div class="folder-header" style="margin-top: 24px;">
-                <span>QUICK ACCESS</span>
-            </div>
-
-            <div class="folder-item" onclick="window.location.href='{{ url_for('scenarios') }}'">
-                <div class="folder-icon">
-                    <i class="fas fa-sitemap" style="color: #8B5CF6;"></i>
-                </div>
-                <div class="folder-name">Scenarios</div>
-            </div>
-
-            <div class="folder-item" onclick="window.location.href='{{ url_for('workspace_builder') }}'">
-                <div class="folder-icon">
-                    <i class="fas fa-project-diagram" style="color: #FF6B6B;"></i>
-                </div>
-                <div class="folder-name">Visual Builder</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="top-bar">
-            <div class="page-title-wrapper">
-                <div class="page-title">My Automations</div>
-                <div class="page-subtitle">Streamline your retail operations with AI</div>
-            </div>
-            <div class="top-actions">
-                <button class="btn btn-secondary" onclick="openModal('createWorkspaceModal')">
-                    <i class="fas fa-folder-plus"></i>
-                    New Workspace
-                </button>
-                <a href="{{ url_for('workspace_builder') }}" class="btn btn-primary"
-                    style="text-decoration: none; color: white;">
-                    <i class="fas fa-magic"></i>
-                    Workflow Builder
-                </a>
-                <button class="btn btn-primary" onclick="openModal('createItemModal')">
-                    <i class="fas fa-plus"></i>
-                    New Automation
-                </button>
-            </div>
-        </div>
-
-        <div class="content-area">
-            <div class="content-header">
-                <div class="content-title">All Workflows</div>
-                <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="filterItems('all')">All</button>
-                    <button class="filter-tab" onclick="filterItems('workflow')">Workflows</button>
-                    <button class="filter-tab" onclick="filterItems('automation')">Automations</button>
-                    <button class="filter-tab" onclick="filterItems('integration')">Integrations</button>
+                <div class="col-md-4">
+                    <div class="card border-info h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-code fa-3x text-info mb-3"></i>
+                            <h5 class="card-title">Custom Script</h5>
+                            <p class="card-text">Viết script Python/JavaScript tùy chỉnh cho nhu cầu riêng</p>
+                            <button class="btn btn-info" onclick="alert('Chức năng đang phát triển')">
+                                <i class="fas fa-plus"></i> Viết Script
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="items-grid" id="itemsGrid">
-                <!-- Items will be loaded here -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-folder-open"></i> Dự án của bạn</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" onclick="viewMode('grid')">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="viewMode('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="projectsGrid">
+                        <!-- Projects will be loaded here -->
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">Chưa có dự án nào</h5>
+                            <p class="text-muted">Bắt đầu tạo dự án đầu tiên của bạn!</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="empty-state" id="emptyState" style="display: none;">
-                <div class="empty-icon">
-                    <i class="fas fa-robot"></i>
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Ý tưởng sáng tạo</h5>
                 </div>
-                <div class="empty-title">No automations yet</div>
-                <div class="empty-description">
-                    Create your first retail automation workflow to streamline inventory, orders, and customer
-                    management.
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-comments"></i> Chatbot hỗ trợ khách hàng</h6>
+                                    <p class="card-text small">Tạo chatbot tự động trả lời câu hỏi khách hàng 24/7</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-chart-line"></i> Dashboard phân tích dữ liệu</h6>
+                                    <p class="card-text small">Xây dựng dashboard theo dõi KPI và số liệu kinh doanh</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-envelope"></i> Email Marketing Automation</h6>
+                                    <p class="card-text small">Tự động gửi email marketing theo kịch bản</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-database"></i> Data Pipeline</h6>
+                                    <p class="card-text small">Xây dựng pipeline xử lý và đồng bộ dữ liệu</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('createItemModal')">
-                    <i class="fas fa-plus"></i>
-                    Create Your First Automation
-                </button>
             </div>
-        </div>
+        </main>
     </div>
 </div>
 
-<!-- Create Item Modal -->
-<div class="modal" id="createItemModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title" id="modalTitle">Create New Automation</div>
-            <button class="close-btn" onclick="closeModal('createItemModal')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <form id="itemForm" onsubmit="saveItem(); return false;">
-            <div class="form-group">
-                <label class="form-label">Workflow Name</label>
-                <input type="text" class="form-input" id="itemTitle" name="title"
-                    placeholder="e.g., Inventory Sync Automation" required>
+<!-- Modal: Create Project -->
+<div class="modal fade" id="createProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tạo Dự án mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-textarea" id="itemDescription" name="description" rows="4"
-                    placeholder="Describe what this automation does..."></textarea>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên dự án <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="projectName" placeholder="VD: Chatbot hỗ trợ khách hàng">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Loại dự án</label>
+                    <select class="form-select" id="projectType">
+                        <option value="ai_agent">AI Agent</option>
+                        <option value="workflow">Workflow</option>
+                        <option value="script">Custom Script</option>
+                        <option value="dashboard">Dashboard</option>
+                        <option value="other">Khác</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea class="form-control" id="projectDescription" rows="4" placeholder="Mô tả chi tiết về dự án của bạn..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tags</label>
+                    <input type="text" class="form-control" id="projectTags" placeholder="VD: chatbot, automation, AI">
+                    <small class="text-muted">Phân cách bằng dấu phẩy</small>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Type</label>
-                <select class="form-select" id="itemType" name="type" required>
-                    <option value="workflow">Workflow</option>
-                    <option value="automation">Automation</option>
-                    <option value="integration">Integration</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Priority</label>
-                <select class="form-select" id="itemPriority" name="priority" required>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select class="form-select" id="itemStatus" name="status" required>
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Active</option>
-                </select>
-            </div>
-
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('createItemModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Automation</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">Tạo dự án</button>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- Create Workspace Modal -->
-<div class="modal" id="createWorkspaceModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title">Create New Workspace</div>
-            <button class="close-btn" onclick="closeModal('createWorkspaceModal')">
-                <i class="fas fa-times"></i>
-            </button>
         </div>
-
-        <form id="workspaceForm" onsubmit="saveWorkspace(); return false;">
-            <div class="form-group">
-                <label class="form-label">Workspace Name</label>
-                <input type="text" class="form-input" id="workspaceName" name="name" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-textarea" id="workspaceDescription" name="description" rows="3"></textarea>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"
-                    onclick="closeModal('createWorkspaceModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Workspace</button>
-            </div>
-        </form>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<style>
+.main-content {
+    margin-left: 280px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.card h6 {
+    font-weight: 600;
+    color: #333;
+}
+
+.alert {
+    border-radius: 12px;
+    border: none;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+}
+
+.border-primary {
+    border: 2px solid #667eea !important;
+}
+
+.border-success {
+    border: 2px solid #43e97b !important;
+}
+
+.border-info {
+    border: 2px solid #4facfe !important;
+}
+
+.border-warning {
+    border: 2px solid #feca57 !important;
+}
+</style>
+
 <script>
+function openCreateProjectModal() {
+    new bootstrap.Modal(document.getElementById('createProjectModal')).show();
+}
 
+function viewMode(mode) {
+    // Toggle view mode between grid and list
+    console.log('View mode:', mode);
+}
 </script>
 {% endblock %}

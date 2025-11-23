@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Fun Work Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="dashboard-header">
+                <div class="header-title">
+                    <h1><i class="fas fa-crown"></i> Admin Dashboard</h1>
+                    <p>Chào mừng đến với bảng điều khiển quản trị hệ thống</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-danger">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalUsers">0</div>
+                            <div class="stat-label">Tổng người dùng</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalManagers">0</div>
+                            <div class="stat-label">Managers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalProducts">0</div>
+                            <div class="stat-label">Sản phẩm</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-success">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalCustomers">0</div>
+                            <div class="stat-label">Khách hàng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title">
+                        <i class="fas fa-bolt"></i> Thao tác nhanh
+                    </h3>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('admin_analytics') }}" class="action-card">
+                        <div class="action-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Thống kê & Báo cáo</h4>
+                            <p>Xem doanh thu, lượng truy cập, lợi nhuận</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('admin_roles') }}" class="action-card">
+                        <div class="action-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Quản lý Vai trò</h4>
+                            <p>Nâng cấp/Hạ cấp tài khoản User ↔ Manager</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('admin_managers') }}" class="action-card">
+                        <div class="action-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Quản lý Manager</h4>
+                            <p>Tạo và quản lý tài khoản Manager</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('manager_permissions') }}" class="action-card">
+                        <div class="action-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Cấp quyền User</h4>
+                            <p>Phân quyền cho người dùng trong hệ thống</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title">
+                        <i class="fas fa-history"></i> Hoạt động gần đây
+                    </h3>
+                </div>
+                <div class="col-12">
+                    <div class="activity-card">
+                        <div class="activity-list" id="recentActivities">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h4><i class="fas fa-info-circle"></i> Thông tin hệ thống</h4>
+                        <div class="info-item">
+                            <span class="info-label">Phiên bản:</span>
+                            <span class="info-value">v1.0.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database:</span>
+                            <span class="info-value">SQLite</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Uptime:</span>
+                            <span class="info-value" id="systemUptime">--</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h4><i class="fas fa-shield-alt"></i> Bảo mật</h4>
+                        <div class="info-item">
+                            <span class="info-label">Xác thực:</span>
+                            <span class="info-value"><i class="fas fa-check-circle text-success"></i> Đã bật</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">HTTPS:</span>
+                            <span class="info-value"><i class="fas fa-times-circle text-warning"></i> Chưa bật</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Sao lưu tự động:</span>
+                            <span class="info-value"><i class="fas fa-check-circle text-success"></i> Hàng ngày</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+.main-content {
+    margin-left: 280px;
+    padding: 30px;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    margin-bottom: 30px;
+}
+
+.header-title h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 5px;
+}
+
+.header-title p {
+    color: #666;
+    font-size: 16px;
+}
+
+.stat-card {
+    border-radius: 15px;
+    padding: 25px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-icon {
+    font-size: 48px;
+    opacity: 0.9;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 20px;
+}
+
+.action-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
+}
+
+.action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-content h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 5px;
+}
+
+.action-content p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.action-arrow {
+    font-size: 20px;
+    color: #667eea;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.activity-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 3px;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: #999;
+}
+
+.info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.info-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.info-value {
+    color: #1a1a2e;
+}
+</style>
+
+<script>
+let startTime = new Date();
+
+async function loadDashboardData() {
+    try {
+        // Load users stats
+        const usersResponse = await fetch('/api/admin/users');
+        if (usersResponse.ok) {
+            const usersData = await usersResponse.json();
+            const users = usersData.users || [];
+            
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('totalManagers').textContent = 
+                users.filter(u => u.role === 'manager').length;
+        }
+        
+        // Load products stats
+        const productsResponse = await fetch('/api/products');
+        if (productsResponse.ok) {
+            const productsData = await productsResponse.json();
+            document.getElementById('totalProducts').textContent = 
+                (productsData.products || []).length;
+        }
+        
+        // Load customers stats
+        const customersResponse = await fetch('/api/customers');
+        if (customersResponse.ok) {
+            const customersData = await customersResponse.json();
+            document.getElementById('totalCustomers').textContent = 
+                (customersData.customers || []).length;
+        }
+        
+        // Load recent activities
+        loadRecentActivities();
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function loadRecentActivities() {
+    const activities = [
+        {
+            icon: 'fas fa-user-plus',
+            title: 'User mới đã đăng ký',
+            time: '5 phút trước'
+        },
+        {
+            icon: 'fas fa-shopping-cart',
+            title: 'Đơn hàng mới được tạo',
+            time: '15 phút trước'
+        },
+        {
+            icon: 'fas fa-box',
+            title: 'Sản phẩm mới được thêm',
+            time: '30 phút trước'
+        },
+        {
+            icon: 'fas fa-user-shield',
+            title: 'Quyền user được cập nhật',
+            time: '1 giờ trước'
+        }
+    ];
+    
+    const activitiesHTML = activities.map(activity => `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="${activity.icon}"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-time">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('recentActivities').innerHTML = activitiesHTML;
+}
+
+function updateUptime() {
+    const now = new Date();
+    const diff = Math.floor((now - startTime) / 1000);
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    const seconds = diff % 60;
+    
+    document.getElementById('systemUptime').textContent = 
+        `${hours}h ${minutes}m ${seconds}s`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardData();
+    setInterval(updateUptime, 1000);
+});
+</script>
+{% endblock %}

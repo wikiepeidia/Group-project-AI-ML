@@ -85,3 +85,29 @@ class AuthManager:
                 return redirect(url_for('auth.signin'))
             return f(*args, **kwargs)
         return decorated_function
+    
+    @staticmethod
+    def permission_required(permission_type):
+        """Decorator to check if user has specific permission"""
+        def decorator(f):
+            @wraps(f)
+            def decorated_function(*args, **kwargs):
+                from flask import jsonify, current_app
+                from flask_login import current_user
+                
+                if not current_user.is_authenticated:
+                    return jsonify({'success': False, 'message': 'Unauthorized - please login'}), 401
+                
+                # Admin và Manager có tất cả quyền
+                if hasattr(current_user, 'role') and current_user.role in ['admin', 'manager']:
+                    return f(*args, **kwargs)
+                
+                # Kiểm tra permission trong database
+                db = current_app.extensions.get('database')
+                if db and db.has_permission(current_user.id, permission_type):
+                    return f(*args, **kwargs)
+                
+                return jsonify({'success': False, 'message': f'Permission denied: {permission_type} required'}), 403
+            
+            return decorated_function
+        return decorator

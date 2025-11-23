@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Xuất hàng{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-arrow-up"></i> Quản lý Xuất hàng</h1>
+                <button class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">
+                    <i class="fas fa-plus"></i> Tạo phiếu xuất
+                </button>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">Tổng phiếu xuất</h5>
+                            <h2 id="totalExports">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Hoàn thành</h5>
+                            <h2 id="completedExports">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h5 class="card-title">Doanh thu</h5>
+                            <h2 id="totalRevenue">0đ</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Danh sách phiếu xuất</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mã phiếu</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày xuất</th>
+                                    <th>Ghi chú</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exportsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="spinner-border" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+.main-content {
+    margin-left: 260px;
+}
+.card h2 {
+    margin: 0;
+    font-size: 2rem;
+}
+</style>
+
+<script>
+let exportsData = [];
+
+async function loadExports() {
+    try {
+        const response = await fetch('/api/exports');
+        const data = await response.json();
+        
+        if (data.success) {
+            exportsData = data.exports;
+            renderExportsTable();
+            updateStats();
+        } else {
+            showAlert('error', 'Lỗi tải dữ liệu');
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+function renderExportsTable() {
+    const tbody = document.getElementById('exportsTableBody');
+    
+    if (exportsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Chưa có phiếu xuất nào</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = exportsData.map(exp => `
+        <tr>
+            <td><strong>${exp.code}</strong></td>
+            <td>${exp.customer_name || 'Khách lẻ'}</td>
+            <td class="text-end"><strong>${Number(exp.total_amount).toLocaleString('vi-VN')}đ</strong></td>
+            <td><span class="badge bg-${exp.status === 'completed' ? 'success' : 'warning'}">${exp.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</span></td>
+            <td>${new Date(exp.created_at).toLocaleDateString('vi-VN')}</td>
+            <td>${exp.notes || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="alert('Xem chi tiết: ' + '${exp.code}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateStats() {
+    document.getElementById('totalExports').textContent = exportsData.length;
+    const completed = exportsData.filter(e => e.status === 'completed').length;
+    document.getElementById('completedExports').textContent = completed;
+    
+    const total = exportsData.reduce((sum, e) => sum + Number(e.total_amount), 0);
+    document.getElementById('totalRevenue').textContent = total.toLocaleString('vi-VN') + 'đ';
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('main').insertBefore(alertDiv, document.querySelector('main').firstChild);
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+document.addEventListener('DOMContentLoaded', loadExports);
+</script>
+{% endblock %}
