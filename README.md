@@ -1,4 +1,5 @@
-# AI Agent Management System
+# RPaas on Retail
+
 [![GitHub repo size](https://img.shields.io/github/repo-size/wikiepeidia/Group-project-AI-ML)](https://github.com/wikiepeidia/Group-project-AI-ML)
 [![GitHub last commit](https://img.shields.io/github/last-commit/wikiepeidia/Group-project-AI-ML)](https://github.com/wikiepeidia/Group-project-AI-ML/commits)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,17 +18,17 @@ User
 
 ### Vai trò trong hệ thống
 
-- **Chủ Web (Admin)**: 
+- **Chủ Web (Admin)**:
   - Quản lý cao nhất
   - Thêm/xóa Manager
   - Có toàn bộ quyền trong hệ thống
 
-- **Manager**: 
+- **Manager**:
   - Được Chủ Web giao quyền
   - Cấp/thu hồi quyền cho User
   - Quản lý tài nguyên, báo cáo
 
-- **User**: 
+- **User**:
   - Sử dụng hệ thống sau khi được cấp quyền
   - Truy cập các module: KH, SP, Nhập hàng, Xuất hàng
   - Sử dụng SE (tự động hóa) và Workspace
@@ -49,28 +50,34 @@ Admin → Manager          KH/SP/Nhập/Xuất              SE + Workspace sáng
 ### 1. Menu hệ thống (Sidebar Navigation)
 
 #### A. Chủ Web (Admin)
+
 - **Quản lý Manager**: Thêm/xóa Manager
 - **Thống kê hệ thống**: Tổng quan users, workspaces, tasks
 
 #### B. Manager  
+
 - **Cấp quyền User**: Grant/Revoke permissions cho User
 
 #### C. Menu chính (Dành cho User có quyền)
+
 - **Khách hàng (KH)**: Quản lý thông tin khách hàng (code, tên, SĐT, email, địa chỉ)
 - **Sản phẩm (SP)**: Quản lý sản phẩm (code, tên, danh mục, đơn vị, giá, tồn kho)
 - **Nhập hàng**: Tạo phiếu nhập hàng từ nhà cung cấp
 - **Xuất hàng**: Tạo phiếu xuất hàng cho khách hàng
 
 #### D. SE - Tự động hóa (Scenarios & Events)
+
 - **Tự động nhập hàng**: Cấu hình automation nhập hàng tự động theo điều kiện
 - **Báo cáo thu chi**: Gửi báo cáo định kỳ (ngày/tuần/tháng) về doanh thu, chi phí
 
 #### E. Workspace
+
 - **Không gian sáng tạo**: User tự do tạo bot, AI agent không cần gợi ý template
 
 ### 2. Phân quyền chi tiết
 
 Manager có thể duyệt và cấp quyền cho User truy cập vào các chức năng cụ thể:
+
 - **export**: Xuất dữ liệu
 - **import**: Nhập dữ liệu  
 - **view_reports**: Xem báo cáo
@@ -79,6 +86,7 @@ Manager có thể duyệt và cấp quyền cho User truy cập vào các chức
 - **delete_items**: Xóa items
 
 Manager truy cập giao diện quản lý quyền tại `/manager/permissions` để:
+
 - Xem danh sách user và quyền hiện tại
 - Cấp quyền mới cho user (Grant)
 - Thu hồi quyền đã cấp (Revoke)
@@ -179,9 +187,9 @@ Sau khi chạy `create_database.py`, hệ thống tạo sẵn 3 tài khoản dem
 
 | Email | Password | Role | Chức năng |
 |-------|----------|------|-----------|
-| admin@fun.com | admin123 | admin | Chủ Web - Quản lý Manager, full quyền |
-| manager@fun.com | manager123 | manager | Cấp quyền cho User |
-| user@fun.com | user123 | user | User thông thường, cần được cấp quyền |
+| <admin@fun.com> | admin123 | admin | Chủ Web - Quản lý Manager, full quyền |
+| <manager@fun.com> | manager123 | manager | Cấp quyền cho User |
+| <user@fun.com> | user123 | user | User thông thường, cần được cấp quyền |
 
 ## Sử dụng hệ thống
 
