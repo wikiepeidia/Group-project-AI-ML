@@ -1,32 +1,47 @@
 /* Workspace CSS - Main dashboard styles */
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-gradient: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   --accent-gradient: linear-gradient(45deg, #8B5CF6, #06B6D4);
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-sidebar: #ffffff;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --border-color: #e9ecef;
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+  --bg-primary: var(--surface-100, #ffffff);
+  --bg-secondary: var(--surface-200, #f8f9fa);
+  --bg-sidebar: var(--surface-100, #ffffff);
+  --text-primary: var(--gray-900, #212529);
+  --text-secondary: var(--gray-600, #6c757d);
+  --border-color: var(--border-soft, #e9ecef);
+  --shadow-sm: var(--shadow-md, 0 2px 10px rgba(0, 0, 0, 0.05));
+  --shadow-md: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.1));
+  --shadow-lg: var(--shadow-xl, 0 8px 25px rgba(0, 0, 0, 0.15));
   --card-hover-transform: translateY(-2px);
+  --workspace-muted: var(--gray-500, #94a3b8);
+  --workspace-input-bg: var(--input-bg, #ffffff);
+  --workspace-input-border: var(--input-border, #e2e8f0);
+  --workspace-input-text: var(--input-text, #0f172a);
+  --workspace-chip-bg: rgba(99, 102, 241, 0.12);
+  --workspace-chip-text: var(--primary, #5b21b6);
+  --workspace-count-bg: var(--surface-200, #f1f5f9);
 }
 
-[data-theme="dark"] {
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+html[data-theme='dark'],
+body.dark-mode {
+  --primary-gradient: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   --accent-gradient: linear-gradient(45deg, #8B5CF6, #06B6D4);
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #0f0f0f;
-  --bg-sidebar: #2d2d2d;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --border-color: #404040;
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.5);
+  --bg-primary: var(--surface-100, #0f172a);
+  --bg-secondary: var(--surface-200, #050816);
+  --bg-sidebar: var(--surface-100, #0f172a);
+  --text-primary: var(--gray-100, #f8fafc);
+  --text-secondary: var(--gray-400, #a0a0a0);
+  --border-color: var(--border-soft, rgba(148, 163, 184, 0.18));
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 45px rgba(0, 0, 0, 0.55);
+  --workspace-muted: var(--gray-500, #94a3b8);
+  --workspace-input-bg: rgba(15, 23, 42, 0.85);
+  --workspace-input-border: rgba(148, 163, 184, 0.35);
+  --workspace-input-text: #f8fafc;
+  --workspace-chip-bg: rgba(99, 102, 241, 0.22);
+  --workspace-chip-text: rgba(219, 234, 254, 0.95);
+  --workspace-count-bg: rgba(15, 23, 42, 0.7);
 }
 
 * {
@@ -96,27 +111,6 @@ body.workspace-page {
   margin-top: 8px;
 }
 
-.theme-toggle {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: rotate(180deg) scale(1.1);
-}
 
 .user-avatar {
   width: 36px;
@@ -166,24 +160,24 @@ body.workspace-page {
 .search-input {
   width: 100%;
   padding: 11px 42px 11px 14px;
-  border: none;
+  border: 1px solid var(--workspace-input-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.18);
-  color: white;
+  background: var(--workspace-input-bg);
+  color: var(--workspace-input-text);
   font-size: 13px;
-  backdrop-filter: blur(10px);
   box-sizing: border-box;
   font-weight: 400;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text-secondary);
 }
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.28);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
 }
 
 .search-icon {
@@ -191,7 +185,7 @@ body.workspace-page {
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -309,7 +303,7 @@ body.workspace-page {
 }
 
 .folder-item:not(.active) .folder-count {
-  background: var(--bg-secondary);
+  background: var(--workspace-count-bg);
   color: var(--text-secondary);
 }
 
@@ -565,7 +559,7 @@ body.workspace-page {
 }
 
 .item-count {
-  background: var(--bg-secondary);
+  background: var(--workspace-count-bg);
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 600;
@@ -576,6 +570,10 @@ body.workspace-page {
   text-align: center;
   padding: 60px 20px;
   color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px dashed var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
 }
 
 .empty-icon {
@@ -594,6 +592,7 @@ body.workspace-page {
 .empty-description {
   font-size: 14px;
   margin-bottom: 24px;
+  color: var(--text-secondary);
 }
 
 .empty-action {

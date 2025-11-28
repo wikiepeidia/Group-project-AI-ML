@@ -2,13 +2,24 @@
 
 {% block title %}SE - Tự động nhập hàng{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin_auto_import.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='admin_auto_import.js') }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         {% include 'components/sidebar.html' %}
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-sync-alt"></i> SE - Tự động nhập hàng</h1>
                 <button class="btn btn-primary" onclick="openAddAutomationModal()">
                     <i class="fas fa-plus"></i> Tạo automation
@@ -16,7 +27,8 @@
             </div>
 
             <div class="alert alert-info">
-                <i class="fas fa-magic"></i> <strong>Tính năng:</strong> Thiết lập các kịch bản tự động nhập hàng khi sản phẩm dưới ngưỡng tồn kho hoặc theo lịch định kỳ.
+                <i class="fas fa-magic"></i> <strong>Tính năng:</strong> Thiết lập các kịch bản tự động nhập hàng khi
+                sản phẩm dưới ngưỡng tồn kho hoặc theo lịch định kỳ.
             </div>
 
             <div class="row mb-3">
@@ -82,9 +94,12 @@
                         <div class="col-md-6 mb-3">
                             <div class="card border-info">
                                 <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-warehouse"></i> Tự động nhập khi hết hàng</h6>
-                                    <p class="card-text">Tự động tạo phiếu nhập khi tồn kho sản phẩm dưới ngưỡng cảnh báo.</p>
-                                    <button class="btn btn-sm btn-info" onclick="alert('Template: Auto Import on Low Stock')">
+                                    <h6 class="card-title"><i class="fas fa-warehouse"></i> Tự động nhập khi hết hàng
+                                    </h6>
+                                    <p class="card-text">Tự động tạo phiếu nhập khi tồn kho sản phẩm dưới ngưỡng cảnh
+                                        báo.</p>
+                                    <button class="btn btn-sm btn-info"
+                                        onclick="alert('Template: Auto Import on Low Stock')">
                                         <i class="fas fa-plus"></i> Sử dụng template
                                     </button>
                                 </div>
@@ -94,8 +109,10 @@
                             <div class="card border-success">
                                 <div class="card-body">
                                     <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Nhập hàng định kỳ</h6>
-                                    <p class="card-text">Tự động nhập hàng theo lịch: hàng ngày, hàng tuần, hàng tháng.</p>
-                                    <button class="btn btn-sm btn-success" onclick="alert('Template: Scheduled Import')">
+                                    <p class="card-text">Tự động nhập hàng theo lịch: hàng ngày, hàng tuần, hàng tháng.
+                                    </p>
+                                    <button class="btn btn-sm btn-success"
+                                        onclick="alert('Template: Scheduled Import')">
                                         <i class="fas fa-plus"></i> Sử dụng template
                                     </button>
                                 </div>
@@ -119,7 +136,8 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Tên automation <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="automationName" placeholder="VD: Tự động nhập hàng khi hết tồn">
+                    <input type="text" class="form-control" id="automationName"
+                        placeholder="VD: Tự động nhập hàng khi hết tồn">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Loại automation</label>
@@ -131,7 +149,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Cấu hình (JSON)</label>
-                    <textarea class="form-control" id="automationConfig" rows="5" placeholder='{"threshold": 10, "quantity": 100}'></textarea>
+                    <textarea class="form-control" id="automationConfig" rows="5"
+                        placeholder='{"threshold": 10, "quantity": 100}'></textarea>
                     <small class="text-muted">Cấu hình theo format JSON</small>
                 </div>
             </div>
@@ -143,24 +162,4 @@
     </div>
 </div>
 
-<style>
-.main-content {
-    margin-left: 260px;
-}
-.card h2 {
-    margin: 0;
-    font-size: 2rem;
-}
-</style>
-
-<script>
-function openAddAutomationModal() {
-    new bootstrap.Modal(document.getElementById('automationModal')).show();
-}
-
-// Initialize stats
-document.getElementById('activeAutomations').textContent = '0';
-document.getElementById('completedRuns').textContent = '0';
-document.getElementById('lastRun').textContent = 'Chưa có';
-</script>
 {% endblock %}

@@ -1,0 +1,56 @@
+/* Admin Managers page specific styles */
+.main-content {
+    margin-left: 280px;
+    padding: 30px;
+    background: var(--surface-200);
+    min-height: 100vh;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.page-title i {
+    color: #f6c343;
+    font-size: 24px;
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.table thead th {
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--gray-500);
+}
+
+.table tbody td {
+    vertical-align: middle;
+    color: var(--gray-800);
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+    color: #1f1f1f;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.alert-info {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.table-responsive {
+    overflow-x: auto;
+}

@@ -1,0 +1,9 @@
+/* SE auto import page tweaks */
+.main-content {
+    margin-left: 260px;
+}
+
+.card h2 {
+    margin: 0;
+    font-size: 2rem;
+}

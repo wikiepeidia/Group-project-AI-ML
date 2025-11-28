@@ -1,13 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from core.database import Database
-from core.auth import AuthManager
-from core.config import Config
-from core.utils import Utils
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from core.database import Database
+from core.auth import AuthManager
+from core.config import Config
+from core.utils import Utils
 import os
 import json
 import sqlite3
@@ -16,24 +16,12 @@ import sqlite3
 
 # Update template folder to use ui/templates
 app = Flask(__name__, template_folder='ui/templates')
-app.config['SECRET_KEY'] = os.environ.get(
-    'SECRET_KEY',
-    'change_me_to_a_secure_random_value'
-)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_me_to_a_secure_random_value')
 app.config['WTF_CSRF_ENABLED'] = True
+app.secret_key = app.config['SECRET_KEY']
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["100 per day", "25 per hour"]
-)
-
-Talisman(
-    app,
-    force_https=False,
-    content_security_policy=None
-)
-
+limiter = Limiter(get_remote_address, app=app, default_limits=["100 per day", "25 per hour"])
+Talisman(app, force_https=False, content_security_policy=None)
 csrf = CSRFProtect(app)
 
 # Store database manager in app extensions for decorator access
@@ -59,18 +47,18 @@ app.extensions['database'] = db_manager
 
 @app.context_processor
 def inject_csrf_token():
-    """Expose csrf_token() helper inside templates."""
+    """Expose csrf_token helper in all templates."""
     return dict(csrf_token=lambda: generate_csrf())
 
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(error):
-    """Provide user-friendly errors for CSRF validation failures."""
+    """Provide graceful feedback when CSRF validation fails."""
     if request.path.startswith('/api/'):
         return jsonify({'success': False, 'message': 'CSRF token missing or invalid'}), 400
     flash('Security check failed. Please refresh the page and try again.', 'error')
     referer = request.referrer or url_for('auth.signin')
-    return redirect(referer), 400
+    return redirect(referer)
 
 class User(UserMixin):
     def __init__(self, id, email, first_name, last_name, role='user'):
@@ -94,11 +82,7 @@ from flask import Blueprint
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/signin', methods=['GET', 'POST'])
-@limiter.limit(
-    "5 per minute",
-    methods=['POST'],
-    error_message="Too many login attempts. Please try again later."
-)
+@limiter.limit("5 per minute", methods=['POST'], error_message="Too many login attempts. Please try again later.")
 def signin():
     if request.method == 'POST':
         email = request.form['email']
@@ -123,11 +107,7 @@ def signin():
     return render_template('signin.html')
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
-@limiter.limit(
-    "10 per hour",
-    methods=['POST'],
-    error_message="Too many registrations from this address. Please try again later."
-)
+@limiter.limit("10 per hour", methods=['POST'], error_message="Too many registrations from this address. Please try again later.")
 def signup():
     if request.method == 'POST':
         email = request.form['email']

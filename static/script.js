@@ -1,23 +1,47 @@
 /* Workflow Automation for Retail - Global JavaScript */
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeTheme();
     setupFormHandlers();
     setupDemoAccounts();
     setupNotifications();
 });
 
-/**
- * Theme Preferences (system + manual override)
- */
 function initializeTheme() {
     const html = document.documentElement;
     const toggles = document.querySelectorAll('[data-theme-toggle]');
+    const selectControls = document.querySelectorAll('[data-theme-select]');
+    const optionControls = document.querySelectorAll('[data-theme-option]');
+    const panelToggle = document.querySelector('[data-theme-panel-toggle]');
+    const panel = document.querySelector('[data-theme-panel]');
     const preferenceKey = 'theme-preference';
+    const legacyKey = 'landing-theme';
     const systemPreference = window.matchMedia('(prefers-color-scheme: dark)');
     const preferenceOrder = ['system', 'dark', 'light'];
-    let currentPreference = localStorage.getItem(preferenceKey) || 'system';
+    const themeLabels = {
+        system: 'System theme',
+        dark: 'Dark mode',
+        light: 'Light mode'
+    };
+    const themeIcons = {
+        system: 'fa-desktop',
+        dark: 'fa-moon',
+        light: 'fa-sun'
+    };
+
+    const normalizePreference = (value) => preferenceOrder.includes(value) ? value : 'system';
+
+    if (!localStorage.getItem(preferenceKey)) {
+        const legacyPreference = localStorage.getItem(legacyKey);
+        if (legacyPreference) {
+            const migrated = normalizePreference(legacyPreference);
+            localStorage.setItem(preferenceKey, migrated);
+            localStorage.removeItem(legacyKey);
+        }
+    }
+
+    let currentPreference = normalizePreference(localStorage.getItem(preferenceKey) || 'system');
 
     const getEffectiveTheme = (preference) => {
         if (preference === 'system') {
@@ -28,46 +52,130 @@ function initializeTheme() {
 
     const updateToggleButton = (button, preference, appliedTheme) => {
         const icon = button.querySelector('i');
-        const labelMap = {
-            system: 'System theme',
-            dark: 'Dark mode',
-            light: 'Light mode'
-        };
-        const iconMap = {
-            system: 'fa-desktop',
-            dark: 'fa-moon',
-            light: 'fa-sun'
-        };
-        const normalizedPreference = preferenceOrder.includes(preference) ? preference : 'system';
+        const normalizedPreference = normalizePreference(preference);
         const currentIndex = Math.max(preferenceOrder.indexOf(normalizedPreference), 0);
         const nextPreference = preferenceOrder[(currentIndex + 1) % preferenceOrder.length];
         if (icon) {
-            icon.className = `fas ${iconMap[normalizedPreference]}`;
+            icon.className = `fas ${themeIcons[normalizedPreference]}`;
         }
         button.dataset.themePreference = normalizedPreference;
         button.dataset.themeApplied = appliedTheme;
-        button.setAttribute('aria-label', `${labelMap[normalizedPreference]} (click to switch to ${labelMap[nextPreference]})`);
-        button.title = `${labelMap[normalizedPreference]} • Currently ${appliedTheme}\nClick to switch to ${labelMap[nextPreference]}`;
+        button.setAttribute('aria-label', `${themeLabels[normalizedPreference]} (click to switch to ${themeLabels[nextPreference]})`);
+        button.title = `${themeLabels[normalizedPreference]} • Currently ${appliedTheme}\nClick to switch to ${themeLabels[nextPreference]}`;
+    };
+
+    const syncPreferenceControls = (preference) => {
+        selectControls.forEach((select) => {
+            if (select.value !== preference) {
+                select.value = preference;
+            }
+        });
+
+        optionControls.forEach((button) => {
+            const optionValue = button.dataset.themeOption;
+            if (!optionValue) {
+                return;
+            }
+            const isActive = optionValue === preference;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     };
 
     const applyTheme = (preference) => {
-        const effectiveTheme = getEffectiveTheme(preference);
+        const normalizedPreference = normalizePreference(preference);
+        const effectiveTheme = getEffectiveTheme(normalizedPreference);
         html.setAttribute('data-theme', effectiveTheme);
         html.classList.toggle('theme-dark', effectiveTheme === 'dark');
         document.body.classList.toggle('dark-mode', effectiveTheme === 'dark');
-        toggles.forEach((button) => updateToggleButton(button, preference, effectiveTheme));
+        toggles.forEach((button) => updateToggleButton(button, normalizedPreference, effectiveTheme));
+        syncPreferenceControls(normalizedPreference);
+    };
+
+    const setPreference = (nextPreference) => {
+        const normalizedPreference = normalizePreference(nextPreference);
+        currentPreference = normalizedPreference;
+        localStorage.setItem(preferenceKey, normalizedPreference);
+        applyTheme(normalizedPreference);
     };
 
     const cyclePreference = () => {
         const currentIndex = Math.max(preferenceOrder.indexOf(currentPreference), 0);
         const nextPreference = preferenceOrder[(currentIndex + 1) % preferenceOrder.length];
-        currentPreference = nextPreference;
-        localStorage.setItem(preferenceKey, currentPreference);
-        applyTheme(currentPreference);
+        setPreference(nextPreference);
+    };
+
+    let panelOpen = false;
+    const openPanel = () => {
+        if (!panel) {
+            return;
+        }
+        panel.removeAttribute('hidden');
+        panel.classList.add('is-open');
+        panelToggle?.setAttribute('aria-expanded', 'true');
+        panelOpen = true;
+    };
+
+    const closePanel = () => {
+        if (!panel) {
+            return;
+        }
+        panel.classList.remove('is-open');
+        panel.setAttribute('hidden', '');
+        panelToggle?.setAttribute('aria-expanded', 'false');
+        panelOpen = false;
+    };
+
+    const togglePanel = () => {
+        if (!panel) {
+            return;
+        }
+        if (panelOpen) {
+            closePanel();
+        } else {
+            openPanel();
+        }
     };
 
     toggles.forEach((button) => {
         button.addEventListener('click', cyclePreference);
+    });
+
+    selectControls.forEach((select) => {
+        select.addEventListener('change', (event) => {
+            setPreference(event.target.value);
+        });
+    });
+
+    optionControls.forEach((button) => {
+        button.addEventListener('click', () => {
+            const optionValue = button.dataset.themeOption;
+            if (optionValue) {
+                setPreference(optionValue);
+                closePanel();
+            }
+        });
+    });
+
+    panelToggle?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        togglePanel();
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!panelOpen) {
+            return;
+        }
+        if (panel?.contains(event.target) || panelToggle?.contains(event.target)) {
+            return;
+        }
+        closePanel();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closePanel();
+        }
     });
 
     systemPreference.addEventListener('change', () => {
@@ -76,6 +184,7 @@ function initializeTheme() {
         }
     });
 
+    closePanel();
     applyTheme(currentPreference);
 }
 

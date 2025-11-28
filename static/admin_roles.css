@@ -1,0 +1,91 @@
+/* Admin roles page specific styles */
+.main-content {
+    margin-left: 280px;
+    padding: 30px;
+    background: var(--surface-200);
+    min-height: 100vh;
+}
+
+.stats-card {
+    border-radius: 15px;
+    padding: 25px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+    color: #1f1f1f;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stats-icon {
+    font-size: 48px;
+    opacity: 0.9;
+}
+
+.stats-info {
+    flex: 1;
+}
+
+.stats-number {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    font-size: 14px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nav-tabs .nav-link {
+    color: var(--gray-600);
+    border: none;
+    padding: 10px 20px;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    background: none;
+    font-weight: 700;
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom: 3px solid #764ba2;
+}
+
+.badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn-action {
+    padding: 5px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: scale(1.05);
+}

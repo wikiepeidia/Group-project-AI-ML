@@ -2,20 +2,32 @@
 
 {% block title %}Quản lý Vai trò - Admin{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin_roles.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='admin_roles.js') }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         {% include 'components/sidebar.html' %}
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-user-shield"></i> Quản lý Vai trò Tài khoản</h1>
             </div>
 
             <div class="row mb-3">
                 <div class="col-md-12">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> <strong>Chú ý:</strong> Chỉ Admin mới có thể nâng cấp User lên Manager hoặc hạ cấp Manager xuống User.
+                        <i class="fas fa-info-circle"></i> <strong>Chú ý:</strong> Chỉ Admin mới có thể nâng cấp User
+                        lên Manager hoặc hạ cấp Manager xuống User.
                     </div>
                 </div>
             </div>
@@ -112,256 +124,4 @@
     </div>
 </div>
 
-<style>
-.main-content {
-    margin-left: 260px;
-    padding: 20px;
-}
-
-.stats-card {
-    border-radius: 15px;
-    padding: 25px;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
-}
-
-.stats-card:hover {
-    transform: translateY(-5px);
-}
-
-.bg-gradient-danger {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
-}
-
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.stats-icon {
-    font-size: 48px;
-    opacity: 0.9;
-}
-
-.stats-info {
-    flex: 1;
-}
-
-.stats-number {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.stats-label {
-    font-size: 14px;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.nav-tabs .nav-link {
-    color: #666;
-    border: none;
-    padding: 10px 20px;
-}
-
-.nav-tabs .nav-link.active {
-    color: #667eea;
-    border-bottom: 3px solid #667eea;
-    background: none;
-    font-weight: bold;
-}
-
-.nav-tabs .nav-link:hover {
-    border-bottom: 3px solid #764ba2;
-}
-
-.badge {
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.btn-action {
-    padding: 5px 12px;
-    font-size: 13px;
-    border-radius: 6px;
-    transition: all 0.3s;
-}
-
-.btn-action:hover {
-    transform: scale(1.05);
-}
-</style>
-
-<script>
-let allUsers = [];
-let currentFilter = 'all';
-
-async function loadUsers() {
-    try {
-        const response = await fetch('/api/admin/users');
-        if (!response.ok) throw new Error('Failed to load users');
-        
-        const data = await response.json();
-        allUsers = data.users || [];
-        
-        updateStatistics();
-        renderUsersTable();
-    } catch (error) {
-        showAlert('error', 'Lỗi tải danh sách: ' + error.message);
-    }
-}
-
-function updateStatistics() {
-    const adminCount = allUsers.filter(u => u.role === 'admin').length;
-    const managerCount = allUsers.filter(u => u.role === 'manager').length;
-    const userCount = allUsers.filter(u => u.role === 'user').length;
-    
-    document.getElementById('adminCount').textContent = adminCount;
-    document.getElementById('managerCount').textContent = managerCount;
-    document.getElementById('userCount').textContent = userCount;
-}
-
-function filterByRole(role) {
-    currentFilter = role;
-    
-    // Update active tab
-    document.querySelectorAll('#roleTabs .nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    document.querySelector(`#roleTabs .nav-link[data-role="${role}"]`).classList.add('active');
-    
-    renderUsersTable();
-}
-
-function renderUsersTable() {
-    const tbody = document.getElementById('usersTableBody');
-    
-    let filteredUsers = allUsers;
-    if (currentFilter !== 'all') {
-        filteredUsers = allUsers.filter(u => u.role === currentFilter);
-    }
-    
-    if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không có tài khoản nào</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = filteredUsers.map(user => {
-        const badgeClass = user.role === 'admin' ? 'bg-danger' : 
-                          user.role === 'manager' ? 'bg-warning' : 'bg-primary';
-        const roleText = user.role === 'admin' ? 'ADMIN' : 
-                        user.role === 'manager' ? 'MANAGER' : 'USER';
-        
-        let actionButtons = '';
-        
-        if (user.role === 'user') {
-            // User can be promoted to Manager
-            actionButtons = `
-                <button class="btn btn-action btn-success btn-sm" onclick="promoteToManager(${user.id}, '${user.email}')">
-                    <i class="fas fa-arrow-up"></i> Nâng lên Manager
-                </button>
-            `;
-        } else if (user.role === 'manager') {
-            // Manager can be demoted to User
-            actionButtons = `
-                <button class="btn btn-action btn-warning btn-sm" onclick="demoteToUser(${user.id}, '${user.email}')">
-                    <i class="fas fa-arrow-down"></i> Hạ xuống User
-                </button>
-            `;
-        } else if (user.role === 'admin') {
-            // Admin cannot be changed
-            actionButtons = '<span class="text-muted"><i class="fas fa-lock"></i> Không thể thay đổi</span>';
-        }
-        
-        return `
-            <tr>
-                <td>${user.id}</td>
-                <td>${user.name}</td>
-                <td>${user.email}</td>
-                <td><span class="badge ${badgeClass}">${roleText}</span></td>
-                <td>${new Date(user.created_at).toLocaleDateString('vi-VN')}</td>
-                <td>${actionButtons}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-async function promoteToManager(userId, email) {
-    if (!confirm(`Bạn chắc chắn muốn nâng cấp "${email}" lên Manager?\n\nManager sẽ có quyền cấp phát quyền cho User khác.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/admin/users/promote', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user_id: userId, role: 'manager'})
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showAlert('success', `✅ Đã nâng cấp "${email}" lên Manager thành công!`);
-            loadUsers();
-        } else {
-            showAlert('error', data.message || 'Lỗi nâng cấp');
-        }
-    } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
-    }
-}
-
-async function demoteToUser(userId, email) {
-    if (!confirm(`Bạn chắc chắn muốn hạ cấp "${email}" xuống User?\n\nManager sẽ mất quyền cấp phát quyền cho User khác.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/admin/users/demote', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user_id: userId, role: 'user'})
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showAlert('success', `✅ Đã hạ cấp "${email}" xuống User thành công!`);
-            loadUsers();
-        } else {
-            showAlert('error', data.message || 'Lỗi hạ cấp');
-        }
-    } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
-    }
-}
-
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.right = '20px';
-    alertDiv.style.zIndex = '9999';
-    alertDiv.style.minWidth = '300px';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-    setTimeout(() => alertDiv.remove(), 5000);
-}
-
-document.addEventListener('DOMContentLoaded', loadUsers);
-</script>
 {% endblock %}

@@ -1,254 +1,183 @@
 {% extends "base.html" %}
 
-{% block title %}Workspace - Không gian sáng tạo{% endblock %}
+{% block title %}Workflow Studio - Fun Work Hub{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace_scenario.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        {% include 'components/sidebar.html' %}
+<div class="scenario-wrapper">
+    {% include 'components/sidebar.html' %}
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-paint-brush"></i> Workspace - Không gian sáng tạo</h1>
-                <button class="btn btn-primary" onclick="openCreateProjectModal()">
-                    <i class="fas fa-plus"></i> Tạo dự án mới
+    <main class="scenario-main">
+        <section class="workspace-launchpad">
+            <div>
+                <p class="launch-eyebrow">Workspace shortcuts</p>
+                <h2>Chọn chế độ xây dựng</h2>
+            </div>
+            <div class="launch-grid">
+                <button class="launch-card disabled" type="button">
+                    <div class="launch-icon gradient-pink"><i class="fas fa-robot"></i></div>
+                    <div>
+                        <h4>AI Tự động</h4>
+                        <p>Đang phát triển · Tự động hóa bằng AI đang được hoàn thiện</p>
+                    </div>
+                    <span class="coming-soon">Soon</span>
+                </button>
+                <button class="launch-card active" type="button" onclick="openScrapingScenario()">
+                    <div class="launch-icon gradient-blue"><i class="fas fa-layer-group"></i></div>
+                    <div>
+                        <h4>Scraping + CRM Sync</h4>
+                        <p>Thu thập dữ liệu và đồng bộ CRM giống Make.com</p>
+                    </div>
+                    <span class="launch-cta">Mở scenario</span>
+                </button>
+                <button class="launch-card disabled" type="button">
+                    <div class="launch-icon gradient-green"><i class="fas fa-code"></i></div>
+                    <div>
+                        <h4>Custom Workflow</h4>
+                        <p>Đang phát triển · Sẽ hỗ trợ API/Webhook tùy chỉnh</p>
+                    </div>
+                    <span class="coming-soon">Soon</span>
                 </button>
             </div>
+        </section>
 
-            <div class="alert alert-success">
-                <h5><i class="fas fa-rocket"></i> Chào mừng đến Workspace!</h5>
-                <p class="mb-0">Đây là không gian tự do để bạn sáng tạo bot, AI agent, workflow mà <strong>không cần gợi ý hay template có sẵn</strong>. Hãy thỏa sức sáng tạo theo ý tưởng của riêng bạn!</p>
+        <header class="scenario-topbar" id="scenarioTop">
+            <div class="scenario-title">
+                <span class="scenario-chip">Scenario #FW-204</span>
+                <h1>CRM Sync & Customer Delight</h1>
+                <p>Luồng tự động đồng bộ dữ liệu đa nền tảng giống Make.com</p>
             </div>
+            <div class="scenario-actions">
+                <button class="btn btn-outline-light" onclick="duplicateScenario()">
+                    <i class="fas fa-clone"></i> Duplicate
+                </button>
+                <button class="btn btn-outline-light" onclick="scheduleScenario()">
+                    <i class="far fa-clock"></i> Lịch chạy
+                </button>
+                <button class="btn btn-light" onclick="saveScenario()">
+                    <i class="fas fa-save"></i> Lưu draft
+                </button>
+                <button class="btn btn-success" onclick="runScenarioNow()">
+                    <i class="fas fa-play"></i> Run once
+                </button>
+            </div>
+        </header>
 
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="card border-primary h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
-                            <h5 class="card-title">AI Agent Builder</h5>
-                            <p class="card-text">Tạo AI agent tùy chỉnh với khả năng xử lý ngôn ngữ tự nhiên</p>
-                            <button class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">
-                                <i class="fas fa-plus"></i> Tạo Agent
-                            </button>
-                        </div>
-                    </div>
+        <section class="scenario-layout">
+            <aside class="scenario-sidebar" id="scenarioSidebar">
+                <div class="sidebar-header">
+                    <h6>Module Library</h6>
+                    <div class="badge bg-primary">+240 integrations</div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card border-success h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-project-diagram fa-3x text-success mb-3"></i>
-                            <h5 class="card-title">Workflow Designer</h5>
-                            <p class="card-text">Thiết kế luồng làm việc tự động với giao diện kéo thả</p>
-                            <button class="btn btn-success" onclick="alert('Chức năng đang phát triển')">
-                                <i class="fas fa-plus"></i> Tạo Workflow
-                            </button>
-                        </div>
-                    </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span class="input-group-text bg-transparent text-light"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Tìm app, trigger, action..." id="moduleSearch"
+                        oninput="filterModules()">
                 </div>
-                <div class="col-md-4">
-                    <div class="card border-info h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-code fa-3x text-info mb-3"></i>
-                            <h5 class="card-title">Custom Script</h5>
-                            <p class="card-text">Viết script Python/JavaScript tùy chỉnh cho nhu cầu riêng</p>
-                            <button class="btn btn-info" onclick="alert('Chức năng đang phát triển')">
-                                <i class="fas fa-plus"></i> Viết Script
-                            </button>
-                        </div>
-                    </div>
+                <div class="module-groups">
+                    <button class="module-group active" data-group="all" onclick="switchModuleGroup(event, 'all')">
+                        <i class="fas fa-layer-group"></i> Tất cả
+                    </button>
+                    <button class="module-group" data-group="trigger" onclick="switchModuleGroup(event, 'trigger')">
+                        <i class="fas fa-bolt"></i> Triggers
+                    </button>
+                    <button class="module-group" data-group="action" onclick="switchModuleGroup(event, 'action')">
+                        <i class="fas fa-cogs"></i> Actions
+                    </button>
+                    <button class="module-group" data-group="data" onclick="switchModuleGroup(event, 'data')">
+                        <i class="fas fa-database"></i> Data
+                    </button>
                 </div>
-            </div>
+                <div class="module-list" id="moduleLibrary"></div>
+                <div class="sidebar-footer">
+                    <p class="text-muted small mb-1">Không tìm thấy ứng dụng?</p>
+                    <button class="btn btn-outline-light w-100 btn-sm" onclick="requestIntegration()">
+                        <i class="fas fa-plug"></i> Đề nghị tích hợp mới
+                    </button>
+                </div>
+            </aside>
 
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-folder-open"></i> Dự án của bạn</h5>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary active" onclick="viewMode('grid')">
-                            <i class="fas fa-th"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="viewMode('list')">
-                            <i class="fas fa-list"></i>
-                        </button>
+            <section class="scenario-canvas-panel">
+                <div class="canvas-toolbar">
+                    <div class="toolbar-left">
+                        <span class="status-dot online"></span> LIVE mode
+                        <span class="toolbar-divider"></span>
+                        <span>Auto-save: <strong>Enabled</strong></span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-sm btn-outline-danger" id="clearCanvasBtn" onclick="clearAllNodes()"><i
+                                class="fas fa-trash"></i> Clear all</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="zoomCanvas('out')"><i
+                                class="fas fa-search-minus"></i></button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="zoomCanvas('reset')"><i
+                                class="fas fa-compress"></i></button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="zoomCanvas('in')"><i
+                                class="fas fa-search-plus"></i></button>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row" id="projectsGrid">
-                        <!-- Projects will be loaded here -->
-                        <div class="col-12 text-center py-5">
-                            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted">Chưa có dự án nào</h5>
-                            <p class="text-muted">Bắt đầu tạo dự án đầu tiên của bạn!</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="card mt-3">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Ý tưởng sáng tạo</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-warning">
-                                <div class="card-body">
-                                    <h6><i class="fas fa-comments"></i> Chatbot hỗ trợ khách hàng</h6>
-                                    <p class="card-text small">Tạo chatbot tự động trả lời câu hỏi khách hàng 24/7</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-primary">
-                                <div class="card-body">
-                                    <h6><i class="fas fa-chart-line"></i> Dashboard phân tích dữ liệu</h6>
-                                    <p class="card-text small">Xây dựng dashboard theo dõi KPI và số liệu kinh doanh</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-success">
-                                <div class="card-body">
-                                    <h6><i class="fas fa-envelope"></i> Email Marketing Automation</h6>
-                                    <p class="card-text small">Tự động gửi email marketing theo kịch bản</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body">
-                                    <h6><i class="fas fa-database"></i> Data Pipeline</h6>
-                                    <p class="card-text small">Xây dựng pipeline xử lý và đồng bộ dữ liệu</p>
-                                </div>
-                            </div>
-                        </div>
+                <div class="scenario-canvas" id="scenarioCanvas">
+                    <div class="canvas-surface" id="canvasSurface">
+                        <svg class="canvas-connections" id="canvasConnections" xmlns="http://www.w3.org/2000/svg"></svg>
+                        <div class="canvas-grid"></div>
                     </div>
                 </div>
+
+                <div class="scenario-run-console" id="runConsole">
+                    <div class="console-header">
+                        <h6><i class="fas fa-terminal"></i> Run console</h6>
+                        <button class="btn btn-sm btn-outline-light" onclick="clearConsole()"><i
+                                class="fas fa-broom"></i> Clear</button>
+                    </div>
+                    <pre id="consoleOutput">Ready. Waiting for run...</pre>
+                </div>
+            </section>
+
+            <aside class="scenario-inspector">
+                <div class="inspector-tabs">
+                    <button class="inspector-tab active" data-tab="properties"
+                        onclick="switchInspectorTab(event, 'properties')">Properties</button>
+                    <button class="inspector-tab" data-tab="output"
+                        onclick="switchInspectorTab(event, 'output')">Output</button>
+                    <button class="inspector-tab" data-tab="versions"
+                        onclick="switchInspectorTab(event, 'versions')">Versions</button>
+                </div>
+                <div class="inspector-content" id="inspectorContent">
+                    <p class="text-muted">Chọn một module trong canvas để xem cấu hình chi tiết.</p>
+                </div>
+                <div class="run-history">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6>Run history</h6>
+                        <span class="badge bg-secondary" id="runCounter">0 runs</span>
+                    </div>
+                    <ul class="run-history-list" id="runHistoryList"></ul>
+                </div>
+            </aside>
+        </section>
+
+        <footer class="scenario-statusbar">
+            <div>
+                <i class="fas fa-info-circle"></i> Last run: <strong id="lastRunTime">Chưa chạy</strong>
             </div>
-        </main>
-    </div>
+            <div>
+                <i class="fas fa-database"></i> Data processed: <strong id="dataProcessed">0 records</strong>
+            </div>
+            <div>
+                <i class="fas fa-users"></i> Active collaborators: <strong>2</strong>
+            </div>
+            <div>
+                <i class="fas fa-cloud-upload-alt"></i> Version: <strong>v1.4-draft</strong>
+            </div>
+        </footer>
+    </main>
 </div>
 
-<!-- Modal: Create Project -->
-<div class="modal fade" id="createProjectModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tạo Dự án mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Tên dự án <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="projectName" placeholder="VD: Chatbot hỗ trợ khách hàng">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Loại dự án</label>
-                    <select class="form-select" id="projectType">
-                        <option value="ai_agent">AI Agent</option>
-                        <option value="workflow">Workflow</option>
-                        <option value="script">Custom Script</option>
-                        <option value="dashboard">Dashboard</option>
-                        <option value="other">Khác</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Mô tả</label>
-                    <textarea class="form-control" id="projectDescription" rows="4" placeholder="Mô tả chi tiết về dự án của bạn..."></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Tags</label>
-                    <input type="text" class="form-control" id="projectTags" placeholder="VD: chatbot, automation, AI">
-                    <small class="text-muted">Phân cách bằng dấu phẩy</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">Tạo dự án</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.main-content {
-    margin-left: 280px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    min-height: 100vh;
-}
-
-.card {
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-}
-
-.card h6 {
-    font-weight: 600;
-    color: #333;
-}
-
-.alert {
-    border-radius: 12px;
-    border: none;
-}
-
-.btn {
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    border: none;
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    border: none;
-}
-
-.border-primary {
-    border: 2px solid #667eea !important;
-}
-
-.border-success {
-    border: 2px solid #43e97b !important;
-}
-
-.border-info {
-    border: 2px solid #4facfe !important;
-}
-
-.border-warning {
-    border: 2px solid #feca57 !important;
-}
-</style>
-
-<script>
-function openCreateProjectModal() {
-    new bootstrap.Modal(document.getElementById('createProjectModal')).show();
-}
-
-function viewMode(mode) {
-    // Toggle view mode between grid and list
-    console.log('View mode:', mode);
-}
-</script>
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='workspace_scenario.js') }}"></script>
+{% endblock %}
 {% endblock %}

@@ -5,6 +5,7 @@
 {% block body_class %}scenarios-page{% endblock %}
 
 {% block styles %}
+{{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='scenarios.css') }}">
 {% endblock %}
 
@@ -23,7 +24,7 @@
                 </a>
             </div>
             <div class="search-box">
-                <input type="text" class="search-input" placeholder="Search scenarios...">
+                <input type="text" class="search-input" placeholder="Search scenarios..." data-scenarios-search>
                 <i class="fas fa-search search-icon"></i>
             </div>
         </div>
@@ -36,23 +37,23 @@
                 </button>
             </div>
 
-            <div class="folder-item active" onclick="selectFolder('all')">
+            <div class="folder-item active" data-folder-item="all" onclick="selectFolder('all')">
                 <div class="folder-icon">
                     <i class="fas fa-folder" style="color: #667eea;"></i>
                 </div>
                 <div class="folder-info">
                     <div class="folder-name">All scenarios</div>
-                    <div class="folder-count">0 scenarios</div>
+                    <div class="folder-count" data-folder-count="all">0 scenarios</div>
                 </div>
             </div>
 
-            <div class="folder-item" onclick="selectFolder('uncategorized')">
+            <div class="folder-item" data-folder-item="uncategorized" onclick="selectFolder('uncategorized')">
                 <div class="folder-icon">
                     <i class="fas fa-folder-open" style="color: #6c757d;"></i>
                 </div>
                 <div class="folder-info">
                     <div class="folder-name">Uncategorized</div>
-                    <div class="folder-count">0 scenarios</div>
+                    <div class="folder-count" data-folder-count="uncategorized">0 scenarios</div>
                 </div>
             </div>
         </div>
@@ -69,21 +70,21 @@
                 </div>
                 <h1 class="content-title">All scenarios</h1>
                 <div class="content-tabs">
-                    <div class="tab active">
+                    <div class="tab active" data-tab="all">
                         ALL
-                        <span class="tab-badge">0</span>
+                        <span class="tab-badge" data-tab-count="all">0</span>
                     </div>
-                    <div class="tab">
+                    <div class="tab" data-tab="active">
                         ACTIVE SCENARIOS
-                        <span class="tab-badge">0</span>
+                        <span class="tab-badge" data-tab-count="active">0</span>
                     </div>
-                    <div class="tab">
+                    <div class="tab" data-tab="inactive">
                         INACTIVE SCENARIOS
-                        <span class="tab-badge">0</span>
+                        <span class="tab-badge" data-tab-count="inactive">0</span>
                     </div>
-                    <div class="tab">
+                    <div class="tab" data-tab="concept">
                         CONCEPTS
-                        <span class="tab-badge">0</span>
+                        <span class="tab-badge" data-tab-count="concept">0</span>
                     </div>
                 </div>
             </div>
@@ -95,7 +96,7 @@
 
         <div class="content-area">
             <!-- Empty State -->
-            <div class="empty-state">
+            <div class="empty-state" data-scenarios-empty>
                 <div class="empty-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
@@ -116,7 +117,7 @@
             </div>
 
             <!-- Scenarios Grid (will be populated dynamically) -->
-            <div class="scenarios-grid" id="scenariosGrid" style="display: none;">
+            <div class="scenarios-grid" id="scenariosGrid" data-scenarios-grid hidden>
                 <!-- Scenario cards will be inserted here -->
             </div>
         </div>
@@ -125,7 +126,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-
-</script>
+{{ super() }}
+<script src="{{ url_for('static', filename='scenarios.js') }}" defer></script>
 {% endblock %}
