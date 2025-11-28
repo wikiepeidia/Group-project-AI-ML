@@ -3,308 +3,13 @@
 {% block title %}Sign In - Fun Work Hub{% endblock %}
 
 {% block styles %}
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='auth_signin.css') }}">
+{% endblock %}
 
-    body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-
-    .auth-container {
-        width: 100%;
-        max-width: 1000px;
-        margin: 20px;
-        background: #fff;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .auth-left {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 60px 40px;
-        color: #fff;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .brand-logo {
-        font-size: 48px;
-        margin-bottom: 20px;
-    }
-
-    .brand-title {
-        font-size: 32px;
-        font-weight: 700;
-        margin-bottom: 16px;
-    }
-
-    .brand-subtitle {
-        font-size: 16px;
-        line-height: 1.6;
-        opacity: 0.9;
-        margin-bottom: 40px;
-    }
-
-    .feature-list {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .feature-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .feature-icon {
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-    }
-
-    .auth-right {
-        padding: 60px 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow-y: auto;
-        max-height: 90vh;
-    }
-
-    .auth-header {
-        margin-bottom: 40px;
-    }
-
-    .auth-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1a1a2e;
-        margin-bottom: 8px;
-    }
-
-    .auth-subtitle {
-        font-size: 14px;
-        color: #666;
-    }
-
-    .form-group {
-        margin-bottom: 24px;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 8px;
-    }
-
-    .form-input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 14px;
-        transition: all 0.3s;
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .auth-btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .auth-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .divider {
-        text-align: center;
-        margin: 30px 0;
-        position: relative;
-    }
-
-    .divider::before,
-    .divider::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        width: 40%;
-        height: 1px;
-        background: #e0e0e0;
-    }
-
-    .divider::before {
-        left: 0;
-    }
-
-    .divider::after {
-        right: 0;
-    }
-
-    .divider span {
-        background: #fff;
-        padding: 0 10px;
-        color: #999;
-        font-size: 13px;
-    }
-
-    .social-login {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-
-    .social-btn {
-        padding: 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        text-align: center;
-        text-decoration: none;
-        color: #333;
-        font-weight: 600;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .social-btn:hover {
-        border-color: #667eea;
-        background: #f8f9ff;
-    }
-
-    .auth-switch {
-        text-align: center;
-        font-size: 14px;
-        color: #666;
-        margin-top: 20px;
-    }
-
-    .auth-switch a {
-        color: #667eea;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .demo-section {
-        margin-top: 30px;
-        padding: 20px;
-        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
-        border-radius: 12px;
-    }
-
-    .demo-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #667eea;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .demo-accounts {
-        display: grid;
-        gap: 10px;
-    }
-
-    .demo-account {
-        padding: 12px 16px;
-        background: #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 2px solid transparent;
-    }
-
-    .demo-account:hover {
-        border-color: #667eea;
-        transform: translateX(4px);
-    }
-
-    .demo-role {
-        font-size: 13px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .demo-email {
-        font-size: 12px;
-        color: #666;
-        font-family: monospace;
-    }
-
-    .alert {
-        padding: 12px 16px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        font-size: 14px;
-    }
-
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #6ee7b7;
-    }
-
-    .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-
-    @media (max-width: 768px) {
-        .auth-container {
-            grid-template-columns: 1fr;
-        }
-
-        .auth-left {
-            display: none;
-        }
-    }
-</style>
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='auth_signin.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -354,7 +59,7 @@
         {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('auth.signin') }}" id="loginForm">
+        <form method="POST" action="{{ url_for('auth.signin') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email" class="form-label">Email</label>
@@ -396,21 +101,21 @@
                 Thử ngay với tài khoản demo
             </div>
             <div class="demo-accounts">
-                <div class="demo-account" onclick="fillDemo('admin@fun.com', 'admin123')">
+                <div class="demo-account" data-demo-email="admin@fun.com" data-demo-password="admin123">
                     <div class="demo-role">
                         <i class="fas fa-crown"></i>
                         Admin
                     </div>
                     <div class="demo-email">admin@fun.com / admin123</div>
                 </div>
-                <div class="demo-account" onclick="fillDemo('manager@fun.com', 'manager123')">
+                <div class="demo-account" data-demo-email="manager@fun.com" data-demo-password="manager123">
                     <div class="demo-role">
                         <i class="fas fa-user-shield"></i>
                         Manager
                     </div>
                     <div class="demo-email">manager@fun.com / manager123</div>
                 </div>
-                <div class="demo-account" onclick="fillDemo('user@fun.com', 'user123')">
+                <div class="demo-account" data-demo-email="user@fun.com" data-demo-password="user123">
                     <div class="demo-role">
                         <i class="fas fa-user"></i>
                         User
@@ -421,11 +126,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    function fillDemo(email, password) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = password;
-    }
-</script>
 {% endblock %}

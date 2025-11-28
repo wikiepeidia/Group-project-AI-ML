@@ -14,7 +14,8 @@
     --builder-canvas-grid: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
 }
 
-html.theme-dark {
+html[data-theme='dark'],
+body.dark-mode {
     --builder-bg: #050816;
     --builder-panel: #0f172a;
     --builder-panel-alt: #111a32;
@@ -79,25 +80,6 @@ body.builder-page {
     display: flex;
     align-items: center;
     gap: 10px;
-}
-
-.theme-toggle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--builder-border);
-    background: var(--builder-panel);
-    color: var(--builder-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.theme-toggle:hover {
-    transform: rotate(20deg);
-    border-color: var(--builder-border-strong);
 }
 
 .user-avatar {

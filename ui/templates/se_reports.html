@@ -2,13 +2,24 @@
 
 {% block title %}SE - Báo cáo thu chi{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin_reports.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='admin_reports.js') }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         {% include 'components/sidebar.html' %}
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-file-invoice-dollar"></i> SE - Báo cáo Thu Chi</h1>
                 <button class="btn btn-primary" onclick="openScheduleReportModal()">
                     <i class="fas fa-calendar-plus"></i> Đặt lịch báo cáo
@@ -16,7 +27,8 @@
             </div>
 
             <div class="alert alert-info">
-                <i class="fas fa-magic"></i> <strong>Tính năng:</strong> Tự động tạo và gửi báo cáo thu chi định kỳ (ngày/tuần/tháng) qua email hoặc lưu file.
+                <i class="fas fa-magic"></i> <strong>Tính năng:</strong> Tự động tạo và gửi báo cáo thu chi định kỳ
+                (ngày/tuần/tháng) qua email hoặc lưu file.
             </div>
 
             <div class="row mb-3">
@@ -190,31 +202,11 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">Lưu lịch</button>
+                <button type="button" class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">Lưu
+                    lịch</button>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.main-content {
-    margin-left: 260px;
-}
-.card h2 {
-    margin: 0;
-    font-size: 1.5rem;
-}
-</style>
-
-<script>
-function openScheduleReportModal() {
-    new bootstrap.Modal(document.getElementById('scheduleReportModal')).show();
-}
-
-// Initialize stats (mock data)
-document.getElementById('monthRevenue').textContent = '0đ';
-document.getElementById('monthExpense').textContent = '0đ';
-document.getElementById('monthProfit').textContent = '0đ';
-document.getElementById('reportsSent').textContent = '0';
-</script>
 {% endblock %}

@@ -1,0 +1,26 @@
+/* Manager Permissions page styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .nav-link {
+    color: #fff;
+    padding: 10px 20px;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: #495057;
+}
+
+.badge-permission {
+    font-size: 0.75rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
