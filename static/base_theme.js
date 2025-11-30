@@ -60,9 +60,16 @@
         };
     }
 })();
+
 // Periodically check session status (keepalive/notify) to warn users
 ;(function sessionKeepalive() {
     if (typeof window.fetch !== 'function') return;
+    
+    // ĐỊNH NGHĨA ROUTE ĐĂNG NHẬP MỚI VÀ CÁC TRANG KHÔNG CẦN CHUYỂN HƯỚNG
+    const LOGIN_URL = '/auth/login'; 
+    // Thêm /auth/authorize vì đây là trang callback sau khi Google xác thực
+    const UNAUTHENTICATED_PAGES = ['/auth/login', '/auth/signin', '/auth/authorize', '/']; 
+
     const check = async () => {
         try {
             const res = await fetch('/api/session', { credentials: 'same-origin' });
@@ -70,34 +77,59 @@
                 return;
             }
             const data = await res.json();
+            
+            // Nếu phiên đã hết hạn
             if (!data.authenticated) {
-                try { if (typeof showNotification === 'function') showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error'); } catch (e) {}
-                setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
+                const currentPath = window.location.pathname;
+                
+                // CHỈ CHUYỂN HƯỚNG NẾU NGƯỜI DÙNG KHÔNG Ở TRÊN CÁC TRANG CÔNG KHAI/ĐĂNG NHẬP
+                if (!UNAUTHENTICATED_PAGES.some(p => currentPath === p || currentPath.startsWith(p))) {
+                    try { 
+                        if (typeof showNotification === 'function') {
+                            showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error'); 
+                        }
+                    } catch (e) {}
+                    
+                    // Chuyển hướng đến route OAuth mới sau 3 giây
+                    setTimeout(() => { 
+                        window.location.href = LOGIN_URL; 
+                    }, 3000);
+                }
             }
         } catch (e) {
             // ignore connection errors
         }
     };
-    // Run immediately and schedule
+    
+    // Run immediately and schedule (every 2 minutes)
     check();
-    setInterval(check, 120000); // every 2 minutes
+    setInterval(check, 120000); 
 })();
+
 // Add a global handler for unauthorized (401/403) responses so AJAX calls redirect to signin
 ;(function attachUnauthorizedHandler() {
     if (typeof window.fetch !== 'function' || window.__unauthorizedFetchPatched) return;
     window.__unauthorizedFetchPatched = true;
+    
+    // ĐỊNH NGHĨA ROUTE ĐĂNG NHẬP MỚI
+    const LOGIN_URL = '/auth/login'; 
+
     const originalFetch = window.fetch.bind(window);
     window.fetch = function(resource, config) {
         return originalFetch(resource, config).then(res => {
             if (res && (res.status === 401 || res.status === 403)) {
-                try {
-                    if (typeof showNotification === 'function') {
-                        showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+                // Chỉ xử lý chuyển hướng nếu không phải là API Call to /api/session
+                if (resource !== '/api/session') {
+                    try {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+                        }
+                    } catch (e) {
+                        // ignore
                     }
-                } catch (e) {
-                    // ignore
+                    // Chuyển hướng đến route OAuth mới sau 3 giây
+                    setTimeout(() => window.location.href = LOGIN_URL, 3000); 
                 }
-                setTimeout(() => window.location.href = '/auth/signin', 3000);
             }
             return res;
         });
