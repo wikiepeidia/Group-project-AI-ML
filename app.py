@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -21,8 +20,11 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_me_to_a_secure_r
 app.config['WTF_CSRF_ENABLED'] = True
 app.secret_key = app.config['SECRET_KEY']
 
+# Session configuration - 30 minutes
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
 limiter = Limiter(get_remote_address, app=app, default_limits=["100 per day", "66 per hour"])
-Talisman(app, force_https=False, content_security_policy=None)
 csrf = CSRFProtect(app)
 
 # Store database manager in app extensions for decorator access
@@ -160,7 +162,8 @@ def signin():
             user = User(user_data['id'], user_data['email'], user_data['first_name'], 
                         user_data['last_name'],user_data.get('role','user'))
             print(">>> Đăng nhập:", user.email, "role =", user.role)
-            login_user(user)
+            login_user(user, remember=True)  # Remember user to extend session
+            session.permanent = True  # Set session to use PERMANENT_SESSION_LIFETIME
             flash('Login Successful!', 'success')
             
             # Redirect based on role
@@ -226,6 +229,12 @@ def admin_workspace():
         return redirect(url_for('workspace'))
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Main dashboard - chức năng kiếm tiền"""
+    return render_template('dashboard.html', user=current_user)
+
 @app.route('/workspace')
 @login_required
 def workspace():
@@ -235,14 +244,14 @@ def workspace():
         #return redirect(url_for('admin_workspace'))
     return render_template('workspace.html', user=current_user)  # Regular users see user dashboard
 
-@app.route('/manager/permissions')
+@app.route('/manager/create-user')
 @login_required
-def manager_permissions():
-    """Manager page to manage user permissions"""
+def create_user_account():
+    """Manager/Admin page to create user accounts"""
     if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
         flash('Bạn không có quyền truy cập trang này', 'error')
         return redirect(url_for('workspace'))
-    return render_template('manager_permissions.html', user=current_user)
+    return render_template('create_user_account.html', user=current_user)
 
 @app.route('/admin/managers')
 @login_required
@@ -623,6 +632,170 @@ def admin_create_manager():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/api/create-user', methods=['POST'])
+@login_required
+def create_user():
+    """Create a new user account (Manager/Admin only)"""
+    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+    
+    try:
+        # Build full name
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip() or data['email'].split('@')[0]
+        
+        # Create user with 'user' role only
+        user_id = db_manager.create_user(data['email'], data['password'], full_name, role='user')
+        return jsonify({'success': True, 'message': 'User created successfully', 'user_id': user_id})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@app.route('/api/users', methods=['GET'])
+@login_required
+@csrf.exempt
+def get_users():
+    """Get list of users (Manager/Admin only)"""
+    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    role_filter = request.args.get('role', None)
+    
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    # Check if first_name column exists
+    c.execute("PRAGMA table_info(users)")
+    columns = [col[1] for col in c.fetchall()]
+    has_first_name = 'first_name' in columns
+    
+    if has_first_name:
+        if role_filter:
+            c.execute('''
+                SELECT id, email, first_name, last_name, role, created_at 
+                FROM users 
+                WHERE role = ?
+                ORDER BY created_at DESC
+            ''', (role_filter,))
+        else:
+            c.execute('''
+                SELECT id, email, first_name, last_name, role, created_at 
+                FROM users 
+                ORDER BY created_at DESC
+            ''')
+        
+        users = []
+        for row in c.fetchall():
+            users.append({
+                'id': row[0],
+                'email': row[1],
+                'first_name': row[2] or '',
+                'last_name': row[3] or '',
+                'role': row[4],
+                'created_at': row[5]
+            })
+    else:
+        # Fallback to name column
+        if role_filter:
+            c.execute('''
+                SELECT id, email, name, role, created_at 
+                FROM users 
+                WHERE role = ?
+                ORDER BY created_at DESC
+            ''', (role_filter,))
+        else:
+            c.execute('''
+                SELECT id, email, name, role, created_at 
+                FROM users 
+                ORDER BY created_at DESC
+            ''')
+        
+        users = []
+        for row in c.fetchall():
+            users.append({
+                'id': row[0],
+                'email': row[1],
+                'first_name': row[2] or '',
+                'last_name': '',
+                'role': row[3],
+                'created_at': row[4]
+            })
+    
+    conn.close()
+    return jsonify({'success': True, 'users': users})
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@login_required
+def delete_user_account(user_id):
+    """Delete user account (Manager/Admin only)"""
+    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    # Prevent deleting self
+    if user_id == current_user.id:
+        return jsonify({'success': False, 'message': 'Cannot delete yourself'}), 400
+    
+    # Check if user exists and is a regular user
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    c.execute('SELECT role FROM users WHERE id = ?', (user_id,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    
+    # Only allow deleting regular users
+    if user[0] != 'user':
+        conn.close()
+        return jsonify({'success': False, 'message': 'Can only delete regular users'}), 403
+    
+    c.execute('DELETE FROM users WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'User deleted successfully'})
+
+@app.route('/api/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+def reset_user_password(user_id):
+    """Reset user password (Manager/Admin only)"""
+    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    if not data or 'password' not in data:
+        return jsonify({'success': False, 'message': 'Missing password'}), 400
+    
+    new_password = data['password']
+    if len(new_password) < 8:
+        return jsonify({'success': False, 'message': 'Password must be at least 8 characters'}), 400
+    
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    # Check if user exists
+    c.execute('SELECT role FROM users WHERE id = ?', (user_id,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    
+    # Hash new password
+    from werkzeug.security import generate_password_hash
+    hashed_password = generate_password_hash(new_password)
+    
+    c.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, user_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Password reset successfully'})
+
 @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
 @login_required
 def admin_delete_user(user_id):
@@ -747,58 +920,6 @@ def manager_get_users_permissions():
     try:
         users = db_manager.get_all_users_with_permissions()
         return jsonify({'success': True, 'users': users})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/manager/permissions/grant', methods=['POST'])
-@login_required
-def manager_grant_permission():
-    """Grant permission to a user (Manager/Admin only)"""
-    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-    
-    data = request.get_json()
-    if not data or 'user_id' not in data or 'permission_type' not in data:
-        return jsonify({'success': False, 'message': 'Missing required fields: user_id, permission_type'}), 400
-    
-    # Valid permission types
-    valid_permissions = ['export', 'import', 'view_reports', 'manage_data', 'create_scenarios', 'delete_items']
-    if data['permission_type'] not in valid_permissions:
-        return jsonify({'success': False, 'message': f'Invalid permission type. Valid: {valid_permissions}'}), 400
-    
-    try:
-        db_manager.grant_permission(data['user_id'], data['permission_type'], current_user.id)
-        return jsonify({'success': True, 'message': 'Permission granted successfully'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/manager/permissions/revoke', methods=['POST'])
-@login_required
-def manager_revoke_permission():
-    """Revoke permission from a user (Manager/Admin only)"""
-    if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-    
-    data = request.get_json()
-    if not data or 'user_id' not in data or 'permission_type' not in data:
-        return jsonify({'success': False, 'message': 'Missing required fields: user_id, permission_type'}), 400
-    
-    try:
-        success = db_manager.revoke_permission(data['user_id'], data['permission_type'])
-        if success:
-            return jsonify({'success': True, 'message': 'Permission revoked successfully'})
-        else:
-            return jsonify({'success': False, 'message': 'Permission not found'}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/user/permissions')
-@login_required
-def get_my_permissions():
-    """Get current user's permissions"""
-    try:
-        permissions = db_manager.get_user_permissions(current_user.id)
-        return jsonify({'success': True, 'permissions': permissions})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -987,7 +1108,7 @@ def api_get_subscriptions():
     
     c.execute('''SELECT 
                     s.id, s.user_id, s.subscription_type, s.amount, 
-                    s.start_date, s.end_date, s.status,
+                    s.start_date, s.end_date, s.status, s.auto_renew,
                     u.name as user_name, u.email as user_email
                 FROM manager_subscriptions s
                 JOIN users u ON s.user_id = u.id
@@ -1003,12 +1124,53 @@ def api_get_subscriptions():
             'start_date': row[4],
             'end_date': row[5],
             'status': row[6],
-            'user_name': row[7],
-            'user_email': row[8]
+            'auto_renew': bool(row[7]) if len(row) > 7 and row[7] is not None else False,
+            'user_name': row[8] if len(row) > 8 else 'Unknown',
+            'user_email': row[9] if len(row) > 9 else 'Unknown'
         })
     
     conn.close()
     return jsonify({'success': True, 'subscriptions': subscriptions})
+
+@app.route('/api/admin/subscription/auto-renew', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_toggle_auto_renew():
+    """Toggle auto-renew for a subscription"""
+    if not hasattr(current_user, 'role') or current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    user_id = data.get('user_id')
+    auto_renew = data.get('auto_renew', False)
+    
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Missing user_id'}), 400
+    
+    try:
+        conn = db_manager.get_connection()
+        c = conn.cursor()
+        
+        # Check if auto_renew column exists
+        c.execute("PRAGMA table_info(manager_subscriptions)")
+        columns = [col[1] for col in c.fetchall()]
+        
+        if 'auto_renew' not in columns:
+            # Add column if not exists
+            c.execute("ALTER TABLE manager_subscriptions ADD COLUMN auto_renew INTEGER DEFAULT 0")
+            conn.commit()
+        
+        # Update auto_renew status
+        c.execute('''UPDATE manager_subscriptions 
+                     SET auto_renew = ? 
+                     WHERE user_id = ? AND status = 'active' ''', 
+                  (1 if auto_renew else 0, user_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Đã cập nhật gia hạn tự động'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/admin/subscription-history', methods=['GET'])
 @login_required
@@ -1289,6 +1451,68 @@ def api_topup_wallet():
         conn.close()
 
 
+@app.route('/api/admin/wallet/withdraw', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_admin_withdraw():
+    """Admin withdraw money from wallet to bank account"""
+    if not hasattr(current_user, 'role') or current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.get_json() or {}
+    try:
+        amount = float(data.get('amount', 0))
+    except (TypeError, ValueError):
+        amount = 0
+    
+    if amount < 100000:
+        return jsonify({'success': False, 'message': 'Số tiền rút tối thiểu là 100.000đ'}), 400
+    
+    bank_name = (data.get('bank_name') or '').strip()
+    account_number = (data.get('account_number') or '').strip()
+    account_name = (data.get('account_name') or '').strip()
+    note = (data.get('note') or '').strip()
+    
+    if not bank_name or not account_number or not account_name:
+        return jsonify({'success': False, 'message': 'Vui lòng điền đầy đủ thông tin ngân hàng'}), 400
+    
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+        c.execute('SELECT balance FROM wallets WHERE user_id = ?', (current_user.id,))
+        row = c.fetchone()
+        balance = float(row[0]) if row else 0
+        
+        if amount > balance:
+            return jsonify({'success': False, 'message': 'Số dư không đủ'}), 400
+        
+        # Deduct balance
+        c.execute('UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+                  (amount, current_user.id))
+        
+        # Create withdrawal transaction
+        metadata = json.dumps({
+            'bank_name': bank_name,
+            'account_number': account_number,
+            'account_name': account_name,
+            'note': note
+        })
+        
+        c.execute('''INSERT INTO wallet_transactions
+                     (user_id, amount, currency, type, status, method, notes, metadata)
+                     VALUES (?, ?, 'VND', 'withdrawal', 'completed', 'bank_transfer', ?, ?)''',
+                  (current_user.id, -amount, f'Rút về {bank_name} - {account_number}', metadata))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Yêu cầu rút tiền thành công. Tiền sẽ được chuyển trong 1-2 ngày làm việc.'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/user/subscription/upgrade', methods=['POST'])
 @login_required
 def api_upgrade_subscription():
@@ -1359,7 +1583,7 @@ def api_upgrade_subscription():
 
 @app.route('/api/user/subscription/auto-renew', methods=['POST'])
 @login_required
-def api_toggle_auto_renew():
+def api_user_toggle_auto_renew():
     data = request.get_json() or {}
     enabled = data.get('enabled')
     if enabled is None:

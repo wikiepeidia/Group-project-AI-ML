@@ -36,6 +36,7 @@
                         </div>
                     </div>
                 </div>
+                {% if user.role != 'admin' %}
                 <div class="col-lg-4">
                     <div class="wallet-card">
                         <div class="wallet-card-label">Gói Manager</div>
@@ -58,9 +59,30 @@
                         </div>
                     </div>
                 </div>
+                {% else %}
+                <div class="col-lg-4">
+                    <div class="wallet-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <div class="wallet-card-label" style="color: rgba(255,255,255,0.9);">Tổng doanh thu</div>
+                        <div class="wallet-card-value" style="color: white;" id="totalRevenue">0đ</div>
+                        <div class="wallet-card-foot" style="color: rgba(255,255,255,0.8);">
+                            <span>Từ các gói Manager</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="wallet-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                        <div class="wallet-card-label" style="color: rgba(255,255,255,0.9);">Số Manager đang hoạt động</div>
+                        <div class="wallet-card-value" style="color: white;" id="activeManagers">0</div>
+                        <div class="wallet-card-foot" style="color: rgba(255,255,255,0.8);">
+                            <span>Tài khoản VIP</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="row mt-4">
+                {% if user.role != 'admin' %}
                 <div class="col-lg-7 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
@@ -72,6 +94,28 @@
                         </div>
                     </div>
                 </div>
+                {% else %}
+                <div class="col-lg-7 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0"><i class="fas fa-university"></i> Rút tiền về ngân hàng</h5>
+                                <small class="text-muted">Chuyển số dư về tài khoản ngân hàng</small>
+                            </div>
+                            <div class="p-4 text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-money-bill-wave" style="font-size: 3rem; color: #10b981;"></i>
+                                    <h4 class="mt-3">Rút tiền doanh thu</h4>
+                                    <p class="text-muted">Chuyển số dư từ ví về tài khoản ngân hàng của bạn</p>
+                                </div>
+                                <button class="btn btn-lg btn-success" onclick="openWithdrawModal()">
+                                    <i class="fas fa-hand-holding-usd"></i> Rút tiền ngay
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="col-lg-5 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
@@ -149,6 +193,53 @@
 
 </div>
 <!-- Wallet CSS moved to static/wallet.css -->
+
+<!-- Withdraw Modal for Admin -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-university"></i> Rút tiền về ngân hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Số dư khả dụng: <strong id="withdrawAvailableBalance">0đ</strong>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số tiền muốn rút <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">đ</span>
+                        <input type="number" class="form-control" id="withdrawAmount" min="100000" step="50000" placeholder="Nhập số tiền">
+                    </div>
+                    <small class="text-muted">Tối thiểu 100.000đ</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên ngân hàng <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="withdrawBankName" placeholder="VD: Vietcombank">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số tài khoản <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="withdrawAccountNumber" placeholder="VD: 0123456789">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên chủ tài khoản <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="withdrawAccountName" placeholder="VD: NGUYEN VAN A">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea class="form-control" id="withdrawNote" rows="2" placeholder="Ghi chú thêm (nếu có)"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" onclick="submitWithdraw()">
+                    <i class="fas fa-check"></i> Xác nhận rút tiền
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 {% endblock %}

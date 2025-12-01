@@ -380,6 +380,8 @@ function setupNotifications() {
 /**
  * Show Notification
  */
+const NOTIFICATION_AUTO_DISMISS_MS = 30 * 1000;  // auto-dismiss notifications every 30 seconds
+
 function showNotification(message, type = 'info') {
     let container = document.querySelector('.notification-container');
 
@@ -435,10 +437,10 @@ function showNotification(message, type = 'info') {
 
     closeButton.addEventListener('click', removeNotification);
 
-    let dismissTimer = setTimeout(removeNotification, 5000);
+    let dismissTimer = setTimeout(removeNotification, NOTIFICATION_AUTO_DISMISS_MS);
     notification.addEventListener('mouseenter', () => clearTimeout(dismissTimer));
     notification.addEventListener('mouseleave', () => {
-        dismissTimer = setTimeout(removeNotification, 2000);
+        dismissTimer = setTimeout(removeNotification, NOTIFICATION_AUTO_DISMISS_MS);
     });
 
     return notification;
