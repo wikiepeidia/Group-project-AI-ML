@@ -6,12 +6,12 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='auth_signin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth_signin.css') }}">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='auth_signin.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/auth_signin.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}

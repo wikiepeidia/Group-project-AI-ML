@@ -5,7 +5,7 @@
 {% block body_class %}builder-page{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/builder.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -285,5 +285,5 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='workspace_builder.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/workspace_builder.js') }}" defer></script>
 {% endblock %}

@@ -4,13 +4,13 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin_analytics.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_analytics.css') }}">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="{{ url_for('static', filename='admin_analytics.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin_analytics.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}

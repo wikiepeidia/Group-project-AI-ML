@@ -4,7 +4,7 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace_scenario.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace_scenario.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -49,7 +49,8 @@
                         </div>
                         <span class="collection-cta">Đi tới màn hình</span>
                     </button>
-                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('admin_analytics') }}'">
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('admin_analytics') }}'">
                         <div class="collection-icon gradient-violet"><i class="fas fa-chart-pie"></i></div>
                         <div class="collection-body">
                             <h4>Phân tích Manager</h4>
@@ -77,7 +78,8 @@
                         </div>
                         <span class="collection-cta">Đi tới màn hình</span>
                     </button>
-                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('se_auto_import') }}'">
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('se_auto_import') }}'">
                         <div class="collection-icon gradient-gold"><i class="fas fa-sync-alt"></i></div>
                         <div class="collection-body">
                             <h4>Tự động nhập hàng</h4>
@@ -118,7 +120,8 @@
             <div class="tier-card tier-card--free">
                 <p class="tier-eyebrow">Free workspace</p>
                 <h3>Không gian dùng thử</h3>
-                <p class="tier-subtext">Bao gồm các scenario cơ bản, phù hợp để khám phá hệ thống trước khi nâng cấp.</p>
+                <p class="tier-subtext">Bao gồm các scenario cơ bản, phù hợp để khám phá hệ thống trước khi nâng cấp.
+                </p>
                 <ul class="tier-feature-list">
                     <li><i class="fas fa-check"></i> Scraping + CRM Sync giống Make.com</li>
                     <li><i class="fas fa-check"></i> Library module cơ bản &amp; lưu draft</li>
@@ -133,18 +136,21 @@
             <div class="tier-card tier-card--paid" id="paidScenarioGate" data-paid-scenario="locked">
                 <p class="tier-eyebrow">Paid Scenario</p>
                 <h3>Phiên bản trả phí</h3>
-                <p class="tier-subtext">Đây là phần trả phí. Nâng cấp để mở khóa nhiều scenario hơn, tự động chạy theo lịch và tích hợp API.</p>
+                <p class="tier-subtext">Đây là phần trả phí. Nâng cấp để mở khóa nhiều scenario hơn, tự động chạy theo
+                    lịch và tích hợp API.</p>
                 <ul class="tier-feature-list">
                     <li><i class="fas fa-lock"></i> Scenario nâng cao &amp; auto-run</li>
                     <li><i class="fas fa-lock"></i> SLA ưu tiên &amp; hỗ trợ dữ liệu lớn</li>
                     <li><i class="fas fa-lock"></i> API hook (sẽ kích hoạt sau)</li>
                 </ul>
                 <div class="tier-actions">
-                    <button class="btn btn-warning" type="button" onclick="redirectToWallet('#planGrid')" data-paid-action="checkout">
+                    <button class="btn btn-warning" type="button" onclick="redirectToWallet('#planGrid')"
+                        data-paid-action="checkout">
                         <i class="fas fa-credit-card"></i> Paid Scenario
                     </button>
                 </div>
-                <small class="tier-note">Chưa thanh toán? Nhấn nút trên để sang trang ví &amp; hoàn tất nâng cấp.</small>
+                <small class="tier-note">Chưa thanh toán? Nhấn nút trên để sang trang ví &amp; hoàn tất nâng
+                    cấp.</small>
             </div>
             <div class="tier-card tier-card--manager" data-paid-scenario="manager">
                 <p class="tier-eyebrow">Manager / Admin</p>
@@ -164,7 +170,7 @@
 
         <!-- ========== USER VIEW (Limited) ========== -->
         {% else %}
-        
+
         <section class="workspace-collections">
             <div class="collection-block">
                 <div class="collection-head">
@@ -219,7 +225,8 @@
                     <span class="collection-hint">Chức năng cơ bản</span>
                 </div>
                 <div class="collection-grid">
-                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')" style="cursor: pointer;">
+                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')"
+                        style="cursor: pointer;">
                         <div class="collection-icon gradient-purple"><i class="fas fa-lock"></i></div>
                         <div class="collection-body">
                             <h4>Dashboard Kiếm tiền <span style="color: #ef4444;">(VIP)</span></h4>
@@ -227,7 +234,8 @@
                         </div>
                         <span class="collection-cta">Nâng cấp để mở khóa</span>
                     </button>
-                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('se_auto_import') }}'">
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('se_auto_import') }}'">
                         <div class="collection-icon gradient-gold"><i class="fas fa-sync-alt"></i></div>
                         <div class="collection-body">
                             <h4>Tự động nhập hàng</h4>
@@ -235,7 +243,8 @@
                         </div>
                         <span class="collection-cta">Đi tới màn hình</span>
                     </button>
-                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')" style="cursor: pointer;">
+                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')"
+                        style="cursor: pointer;">
                         <div class="collection-icon gradient-cyan"><i class="fas fa-lock"></i></div>
                         <div class="collection-body">
                             <h4>Báo cáo thông minh <span style="color: #ef4444;">(VIP)</span></h4>
@@ -247,9 +256,11 @@
             </div>
         </section>
 
-        <section class="upgrade-cta" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 16px; text-align: center; color: white; margin: 30px 0;">
+        <section class="upgrade-cta"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 16px; text-align: center; color: white; margin: 30px 0;">
             <h3 style="font-size: 1.8rem; margin-bottom: 15px;">Nâng cấp lên Manager để mở khóa tính năng VIP</h3>
-            <p style="font-size: 1.1rem; margin-bottom: 25px; opacity: 0.9;">Phân tích doanh thu, báo cáo thông minh, scenario tự động chạy và nhiều tính năng nâng cao khác.</p>
+            <p style="font-size: 1.1rem; margin-bottom: 25px; opacity: 0.9;">Phân tích doanh thu, báo cáo thông minh,
+                scenario tự động chạy và nhiều tính năng nâng cao khác.</p>
             <div style="display: flex; gap: 15px; justify-content: center;">
                 <button class="btn btn-light btn-lg" onclick="redirectToWallet('#planGrid')">
                     <i class="fas fa-crown"></i> Xem gói Manager
@@ -264,7 +275,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='workspace_scenario.js') }}"></script>
+<script src="{{ url_for('static', filename='js/workspace_scenario.js') }}"></script>
 <script>
     function redirectToWallet(hash) {
         let url = '/wallet';
@@ -273,7 +284,7 @@
     }
 </script>
 {% if current_user.role in ['manager', 'admin'] %}
-<script src="{{ url_for('static', filename='wallet.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/wallet.js') }}" defer></script>
 {% endif %}
 {% endblock %}
 {% endblock %}

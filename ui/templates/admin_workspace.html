@@ -4,7 +4,7 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin_workspace.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_workspace.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -233,7 +233,8 @@
                         </div>
                     </a>
 
-                    <a href="{{ url_for('workspace') }}#scenarioAccessBoard" class="action-card" data-paid-scenario-card onclick="openPaidScenarioBilling(event)">
+                    <a href="{{ url_for('workspace') }}#scenarioAccessBoard" class="action-card" data-paid-scenario-card
+                        onclick="openPaidScenarioBilling(event)">
                         <div class="action-icon">
                             <i class="fas fa-credit-card"></i>
                         </div>
@@ -425,13 +426,13 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='admin_workspace.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin_workspace.js') }}" defer></script>
 <script>
-function openPaidScenarioBilling(event) {
-    if (event && event.preventDefault) {
-        event.preventDefault();
+    function openPaidScenarioBilling(event) {
+        if (event && event.preventDefault) {
+            event.preventDefault();
+        }
+        window.location.href = '/wallet#planGrid';
     }
-    window.location.href = '/wallet#planGrid';
-}
 </script>
 {% endblock %}

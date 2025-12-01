@@ -4,7 +4,7 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='wallet.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wallet.css') }}">
 {% endblock %}
 {% block content %}
 <div class="container-fluid">
@@ -71,7 +71,8 @@
                 </div>
                 <div class="col-lg-4">
                     <div class="wallet-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                        <div class="wallet-card-label" style="color: rgba(255,255,255,0.9);">Số Manager đang hoạt động</div>
+                        <div class="wallet-card-label" style="color: rgba(255,255,255,0.9);">Số Manager đang hoạt động
+                        </div>
                         <div class="wallet-card-value" style="color: white;" id="activeManagers">0</div>
                         <div class="wallet-card-foot" style="color: rgba(255,255,255,0.8);">
                             <span>Tài khoản VIP</span>
@@ -210,7 +211,8 @@
                     <label class="form-label">Số tiền muốn rút <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text">đ</span>
-                        <input type="number" class="form-control" id="withdrawAmount" min="100000" step="50000" placeholder="Nhập số tiền">
+                        <input type="number" class="form-control" id="withdrawAmount" min="100000" step="50000"
+                            placeholder="Nhập số tiền">
                     </div>
                     <small class="text-muted">Tối thiểu 100.000đ</small>
                 </div>
@@ -228,7 +230,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Ghi chú</label>
-                    <textarea class="form-control" id="withdrawNote" rows="2" placeholder="Ghi chú thêm (nếu có)"></textarea>
+                    <textarea class="form-control" id="withdrawNote" rows="2"
+                        placeholder="Ghi chú thêm (nếu có)"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -246,5 +249,5 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='wallet.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/wallet.js') }}" defer></script>
 {% endblock %}

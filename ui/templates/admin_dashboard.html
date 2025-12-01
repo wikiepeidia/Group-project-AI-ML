@@ -4,12 +4,12 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='admin_dashboard.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}
