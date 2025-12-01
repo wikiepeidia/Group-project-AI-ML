@@ -11,10 +11,10 @@
 
     <div class="user-profile-card">
         <div class="user-avatar-lg">
-            {{ (user.first_name or user.email)[0]|upper }}
+            {{ ((user.first_name or user.name or user.email) if user.first_name or user.name else user.email)[0]|upper }}
         </div>
         <div class="user-info">
-            <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+            <div class="user-name">{{ user.first_name or user.name or 'User' }} {{ user.last_name or '' }}</div>
             <div class="user-email">{{ user.email }}</div>
             <span class="role-badge role-{{ user.role }}">
                 <i
@@ -25,7 +25,7 @@
     </div>
 
     <div class="menu-container">
-        <!-- Admin Section: Quản lý Manager -->
+        <!-- Admin Section: Quản trị hệ thống -->
         {% if user.role == 'admin' %}
         <div class="menu-section">
             <div class="section-title">
@@ -44,37 +44,54 @@
                 <div class="menu-label">Quản lý Gói Manager</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
-            <a class="menu-item" href="{{ url_for('admin_roles') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><i
-                        class="fas fa-user-shield"></i></div>
-                <div class="menu-label">Quản lý Vai trò</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-            <a class="menu-item" href="{{ url_for('admin_managers') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><i
-                        class="fas fa-user-tie"></i></div>
-                <div class="menu-label">Quản lý Manager</div>
+        </div>
+        {% endif %}
+
+        <!-- Manager Section: Tạo tài khoản User -->
+        {% if user.role == 'manager' %}
+        <div class="menu-section">
+            <div class="section-title">
+                <i class="fas fa-user-plus"></i>
+                <span>Quản lý User</span>
+            </div>
+            <a class="menu-item" href="{{ url_for('create_user_account') }}">
+                <div class="menu-icon"><i class="fas fa-user-plus"></i></div>
+                <div class="menu-label">Tạo tài khoản User</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
         </div>
         {% endif %}
 
-        <!-- Manager Section: Quản lý quyền User -->
+        <!-- Main Menu: Dành cho Manager/Admin -->
         {% if user.role in ['admin', 'manager'] %}
         <div class="menu-section">
             <div class="section-title">
-                <i class="fas fa-user-shield"></i>
-                <span>Quản lý phân quyền</span>
+                <i class="fas fa-store"></i>
+                <span>Quản lý kinh doanh</span>
             </div>
-            <a class="menu-item" href="{{ url_for('manager_permissions') }}">
-                <div class="menu-icon"><i class="fas fa-key"></i></div>
-                <div class="menu-label">Cấp quyền User</div>
+            <a class="menu-item" href="{{ url_for('dashboard') }}">
+                <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><i
+                        class="fas fa-chart-pie"></i></div>
+                <div class="menu-label">Dashboard (Kiếm tiền)</div>
+                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
+            </a>
+            <a class="menu-item" href="{{ url_for('customers') }}">
+                <div class="menu-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><i
+                        class="fas fa-users"></i></div>
+                <div class="menu-label">Khách hàng</div>
+                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
+            </a>
+            <a class="menu-item" href="{{ url_for('wallet_dashboard') }}">
+                <div class="menu-icon" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%);"><i
+                        class="fas fa-wallet"></i></div>
+                <div class="menu-label">Ví & Gói Manager</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
         </div>
         {% endif %}
-
-        <!-- Main Menu: Dành cho User có quyền -->
+        
+        <!-- User Menu: Chức năng cơ bản -->
+        {% if user.role == 'user' %}
         <div class="menu-section">
             <div class="section-title">
                 <i class="fas fa-store"></i>
@@ -86,62 +103,19 @@
                 <div class="menu-label">Khách hàng</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
-            <a class="menu-item" href="{{ url_for('products') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><i
-                        class="fas fa-box"></i></div>
-                <div class="menu-label">Sản phẩm</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-            <a class="menu-item" href="{{ url_for('imports') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"><i
-                        class="fas fa-download"></i></div>
-                <div class="menu-label">Nhập hàng</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-            <a class="menu-item" href="{{ url_for('exports') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"><i
-                        class="fas fa-upload"></i></div>
-                <div class="menu-label">Xuất hàng</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-            <a class="menu-item" href="{{ url_for('wallet_dashboard') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%);"><i
-                        class="fas fa-wallet"></i></div>
-                <div class="menu-label">Ví & Gói Manager</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
         </div>
-
-        <!-- SE (Scenarios & Events) -->
-        <div class="menu-section">
-            <div class="section-title">
-                <i class="fas fa-magic"></i>
-                <span>Tự động hóa thông minh</span>
-            </div>
-            <a class="menu-item" href="{{ url_for('se_auto_import') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"><i
-                        class="fas fa-sync-alt"></i></div>
-                <div class="menu-label">Tự động nhập hàng</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-            <a class="menu-item" href="{{ url_for('se_reports') }}">
-                <div class="menu-icon" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);"><i
-                        class="fas fa-chart-line"></i></div>
-                <div class="menu-label">Báo cáo thu chi</div>
-                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
-        </div>
+        {% endif %}
 
         <!-- Workspace -->
         <div class="menu-section">
             <div class="section-title">
                 <i class="fas fa-rocket"></i>
-                <span>Sáng tạo & Phát triển</span>
+                <span>Workspace</span>
             </div>
             <a class="menu-item" href="{{ url_for('workspace') }}">
                 <div class="menu-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"><i
                         class="fas fa-paint-brush"></i></div>
-                <div class="menu-label">Workspace</div>
+                <div class="menu-label">Workspace Hub</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
         </div>

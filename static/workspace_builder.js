@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (action) {
             case 'edit':
                 selectNode(node);
-                showNotification('Edit mode activated', 'info');
+                // showNotification('Edit mode activated', 'info');
                 break;
             case 'duplicate': {
                 const clone = node.cloneNode(true);
@@ -127,13 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 clone.style.top = `${parseInt(node.style.top, 10) + 30}px`;
                 canvas?.appendChild(clone);
                 attachNodeInteractions(clone);
-                showNotification('Node duplicated', 'success');
+                // showNotification('Node duplicated', 'success');
                 break;
             }
             case 'delete':
                 if (confirm('Delete this node?')) {
                     node.remove();
-                    showNotification('Node deleted', 'success');
+                    // showNotification('Node deleted', 'success');
                     if (builderState.selectedNode === node) {
                         builderState.selectedNode = null;
                         propertyPanel?.classList.remove('open');
@@ -332,16 +332,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas?.classList.add('cursor-mode');
                 builderMode.isConnecting = false;
                 builderMode.connectionStart = null;
-                showNotification('Select mode activated - Click nodes to select and edit', 'info');
+                // showNotification('Select mode activated - Click nodes to select and edit', 'info');
             } else if (action === 'connect') {
                 canvas?.classList.remove('cursor-mode', 'zoom-mode');
                 canvas?.classList.add('connect-mode');
                 builderMode.isConnecting = true;
-                showNotification('Connect mode activated - Click nodes to connect them', 'info');
+                // showNotification('Connect mode activated - Click nodes to connect them', 'info');
             } else if (action === 'zoom') {
                 canvas?.classList.remove('cursor-mode', 'connect-mode');
                 canvas?.classList.add('zoom-mode');
-                showNotification('Zoom mode activated - Use mouse wheel to zoom in/out', 'info');
+                // showNotification('Zoom mode activated - Use mouse wheel to zoom in/out', 'info');
             }
         });
     });
@@ -366,11 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!builderMode.connectionStart) {
             builderMode.connectionStart = node;
             node.classList.add('connection-source');
-            showNotification('Click another node to create connection', 'info');
+            // showNotification('Click another node to create connection', 'info');
         } else {
             if (builderMode.connectionStart !== node) {
                 drawConnection(builderMode.connectionStart, node);
-                showNotification('Connection created!', 'success');
+                // showNotification('Connection created!', 'success');
             }
             builderMode.connectionStart.classList.remove('connection-source');
             builderMode.connectionStart = null;

@@ -44,7 +44,7 @@ function renderSubscriptionsTable(subscriptions) {
     const tbody = document.getElementById('subscriptionsTable');
 
     if (subscriptions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Chưa có Manager nào</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">Chưa có Manager nào</td></tr>';
         return;
     }
 
@@ -69,6 +69,11 @@ function renderSubscriptionsTable(subscriptions) {
                 quarterly: 'Quý',
                 yearly: 'Năm',
             };
+            
+            // Auto-renew toggle
+            const autoRenew = sub.auto_renew || false;
+            const toggleChecked = autoRenew ? 'checked' : '';
+            const toggleClass = autoRenew ? 'bg-success' : 'bg-secondary';
 
             return `
             <tr>
@@ -78,6 +83,15 @@ function renderSubscriptionsTable(subscriptions) {
                 <td>${new Date(sub.start_date).toLocaleDateString('vi-VN')}</td>
                 <td>${endDate.toLocaleDateString('vi-VN')}</td>
                 <td>${statusBadge}</td>
+                <td>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoRenew${sub.user_id}" ${toggleChecked} 
+                               onchange="toggleAutoRenew(${sub.user_id}, this.checked)">
+                        <label class="form-check-label" for="autoRenew${sub.user_id}">
+                            <span class="badge ${toggleClass}">${autoRenew ? 'BẬT' : 'TẮT'}</span>
+                        </label>
+                    </div>
+                </td>
                 <td>
                     <button class="btn btn-sm btn-success" onclick="openExtendModal(${sub.user_id}, '${sub.user_name.replace(/'/g, "&apos;")}')">
                         <i class="fas fa-plus"></i> Gia hạn
@@ -368,5 +382,38 @@ async function processQueuedPayment(paymentId, action) {
         }
     } catch (error) {
         showAlert('error', 'Lỗi: ' + error.message);
+    }
+}
+
+// Toggle auto-renew subscription
+async function toggleAutoRenew(userId, enabled) {
+    try {
+        const response = await fetch('/api/admin/subscription/auto-renew', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, auto_renew: enabled }),
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
+            return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            showAlert('success', enabled ? 'Đã bật gia hạn tự động' : 'Đã tắt gia hạn tự động');
+            // Reload để cập nhật badge
+            loadSubscriptions();
+        } else {
+            showAlert('error', data.message || 'Không thể cập nhật');
+            // Revert checkbox
+            document.getElementById(`autoRenew${userId}`).checked = !enabled;
+        }
+    } catch (error) {
+        showAlert('error', 'Lỗi: ' + error.message);
+        // Revert checkbox
+        document.getElementById(`autoRenew${userId}`).checked = !enabled;
     }
 }

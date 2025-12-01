@@ -232,6 +232,16 @@
                             Tạo và điều phối các kịch bản làm việc
                         </div>
                     </a>
+
+                    <a href="{{ url_for('workspace') }}#scenarioAccessBoard" class="action-card" data-paid-scenario-card onclick="openPaidScenarioBilling(event)">
+                        <div class="action-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="action-title">Paid Scenario (Manager/Admin)</div>
+                        <div class="action-description">
+                            Đây là phần trả phí · Nhấn để chuyển sang trang đóng tiền trước khi cấp quyền
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -416,4 +426,12 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='admin_workspace.js') }}" defer></script>
+<script>
+function openPaidScenarioBilling(event) {
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
+    window.location.href = '/wallet#planGrid';
+}
+</script>
 {% endblock %}

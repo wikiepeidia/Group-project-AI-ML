@@ -41,6 +41,10 @@ function renderWalletDashboard() {
     const autoToggle = document.getElementById('autoRenewToggle');
     const autoStatus = document.getElementById('autoRenewStatus');
 
+    if (!balanceEl || !updatedEl || !subStatusEl || !subExpiryEl || !autoToggle || !autoStatus) {
+        return; // workspace page does not host full wallet controls
+    }
+
     balanceEl.textContent = formatCurrency(walletState.wallet?.balance || 0);
     updatedEl.textContent = walletState.wallet?.updated_at ? `Cập nhật ${walletState.wallet.updated_at}` : '';
 
@@ -225,8 +229,11 @@ function formatCurrency(amount) {
 
 // Polling to refresh
 window.addEventListener('DOMContentLoaded', () => {
-    loadWalletDashboard();
-    setInterval(loadWalletDashboard, 15000);
+    const hasWalletDashboard = document.getElementById('walletBalance');
+    if (hasWalletDashboard) {
+        loadWalletDashboard();
+        setInterval(loadWalletDashboard, 15000);
+    }
     // If workspace contains a glance widget, initialize it too
     if (document.getElementById('walletGlanceSection')) {
         initWalletGlance();
@@ -266,3 +273,63 @@ window.upgradePlan = upgradePlan;
 window.toggleAutoRenew = toggleAutoRenew;
 window.loadWalletDashboard = loadWalletDashboard;
 
+// Admin withdraw functions
+function openWithdrawModal() {
+    const modal = new bootstrap.Modal(document.getElementById('withdrawModal'));
+    const balance = walletState.wallet?.balance || 0;
+    document.getElementById('withdrawAvailableBalance').textContent = formatCurrency(balance);
+    modal.show();
+}
+
+async function submitWithdraw() {
+    const amount = parseInt(document.getElementById('withdrawAmount').value);
+    const bankName = document.getElementById('withdrawBankName').value.trim();
+    const accountNumber = document.getElementById('withdrawAccountNumber').value.trim();
+    const accountName = document.getElementById('withdrawAccountName').value.trim();
+    const note = document.getElementById('withdrawNote').value.trim();
+
+    if (!amount || amount < 100000) {
+        showNotification('Số tiền rút tối thiểu là 100.000đ', 'error');
+        return;
+    }
+
+    if (!bankName || !accountNumber || !accountName) {
+        showNotification('Vui lòng điền đầy đủ thông tin ngân hàng', 'error');
+        return;
+    }
+
+    const balance = walletState.wallet?.balance || 0;
+    if (amount > balance) {
+        showNotification('Số dư không đủ để rút', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/wallet/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                amount,
+                bank_name: bankName,
+                account_number: accountNumber,
+                account_name: accountName,
+                note
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Yêu cầu rút tiền thành công! Tiền sẽ được chuyển trong 1-2 ngày làm việc.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide();
+            loadWalletDashboard();
+        } else {
+            showNotification(data.message || 'Không thể rút tiền', 'error');
+        }
+    } catch (error) {
+        showNotification('Lỗi: ' + error.message, 'error');
+    }
+}
+
+window.openWithdrawModal = openWithdrawModal;
+window.submitWithdraw = submitWithdraw;
