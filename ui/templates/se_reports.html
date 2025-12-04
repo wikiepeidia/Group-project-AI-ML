@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}SE - Báo cáo thu chi{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_reports.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin_reports.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content reports-page">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-file-invoice-dollar"></i> SE - Báo cáo Thu Chi</h1>
+                <button class="btn btn-primary" onclick="openScheduleReportModal()">
+                    <i class="fas fa-calendar-plus"></i> Đặt lịch báo cáo
+                </button>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-magic"></i> <strong>Tính năng:</strong> Tự động tạo và gửi báo cáo thu chi định kỳ
+                (ngày/tuần/tháng) qua email hoặc lưu file.
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h6 class="card-title">Doanh thu (Tháng này)</h6>
+                            <h2 id="monthRevenue">0đ</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h6 class="card-title">Chi phí (Tháng này)</h6>
+                            <h2 id="monthExpense">0đ</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h6 class="card-title">Lợi nhuận</h6>
+                            <h2 id="monthProfit">0đ</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h6 class="card-title">Báo cáo đã gửi</h6>
+                            <h2 id="reportsSent">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Lịch báo cáo tự động</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tên báo cáo</th>
+                                    <th>Loại</th>
+                                    <th>Tần suất</th>
+                                    <th>Kênh gửi</th>
+                                    <th>Trạng thái</th>
+                                    <th>Lần gửi cuối</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduledReportsBody">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        Chưa có lịch báo cáo nào. Click "Đặt lịch báo cáo" để bắt đầu.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header card-header-surface">
+                    <h5><i class="fas fa-chart-line"></i> Biểu đồ Thu Chi</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="80"></canvas>
+                    <p class="text-center text-muted mt-3">
+                        <i class="fas fa-chart-bar"></i> Biểu đồ sẽ hiển thị sau khi có dữ liệu thu chi
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header card-header-surface">
+                    <h5><i class="fas fa-lightbulb"></i> Template Báo cáo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-calendar-day"></i> Báo cáo hàng ngày</h6>
+                                    <p class="card-text">Thu chi tổng hợp theo ngày, gửi vào 18h hàng ngày.</p>
+                                    <button class="btn btn-sm btn-primary" onclick="alert('Template: Daily Report')">
+                                        <i class="fas fa-plus"></i> Sử dụng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card text-white bg-success">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-calendar-week"></i> Báo cáo hàng tuần</h6>
+                                    <p class="card-text">Tổng kết thu chi 7 ngày, gửi vào Chủ nhật hàng tuần.</p>
+                                    <button class="btn btn-sm btn-success" onclick="alert('Template: Weekly Report')">
+                                        <i class="fas fa-plus"></i> Sử dụng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card text-white bg-info">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Báo cáo hàng tháng</h6>
+                                    <p class="card-text">Báo cáo chi tiết cuối tháng, gửi vào ngày 1 hàng tháng.</p>
+                                    <button class="btn btn-sm btn-info" onclick="alert('Template: Monthly Report')">
+                                        <i class="fas fa-plus"></i> Sử dụng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal: Schedule Report -->
+<div class="modal fade" id="scheduleReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Đặt lịch Báo cáo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên báo cáo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="reportName" placeholder="VD: Báo cáo thu chi tháng">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Loại báo cáo</label>
+                        <select class="form-select" id="reportType">
+                            <option value="revenue_expense">Thu chi tổng hợp</option>
+                            <option value="revenue_only">Chỉ doanh thu</option>
+                            <option value="expense_only">Chỉ chi phí</option>
+                            <option value="profit">Lợi nhuận</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Tần suất</label>
+                        <select class="form-select" id="reportFrequency">
+                            <option value="daily">Hàng ngày</option>
+                            <option value="weekly">Hàng tuần</option>
+                            <option value="monthly">Hàng tháng</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Kênh gửi</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="channelEmail">
+                        <label class="form-check-label" for="channelEmail">Email</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="channelFile" checked>
+                        <label class="form-check-label" for="channelFile">Lưu file (PDF/Excel)</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email nhận báo cáo</label>
+                    <input type="email" class="form-control" id="reportEmail" placeholder="admin@company.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="alert('Chức năng đang phát triển')">Lưu
+                    lịch</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

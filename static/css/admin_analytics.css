@@ -1,0 +1,233 @@
+/* Admin analytics page specific styles */
+.main-content {
+    margin-left: 280px;
+    padding: 20px;
+    background: var(--surface-200);
+    min-height: 100vh;
+}
+
+.metric-card {
+    border-radius: 15px;
+    padding: 25px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.metric-icon {
+    font-size: 48px;
+    opacity: 0.9;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-label {
+    font-size: 12px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.metric-change {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-card {
+    background: var(--surface-100);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.analytics-page .card {
+    background: var(--surface-100);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.analytics-page .card:hover {
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.12);
+}
+
+.analytics-page .card:not([class*='bg-']) .card-body,
+.analytics-page .card:not([class*='bg-']) .card-title,
+.analytics-page .card:not([class*='bg-']) .card-text {
+    color: var(--gray-900);
+}
+
+.analytics-page .table {
+    color: var(--gray-900);
+    border-color: var(--border-soft);
+}
+
+.analytics-page .table thead th {
+    background: var(--surface-200);
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--table-header-color) !important;
+    font-weight: 700;
+}
+
+.analytics-page .table tbody tr {
+    background: var(--surface-100);
+    transition: background 0.3s ease;
+}
+
+.analytics-page .table tbody tr:nth-child(even) {
+    background: var(--surface-200);
+}
+
+.analytics-page .table tbody tr:hover {
+    background: var(--surface-300);
+}
+
+.analytics-page .table tbody td {
+    border-top: 1px solid var(--border-soft);
+}
+
+.analytics-page .form-select {
+    background: var(--surface-100);
+    color: var(--gray-900);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.analytics-page .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+    background: var(--surface-100);
+    color: var(--gray-900);
+}
+
+html[data-theme='dark'] .analytics-page .form-select,
+body.dark-mode .analytics-page .form-select {
+    border-color: var(--gray-400);
+}
+
+html[data-theme='dark'] .analytics-page .form-select:focus,
+body.dark-mode .analytics-page .form-select:focus {
+    border-color: var(--primary);
+}
+
+.analytics-page .card:not([class*='bg-']) .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-item,
+.customer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.3s ease;
+}
+
+.product-item:hover,
+.customer-item:hover {
+    background: var(--surface-200);
+}
+
+.product-item:last-child,
+.customer-item:last-child {
+    border-bottom: none;
+}
+
+.item-rank {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.item-rank.gold {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff8a00 100%);
+}
+
+.item-rank.silver {
+    background: linear-gradient(135deg, #b8b8b8 0%, #888888 100%);
+}
+
+.item-rank.bronze {
+    background: linear-gradient(135deg, #cd7f32 0%, #a05a2c 100%);
+}
+
+.item-info {
+    flex: 1;
+    margin-left: 15px;
+}
+
+.item-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 3px;
+}
+
+.item-detail {
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.item-value {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 16px;
+}
+
+.badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}

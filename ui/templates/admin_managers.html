@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Manager - Chủ Web{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_managers.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin_managers.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content managers-page">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2 page-title"><i class="fas fa-crown"></i><span>Quản lý Manager</span></h1>
+                <button class="btn btn-primary" onclick="openAddManagerModal()">
+                    <i class="fas fa-plus"></i> Thêm Manager
+                </button>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Chú ý:</strong> Manager có quyền cấp phát quyền cho
+                        User. Chỉ Admin (Chủ Web) mới có thể quản lý Manager.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Danh sách Manager</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên</th>
+                                    <th>Email</th>
+                                    <th>Vai trò</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="managersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="spinner-border" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Manager -->
+<div class="modal fade managers-modal" id="managerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="managerModalTitle">Thêm Manager</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="managerId">
+                <div class="mb-3">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="managerEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="managerName" required>
+                </div>
+                <div class="mb-3" id="passwordGroup">
+                    <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="managerPassword">
+                    <small class="text-muted">Để trống nếu không muốn đổi mật khẩu</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveManager()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Fun Work Hub{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="dashboard-header">
+                <div class="header-title">
+                    <h1><i class="fas fa-crown"></i> Admin Dashboard</h1>
+                    <p>Chào mừng đến với bảng điều khiển quản trị hệ thống</p>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-danger">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalUsers">0</div>
+                            <div class="stat-label">Tổng người dùng</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-warning">
+                        <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalManagers">0</div>
+                            <div class="stat-label">Managers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-primary">
+                        <div class="stat-icon"><i class="fas fa-box"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalProducts">0</div>
+                            <div class="stat-label">Sản phẩm</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-gradient-success">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalCustomers">0</div>
+                            <div class="stat-label">Khách hàng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title"><i class="fas fa-bolt"></i> Thao tác nhanh</h3>
+                </div>
+                <div class="col-md-3">
+                    <a class="action-card action-analytics" href="{{ url_for('admin_analytics') }}">
+                        <div class="action-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="action-content">
+                            <h4>Thống kê & Báo cáo</h4>
+                            <p>Xem doanh thu, lượng truy cập, lợi nhuận</p>
+                        </div>
+                        <div class="action-arrow"><i class="fas fa-arrow-right"></i></div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a class="action-card action-roles" href="{{ url_for('admin_roles') }}">
+                        <div class="action-icon"><i class="fas fa-user-shield"></i></div>
+                        <div class="action-content">
+                            <h4>Quản lý Vai trò</h4>
+                            <p>Nâng cấp/Hạ cấp tài khoản User ↔ Manager</p>
+                        </div>
+                        <div class="action-arrow"><i class="fas fa-arrow-right"></i></div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a class="action-card action-managers" href="{{ url_for('admin_managers') }}">
+                        <div class="action-icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="action-content">
+                            <h4>Quản lý Manager</h4>
+                            <p>Tạo và quản lý tài khoản Manager</p>
+                        </div>
+                        <div class="action-arrow"><i class="fas fa-arrow-right"></i></div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title"><i class="fas fa-history"></i> Hoạt động gần đây</h3>
+                </div>
+                <div class="col-12">
+                    <div class="activity-card">
+                        <div class="activity-list" id="recentActivities">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h4><i class="fas fa-info-circle"></i> Thông tin hệ thống</h4>
+                        <div class="info-item">
+                            <span class="info-label">Phiên bản:</span>
+                            <span class="info-value">v1.0.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database:</span>
+                            <span class="info-value">SQLite</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Uptime:</span>
+                            <span class="info-value" id="systemUptime">--</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h4><i class="fas fa-shield-alt"></i> Bảo mật</h4>
+                        <div class="info-item">
+                            <span class="info-label">Xác thực:</span>
+                            <span class="info-value"><i class="fas fa-check-circle text-success"></i> Đã bật</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">HTTPS:</span>
+                            <span class="info-value"><i class="fas fa-times-circle text-warning"></i> Chưa bật</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Sao lưu tự động:</span>
+                            <span class="info-value"><i class="fas fa-check-circle text-success"></i> Hàng ngày</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

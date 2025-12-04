@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow Studio - Fun Work Hub{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace_scenario.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="scenario-wrapper">
+    {% include 'components/sidebar.html' %}
+
+    <main class="scenario-main">
+        <!-- ========== MANAGER/ADMIN VIEW ========== -->
+        {% if current_user.role in ['manager', 'admin'] %}
+
+        <section class="workspace-collections">
+            <div class="collection-block">
+                <div class="collection-head">
+                    <div>
+                        <p class="launch-eyebrow">Quản lý kinh doanh</p>
+                        <h3>Bảng điều khiển vận hành</h3>
+                    </div>
+                    <span class="collection-hint">Tất cả nằm trong Workspace này</span>
+                </div>
+                <div class="collection-grid">
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('products') }}'">
+                        <div class="collection-icon gradient-orange"><i class="fas fa-box"></i></div>
+                        <div class="collection-body">
+                            <h4>Sản phẩm</h4>
+                            <p>Quản lý danh mục, tồn kho và giá theo thời gian thực.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('imports') }}'">
+                        <div class="collection-icon gradient-blue"><i class="fas fa-download"></i></div>
+                        <div class="collection-body">
+                            <h4>Nhập hàng</h4>
+                            <p>Ghi nhận phiếu nhập, nhà cung cấp và chi phí cập nhật.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('exports') }}'">
+                        <div class="collection-icon gradient-green"><i class="fas fa-upload"></i></div>
+                        <div class="collection-body">
+                            <h4>Xuất hàng</h4>
+                            <p>Theo dõi đơn xuất, tìm kiếm giao dịch và hỗ trợ người mua/bán.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('admin_analytics') }}'">
+                        <div class="collection-icon gradient-violet"><i class="fas fa-chart-pie"></i></div>
+                        <div class="collection-body">
+                            <h4>Phân tích Manager</h4>
+                            <p>Xem doanh thu, lợi nhuận và dự đoán nhập xuất hàng (Manager only).</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="collection-block">
+                <div class="collection-head">
+                    <div>
+                        <p class="launch-eyebrow">Tự động hóa thông minh</p>
+                        <h3>Scenario &amp; AI Automation</h3>
+                    </div>
+                    <span class="collection-hint">Thuộc Workspace Automation</span>
+                </div>
+                <div class="collection-grid">
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('dashboard') }}'">
+                        <div class="collection-icon gradient-purple"><i class="fas fa-chart-pie"></i></div>
+                        <div class="collection-body">
+                            <h4>Dashboard Kiếm tiền</h4>
+                            <p>Theo dõi doanh thu, lợi nhuận và phân tích kinh doanh chi tiết.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('se_auto_import') }}'">
+                        <div class="collection-icon gradient-gold"><i class="fas fa-sync-alt"></i></div>
+                        <div class="collection-body">
+                            <h4>Tự động nhập hàng</h4>
+                            <p>Dùng bot tự động đặt hàng khi tồn kho thấp và đồng bộ kho.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('se_reports') }}'">
+                        <div class="collection-icon gradient-cyan"><i class="fas fa-chart-line"></i></div>
+                        <div class="collection-body">
+                            <h4>Báo cáo thông minh</h4>
+                            <p>Phiên bản trả phí dành cho Manager/Admin với dữ liệu realtime.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="wallet-glance" id="walletGlanceSection">
+            <div class="glance-head">
+                <div>
+                    <p class="launch-eyebrow">Ví & Subscription</p>
+                    <h2>Tình trạng nâng cấp Manager</h2>
+                </div>
+                <div class="glance-actions">
+                    <button class="btn btn-outline-secondary" type="button" onclick="redirectToWallet()">
+                        <i class="fas fa-arrow-right"></i> Đi tới ví
+                    </button>
+                </div>
+            </div>
+            <div class="glance-body" id="walletGlanceContent">
+                <!-- Wallet glance content will be loaded here -->
+            </div>
+        </section>
+
+        <section class="scenario-tier-board" id="scenarioAccessBoard">
+            <div class="tier-card tier-card--free">
+                <p class="tier-eyebrow">Free workspace</p>
+                <h3>Không gian dùng thử</h3>
+                <p class="tier-subtext">Bao gồm các scenario cơ bản, phù hợp để khám phá hệ thống trước khi nâng cấp.
+                </p>
+                <ul class="tier-feature-list">
+                    <li><i class="fas fa-check"></i> Scraping + CRM Sync giống Make.com</li>
+                    <li><i class="fas fa-check"></i> Library module cơ bản &amp; lưu draft</li>
+                    <li><i class="fas fa-check"></i> 01 luồng chạy thủ công / lần</li>
+                </ul>
+                <div class="tier-actions">
+                    <button class="btn btn-outline-light" type="button" onclick="openScrapingScenario()">
+                        <i class="fas fa-play"></i> Tiếp tục với bản Free
+                    </button>
+                </div>
+            </div>
+            <div class="tier-card tier-card--paid" id="paidScenarioGate" data-paid-scenario="locked">
+                <p class="tier-eyebrow">Paid Scenario</p>
+                <h3>Phiên bản trả phí</h3>
+                <p class="tier-subtext">Đây là phần trả phí. Nâng cấp để mở khóa nhiều scenario hơn, tự động chạy theo
+                    lịch và tích hợp API.</p>
+                <ul class="tier-feature-list">
+                    <li><i class="fas fa-lock"></i> Scenario nâng cao &amp; auto-run</li>
+                    <li><i class="fas fa-lock"></i> SLA ưu tiên &amp; hỗ trợ dữ liệu lớn</li>
+                    <li><i class="fas fa-lock"></i> API hook (sẽ kích hoạt sau)</li>
+                </ul>
+                <div class="tier-actions">
+                    <button class="btn btn-warning" type="button" onclick="redirectToWallet('#planGrid')"
+                        data-paid-action="checkout">
+                        <i class="fas fa-credit-card"></i> Paid Scenario
+                    </button>
+                </div>
+                <small class="tier-note">Chưa thanh toán? Nhấn nút trên để sang trang ví &amp; hoàn tất nâng
+                    cấp.</small>
+            </div>
+            <div class="tier-card tier-card--manager" data-paid-scenario="manager">
+                <p class="tier-eyebrow">Manager / Admin</p>
+                <h3>Cổng điều phối riêng</h3>
+                <p class="tier-subtext">Khu vực này sẽ nhận dữ liệu từ API nội bộ, tách biệt với bản Free của user.</p>
+                <div class="tier-manager-callout">
+                    <span class="badge bg-info text-dark">Coming soon API</span>
+                    <p class="mb-0">Quản trị có thể bật/tắt Paid Scenario cho từng workspace ngay khi API hoàn tất.</p>
+                </div>
+                <div class="tier-actions">
+                    <button class="btn btn-outline-info" type="button" onclick="redirectToWallet('#planGrid')">
+                        <i class="fas fa-layer-group"></i> Xem quyền nâng cấp
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== USER VIEW (Limited) ========== -->
+        {% else %}
+
+        <section class="workspace-collections">
+            <div class="collection-block">
+                <div class="collection-head">
+                    <div>
+                        <p class="launch-eyebrow">Quản lý kinh doanh</p>
+                        <h3>Bảng điều khiển vận hành</h3>
+                    </div>
+                    <span class="collection-hint">Chức năng cơ bản</span>
+                </div>
+                <div class="collection-grid">
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('customers') }}'">
+                        <div class="collection-icon gradient-blue"><i class="fas fa-users"></i></div>
+                        <div class="collection-body">
+                            <h4>Khách hàng</h4>
+                            <p>Quản lý thông tin khách hàng và lịch sử giao dịch.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('products') }}'">
+                        <div class="collection-icon gradient-orange"><i class="fas fa-box"></i></div>
+                        <div class="collection-body">
+                            <h4>Sản phẩm</h4>
+                            <p>Quản lý danh mục, tồn kho và giá theo thời gian thực.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('imports') }}'">
+                        <div class="collection-icon gradient-blue"><i class="fas fa-download"></i></div>
+                        <div class="collection-body">
+                            <h4>Nhập hàng</h4>
+                            <p>Ghi nhận phiếu nhập, nhà cung cấp và chi phí cập nhật.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card" onclick="location.href='{{ url_for('exports') }}'">
+                        <div class="collection-icon gradient-green"><i class="fas fa-upload"></i></div>
+                        <div class="collection-body">
+                            <h4>Xuất hàng</h4>
+                            <p>Theo dõi đơn xuất, tìm kiếm giao dịch và hỗ trợ người mua/bán.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="collection-block">
+                <div class="collection-head">
+                    <div>
+                        <p class="launch-eyebrow">Tự động hóa thông minh</p>
+                        <h3>Scenario &amp; AI Automation</h3>
+                    </div>
+                    <span class="collection-hint">Chức năng cơ bản</span>
+                </div>
+                <div class="collection-grid">
+                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')"
+                        style="cursor: pointer;">
+                        <div class="collection-icon gradient-purple"><i class="fas fa-lock"></i></div>
+                        <div class="collection-body">
+                            <h4>Dashboard Kiếm tiền <span style="color: #ef4444;">(VIP)</span></h4>
+                            <p>Theo dõi doanh thu, lợi nhuận - chỉ Manager được dùng.</p>
+                        </div>
+                        <span class="collection-cta">Nâng cấp để mở khóa</span>
+                    </button>
+                    <button type="button" class="collection-card"
+                        onclick="location.href='{{ url_for('se_auto_import') }}'">
+                        <div class="collection-icon gradient-gold"><i class="fas fa-sync-alt"></i></div>
+                        <div class="collection-body">
+                            <h4>Tự động nhập hàng</h4>
+                            <p>Dùng bot tự động đặt hàng khi tồn kho thấp và đồng bộ kho.</p>
+                        </div>
+                        <span class="collection-cta">Đi tới màn hình</span>
+                    </button>
+                    <button type="button" class="collection-card locked" onclick="redirectToWallet('#planGrid')"
+                        style="cursor: pointer;">
+                        <div class="collection-icon gradient-cyan"><i class="fas fa-lock"></i></div>
+                        <div class="collection-body">
+                            <h4>Báo cáo thông minh <span style="color: #ef4444;">(VIP)</span></h4>
+                            <p>Phần trả phí chỉ mở khi nâng cấp Manager - dữ liệu realtime.</p>
+                        </div>
+                        <span class="collection-cta">Nâng cấp để mở khóa</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="upgrade-cta"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 16px; text-align: center; color: white; margin: 30px 0;">
+            <h3 style="font-size: 1.8rem; margin-bottom: 15px;">Nâng cấp lên Manager để mở khóa tính năng VIP</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 25px; opacity: 0.9;">Phân tích doanh thu, báo cáo thông minh,
+                scenario tự động chạy và nhiều tính năng nâng cao khác.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-light btn-lg" onclick="redirectToWallet('#planGrid')">
+                    <i class="fas fa-crown"></i> Xem gói Manager
+                </button>
+            </div>
+        </section>
+
+        {% endif %}
+
+    </main>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/workspace_scenario.js') }}"></script>
+<script>
+    function redirectToWallet(hash) {
+        let url = '/wallet';
+        if (hash) url += hash;
+        window.location.href = url;
+    }
+</script>
+{% if current_user.role in ['manager', 'admin'] %}
+<script src="{{ url_for('static', filename='js/wallet.js') }}" defer></script>
+{% endif %}
+{% endblock %}
+{% endblock %}

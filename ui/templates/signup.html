@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Fun Work Hub{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth_signup.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/auth_signup.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-left">
+        <div class="brand-logo">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h1 class="brand-title">Tham gia Fun Work Hub</h1>
+        <p class="brand-subtitle">
+            Tạo tài khoản và bắt đầu quản lý công việc của bạn hiệu quả hơn
+        </p>
+        <div class="benefit-list">
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-users"></i></div>
+                <div class="benefit-content">
+                    <h4>Quản lý toàn diện</h4>
+                    <p>Khách hàng, sản phẩm, nhập xuất kho</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-magic"></i></div>
+                <div class="benefit-content">
+                    <h4>Tự động hóa AI</h4>
+                    <p>Nhập hàng tự động, báo cáo thông minh</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="benefit-content">
+                    <h4>Bảo mật cao</h4>
+                    <p>Dữ liệu được mã hóa và bảo vệ toàn diện</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-header">
+            <h2 class="auth-title">Tạo tài khoản mới</h2>
+            <p class="auth-subtitle">Bắt đầu hành trình quản lý thông minh</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.signup') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">Họ</label>
+                    <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Nguyễn Văn"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Tên</label>
+                    <input type="text" id="last_name" name="last_name" class="form-input" placeholder="A" required>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="example@email.com" required>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="phone" class="form-label">Số điện thoại (tùy chọn)</label>
+                <input type="tel" id="phone" name="phone" class="form-input" placeholder="0123456789">
+            </div>
+
+            <div class="form-group full-width">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Ít nhất 6 ký tự"
+                    required minlength="6">
+            </div>
+
+            <button type="submit" class="auth-btn">Tạo tài khoản</button>
+        </form>
+
+        <div class="divider">
+            <span>hoặc đăng ký với</span>
+        </div>
+
+        <div class="social-login">
+            <a href="#" class="social-btn social-btn--google">
+                <i class="fab fa-google"></i>
+                Google
+            </a>
+        </div>
+
+        <div class="auth-switch">
+            Đã có tài khoản? <a href="{{ url_for('auth.signin') }}">Đăng nhập</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

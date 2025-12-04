@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow Automation for Retail - RPAaaS Platform{% endblock %}
+
+{% block body_class %}landing-page{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}">
+{% endblock %}
+
+{% block content %}
+<nav class="nav">
+    <div class="nav-container">
+        <div class="nav-left">
+            <div class="nav-logo" aria-label="Workflow Automation for Retail">
+                <i class="fas fa-robot" aria-hidden="true"></i>
+                <span>Workflow Automation for Retail</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="{{ url_for('wallet_dashboard') }}">User</a></li>
+                <li><a href="{{ url_for('admin_subscriptions') }}">Manager</a></li>
+            </ul>
+        </div>
+        <div class="nav-actions">
+            <a href="{{ url_for('auth.signin') }}" class="btn btn-secondary">Sign In</a>
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <h1>Automate Your Retail Workflows with AI-Powered RPA</h1>
+            <p>
+                Build and scale intelligent automation workflows for your retail business.
+                Connect inventory, orders, customer data, and more with our no-code workflow builder.
+            </p>
+
+            <div class="hero-actions">
+                <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    Start Free Trial
+                </a>
+                <a href="#demo" class="btn btn-secondary">
+                    <i class="fas fa-play"></i>
+                    Watch Demo
+                </a>
+            </div>
+
+            <div class="hero-features">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <span>Visual Workflow Builder</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <span>Retail Integration</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span>AI-Powered Automation</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span>Real-time Analytics</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="visual-container">
+                <div class="visual-header">
+                    <div class="visual-dots">
+                        <div class="visual-dot dot-red"></div>
+                        <div class="visual-dot dot-yellow"></div>
+                        <div class="visual-dot dot-green"></div>
+                    </div>
+                    <div class="visual-title">Workflow Automation for Retail</div>
+                </div>
+                <div class="visual-content">
+                    <div class="visual-sidebar">
+                        <div class="visual-bar visual-bar--tall visual-bar--blue"></div>
+                        <div class="visual-bar visual-bar--green"></div>
+                        <div class="visual-bar visual-bar--yellow"></div>
+                        <div class="visual-bar visual-bar--red"></div>
+                    </div>
+                    <div class="visual-main">
+                        <div class="visual-logo" aria-label="Workflow Automation emblem">
+                            <i class="fas fa-robot" aria-hidden="true"></i>
+                        </div>
+                        <div class="visual-subtitle">
+                            Your retail automation<br>
+                            <span class="visual-subtitle-accent">starts here</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

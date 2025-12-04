@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Thống kê & Báo cáo - Admin{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_analytics.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="{{ url_for('static', filename='js/admin_analytics.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'components/sidebar.html' %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content analytics-page">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-chart-line"></i> Thống kê & Báo cáo</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <select class="form-select" id="timeRangeFilter">
+                        <option value="today">Hôm nay</option>
+                        <option value="week" selected>7 ngày qua</option>
+                        <option value="month">30 ngày qua</option>
+                        <option value="year">Năm nay</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Revenue & Access Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-success">
+                        <div class="metric-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">TỔNG DOANH THU</div>
+                            <div class="metric-value" id="totalRevenue">0 đ</div>
+                            <div class="metric-change positive" id="revenueChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-primary">
+                        <div class="metric-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">LƯỢT TRUY CẬP</div>
+                            <div class="metric-value" id="totalVisits">0</div>
+                            <div class="metric-change positive" id="visitsChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-warning">
+                        <div class="metric-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">ĐON HÀNG</div>
+                            <div class="metric-value" id="totalOrders">0</div>
+                            <div class="metric-change positive" id="ordersChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card bg-gradient-danger">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">LỢI NHUẬN</div>
+                            <div class="metric-value" id="totalProfit">0 đ</div>
+                            <div class="metric-change positive" id="profitChange">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-area"></i> Biểu đồ Doanh thu & Lợi nhuận
+                        </h5>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-pie"></i> Phân bổ Doanh thu
+                        </h5>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-eye"></i> Lượng truy cập theo giờ
+                        </h5>
+                        <canvas id="accessChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-user-friends"></i> Người dùng hoạt động
+                        </h5>
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Performance Table -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-user-tie"></i> Hiệu suất Manager
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Manager</th>
+                                            <th>Email</th>
+                                            <th>User quản lý</th>
+                                            <th>Quyền đã cấp</th>
+                                            <th>Doanh thu phụ trách</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="managerPerformanceTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                <div class="spinner-border" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Customers -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-crown"></i> Top 5 Khách hàng VIP
+                            </h5>
+                            <div id="topCustomers">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}

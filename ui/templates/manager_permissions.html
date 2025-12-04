@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Quyền User{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_manager_permissions.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin_manager_permissions.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="manager-permissions-page">
+    {% include 'components/sidebar.html' %}
+
+    <main class="permissions-main">
+        <header class="permissions-header">
+            <div>
+                <p class="eyebrow">Phân quyền thông minh</p>
+                <h1>Quản lý Quyền User</h1>
+                <p>Giữ quyền truy cập được kiểm soát chặt chẽ trong hệ thống Fun Work Hub.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline-light" onclick="loadUsers()">
+                    <i class="fas fa-sync-alt"></i>
+                    Tải lại
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#grantPermissionModal">
+                    <i class="fas fa-plus"></i>
+                    Cấp quyền nhanh
+                </button>
+            </div>
+        </header>
+
+        <section class="permissions-summary">
+            <article class="summary-card">
+                <div>
+                    <p class="eyebrow">Cấp quyền nhanh</p>
+                    <h3>6 nhóm quyền chính</h3>
+                    <p>Mỗi nhóm quyền gắn với hành động cụ thể trong hệ thống. Chỉ định chính xác để đảm bảo bảo mật.
+                    </p>
+                </div>
+                <ul class="permission-pill-list">
+                    <li><i class="fas fa-upload"></i> export</li>
+                    <li><i class="fas fa-download"></i> import</li>
+                    <li><i class="fas fa-chart-bar"></i> view_reports</li>
+                    <li><i class="fas fa-database"></i> manage_data</li>
+                    <li><i class="fas fa-rocket"></i> create_scenarios</li>
+                    <li><i class="fas fa-ban"></i> delete_items</li>
+                </ul>
+            </article>
+            <article class="summary-card compact">
+                <p class="eyebrow">Trạng thái hệ thống</p>
+                <div class="status-row">
+                    <span>Người dùng đang theo dõi</span>
+                    <strong id="trackedUsers">--</strong>
+                </div>
+                <div class="status-row">
+                    <span>Quyền đã cấp</span>
+                    <strong id="grantedPermissions">--</strong>
+                </div>
+                <div class="status-row">
+                    <span>Phiên gần nhất</span>
+                    <strong id="lastUpdate">Đang cập nhật…</strong>
+                </div>
+            </article>
+        </section>
+
+        <section class="permissions-table-card">
+            <div class="table-header">
+                <div>
+                    <h2>Danh sách người dùng</h2>
+                    <p>Theo dõi vai trò, quyền hiện tại và thao tác cấp/thu hồi.</p>
+                </div>
+                <div class="table-tools">
+                    <div class="input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input id="userSearch" type="search" placeholder="Tìm theo tên hoặc email"
+                            oninput="filterUsers()">
+                    </div>
+                    <select id="roleFilter" class="form-select" onchange="filterUsers()">
+                        <option value="all">Tất cả vai trò</option>
+                        <option value="user">User</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive permissions-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Quyền hiện tại</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6">
+                                <div class="loading-state">
+                                    <span class="spinner-border" role="status" aria-hidden="true"></span>
+                                    <p>Đang tải danh sách user…</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal: Grant Permission -->
+<div class="modal fade" id="grantPermissionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cấp Quyền</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="grantUserId">
+                <div class="mb-3">
+                    <label class="form-label">User: <strong id="grantUserName"></strong></label>
+                </div>
+                <div class="mb-3">
+                    <label for="permissionTypeSelect" class="form-label">Chọn quyền</label>
+                    <select class="form-select" id="permissionTypeSelect">
+                        <option value="export">Export - Xuất dữ liệu</option>
+                        <option value="import">Import - Nhập dữ liệu</option>
+                        <option value="view_reports">View Reports - Xem báo cáo</option>
+                        <option value="manage_data">Manage Data - Quản lý dữ liệu</option>
+                        <option value="create_scenarios">Create Scenarios - Tạo scenarios</option>
+                        <option value="delete_items">Delete Items - Xóa items</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="grantPermission()">Cấp Quyền</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

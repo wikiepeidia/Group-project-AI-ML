@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow Builder - Workflow Automation for Retail{% endblock %}
+
+{% block body_class %}builder-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/builder.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="builder-container">
+    <aside class="tools-sidebar">
+        <div class="sidebar-header">
+            <div>
+                <button onclick="history.back()" class="back-btn" title="Quay về">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="sidebar-title">Workflow Builder</div>
+                <div class="sidebar-subtitle">Design automations for retail</div>
+            </div>
+            <div class="user-menu">
+                {% set avatar_source = (current_user.first_name or current_user.last_name or current_user.email or 'WA')
+                %}
+                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sign out
+                </a>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input type="search" id="toolSearch" class="search-input" placeholder="Search blocks or services...">
+            <span class="search-icon">
+                <i class="fas fa-search"></i>
+            </span>
+        </div>
+
+        <div class="tools-list" id="toolsList">
+            <div class="tool-category">
+                <div class="category-title">Triggers</div>
+                <div class="tool-item" draggable="true" data-category="trigger">
+                    <div class="tool-icon flow-control">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Scheduled run</div>
+                        <div class="tool-description">Trigger every X minutes/hours</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="trigger">
+                    <div class="tool-icon webhooks">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Webhook</div>
+                        <div class="tool-description">Receive events from the POS</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="trigger">
+                    <div class="tool-icon airtable">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Inventory monitor</div>
+                        <div class="tool-description">Alert when SKU levels drop</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-category">
+                <div class="category-title">AI & Logic</div>
+                <div class="tool-item" draggable="true" data-category="ai">
+                    <div class="tool-icon openai">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">AI classifier</div>
+                        <div class="tool-description">Detect customer intent</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="logic">
+                    <div class="tool-icon tools">
+                        <i class="fas fa-random"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Branch</div>
+                        <div class="tool-description">Route based on conditions</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="logic">
+                    <div class="tool-icon http">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Delay</div>
+                        <div class="tool-description">Wait before next step</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-category">
+                <div class="category-title">Integrations</div>
+                <div class="tool-item" draggable="true" data-category="integration">
+                    <div class="tool-icon google-sheets">
+                        <i class="fas fa-table"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Google Sheets</div>
+                        <div class="tool-description">Log order activity</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="integration">
+                    <div class="tool-icon tools">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Slack</div>
+                        <div class="tool-description">Notify operations team</div>
+                    </div>
+                </div>
+                <div class="tool-item" draggable="true" data-category="integration">
+                    <div class="tool-icon http">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="tool-info">
+                        <div class="tool-name">Email</div>
+                        <div class="tool-description">Send reports to managers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <section class="builder-canvas">
+        <div class="canvas-header">
+            <div>
+                <div class="canvas-title">Workflow Automation Canvas</div>
+                <div class="nav-breadcrumb">
+                    <a href="{{ url_for('workspace') }}" class="nav-link">Workspace</a>
+                    <span class="nav-separator">/</span>
+                    <span class="nav-link">Builder</span>
+                </div>
+            </div>
+            <div class="canvas-actions">
+                <button class="action-btn" type="button" data-action="undo" title="Undo last change">
+                    <i class="fas fa-undo"></i>
+                    Undo
+                </button>
+                <button class="action-btn primary" type="button" data-action="save-workflow" title="Save workflow">
+                    <i class="fas fa-save"></i>
+                    Save workflow
+                </button>
+            </div>
+        </div>
+
+        <svg class="connections-svg" id="connectionLines" width="100%" height="100%" aria-hidden="true"></svg>
+
+        <div class="workflow-canvas" id="workflowCanvas">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-icon">
+                    <i class="fas fa-mouse-pointer"></i>
+                </div>
+                <div class="drop-zone-title">Drag &amp; drop to begin</div>
+                <div class="drop-zone-description">
+                    Drop blocks from the left panel to build a smarter retail workflow.
+                </div>
+            </div>
+
+            <div class="workflow-node" style="top: 180px; left: 200px;" data-title="Trigger: New order">
+                <div class="node-header">
+                    <div class="node-icon" style="background: #8bc34a;">
+                        <i class="fas fa-shopping-basket"></i>
+                    </div>
+                    <div class="node-title">New order</div>
+                    <div class="node-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                </div>
+                <div class="node-content">
+                    Sync new orders from the POS every five minutes and push them through this workflow.
+                </div>
+                <div class="node-connections">
+                    <div class="connection-point input"></div>
+                    <div class="connection-point output"></div>
+                </div>
+            </div>
+
+            <div class="workflow-node" style="top: 180px; left: 400px;" data-title="Webhook">
+                <div class="node-header">
+                    <div class="node-icon" style="background: #00bcd4;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="node-title">Webhook</div>
+                    <div class="node-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                </div>
+                <div class="node-content">
+                    Receive events from the POS
+                </div>
+                <div class="node-connections">
+                    <div class="connection-point input"></div>
+                    <div class="connection-point output"></div>
+                </div>
+            </div>
+
+            <div class="workflow-node" style="top: 360px; left: 300px;" data-title="Slack notification">
+                <div class="node-header">
+                    <div class="node-icon" style="background: #00a67e;">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="node-title">Slack notify</div>
+                    <div class="node-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                </div>
+                <div class="node-content">
+                    Send a message to #retail-ops when a VIP order exceeds five million VND.
+                </div>
+                <div class="node-connections">
+                    <div class="connection-point input"></div>
+                    <div class="connection-point output"></div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="property-panel" id="propertyPanel">
+            <div class="property-header">
+                <div class="property-title" id="selectedNodeTitle">Node properties</div>
+                <button class="close-panel" type="button" id="closePropertyPanel">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label for="nodeName" class="form-label">Node name</label>
+                <input type="text" id="nodeName" class="form-input" placeholder="Trigger: New order">
+            </div>
+
+            <div class="form-group">
+                <label for="nodeDescription" class="form-label">Description</label>
+                <textarea id="nodeDescription" class="form-textarea" rows="4"
+                    placeholder="Summarize what this block does..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="nodeChannel" class="form-label">Channel</label>
+                <select id="nodeChannel" class="form-select">
+                    <option>Slack - #retail-ops</option>
+                    <option>Email - retail@company.com</option>
+                    <option>Google Sheets - Orders</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nodeCondition" class="form-label">Condition</label>
+                <input type="text" id="nodeCondition" class="form-input" placeholder="order.total &gt;= 5000000">
+            </div>
+
+            <button id="saveNodeBtn" class="action-btn primary full-width" type="button" data-action="save-node">
+                <i class="fas fa-save"></i>
+                Save changes
+            </button>
+        </aside>
+
+        <div class="floating-toolbar">
+            <button class="toolbar-btn active" type="button" data-action="cursor" title="Select mode"
+                aria-pressed="true">
+                <i class="fas fa-mouse-pointer"></i>
+                Select
+            </button>
+            <button class="toolbar-btn" type="button" data-action="connect" title="Connect nodes" aria-pressed="false">
+                <i class="fas fa-route"></i>
+                Connect
+            </button>
+            <button class="toolbar-btn" type="button" data-action="zoom" title="Zoom canvas" aria-pressed="false">
+                <i class="fas fa-search-plus"></i>
+                Zoom
+            </button>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/workspace_builder.js') }}" defer></script>
+{% endblock %}

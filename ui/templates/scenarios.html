@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Automation Scenarios - Workflow Automation for Retail{% endblock %}
+
+{% block body_class %}scenarios-page{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scenarios.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="scenario-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Search</div>
+            <div class="user-menu">
+                {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
+                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search scenarios..." data-scenarios-search>
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </div>
+
+        <div class="folders-section">
+            <div class="folder-header">
+                <span>FOLDERS</span>
+                <button class="add-folder-btn" onclick="createFolder()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="folder-item active" data-folder-item="all" onclick="selectFolder('all')">
+                <div class="folder-icon">
+                    <i class="fas fa-folder" style="color: #667eea;"></i>
+                </div>
+                <div class="folder-info">
+                    <div class="folder-name">All scenarios</div>
+                    <div class="folder-count" data-folder-count="all">0 scenarios</div>
+                </div>
+            </div>
+
+            <div class="folder-item" data-folder-item="uncategorized" onclick="selectFolder('uncategorized')">
+                <div class="folder-icon">
+                    <i class="fas fa-folder-open" style="color: #6c757d;"></i>
+                </div>
+                <div class="folder-info">
+                    <div class="folder-name">Uncategorized</div>
+                    <div class="folder-count" data-folder-count="uncategorized">0 scenarios</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <div class="nav-breadcrumb">
+                    <a href="/workspace" class="nav-link">Workspace</a>
+                    <span class="nav-separator">></span>
+                    <span>Scenarios</span>
+                </div>
+                <h1 class="content-title">All scenarios</h1>
+                <div class="content-tabs">
+                    <div class="tab active" data-tab="all">
+                        ALL
+                        <span class="tab-badge" data-tab-count="all">0</span>
+                    </div>
+                    <div class="tab" data-tab="active">
+                        ACTIVE SCENARIOS
+                        <span class="tab-badge" data-tab-count="active">0</span>
+                    </div>
+                    <div class="tab" data-tab="inactive">
+                        INACTIVE SCENARIOS
+                        <span class="tab-badge" data-tab-count="inactive">0</span>
+                    </div>
+                    <div class="tab" data-tab="concept">
+                        CONCEPTS
+                        <span class="tab-badge" data-tab-count="concept">0</span>
+                    </div>
+                </div>
+            </div>
+            <button class="create-btn" onclick="createScenario()">
+                <i class="fas fa-plus"></i>
+                Create scenario
+            </button>
+        </div>
+
+        <div class="content-area">
+            <!-- Empty State -->
+            <div class="empty-state" data-scenarios-empty>
+                <div class="empty-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="empty-title">Create your first Scenario</h2>
+                <p class="empty-description">
+                    In order for Make to automate your tasks for you, you have to create a scenario.
+                    Open the builder to create your first scenario or browse our templates for inspiration and easy
+                    start.
+                </p>
+                <div class="empty-actions">
+                    <button class="create-btn" onclick="openBuilder()">
+                        Open Scenario Builder
+                    </button>
+                    <button class="btn-secondary" onclick="browseTemplates()">
+                        Browse Templates
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scenarios Grid (will be populated dynamically) -->
+            <div class="scenarios-grid" id="scenariosGrid" data-scenarios-grid hidden>
+                <!-- Scenario cards will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/scenarios.js') }}" defer></script>
+{% endblock %}
