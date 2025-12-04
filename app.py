@@ -657,7 +657,6 @@ def create_user():
 
 @app.route('/api/users', methods=['GET'])
 @login_required
-@csrf.exempt
 def get_users():
     """Get list of users (Manager/Admin only)"""
     if not hasattr(current_user, 'role') or current_user.role not in ['admin', 'manager']:
@@ -1134,7 +1133,6 @@ def api_get_subscriptions():
 
 @app.route('/api/admin/subscription/auto-renew', methods=['POST'])
 @login_required
-@csrf.exempt
 def api_toggle_auto_renew():
     """Toggle auto-renew for a subscription"""
     if not hasattr(current_user, 'role') or current_user.role != 'admin':
@@ -1419,7 +1417,7 @@ def api_session():
 def api_topup_wallet():
     data = request.get_json() or {}
     try:
-        amount = float(data.get('amount', 0))
+        amount = int(data.get('amount', 0))
     except (TypeError, ValueError):
         amount = 0
 
@@ -1453,7 +1451,6 @@ def api_topup_wallet():
 
 @app.route('/api/admin/wallet/withdraw', methods=['POST'])
 @login_required
-@csrf.exempt
 def api_admin_withdraw():
     """Admin withdraw money from wallet to bank account"""
     if not hasattr(current_user, 'role') or current_user.role != 'admin':
@@ -1461,7 +1458,7 @@ def api_admin_withdraw():
     
     data = request.get_json() or {}
     try:
-        amount = float(data.get('amount', 0))
+        amount = int(data.get('amount', 0))
     except (TypeError, ValueError):
         amount = 0
     
@@ -1482,7 +1479,7 @@ def api_admin_withdraw():
         c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
         c.execute('SELECT balance FROM wallets WHERE user_id = ?', (current_user.id,))
         row = c.fetchone()
-        balance = float(row[0]) if row else 0
+        balance = int(row[0]) if row else 0
         
         if amount > balance:
             return jsonify({'success': False, 'message': 'Số dư không đủ'}), 400
