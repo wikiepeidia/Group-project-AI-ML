@@ -116,7 +116,32 @@ We use Make.com to handle complex APIs (Slack, Jira, etc.).
 
 ---
 
-### Step 4: Run & Test
+### Step 4: Slack Setup (Direct Integration)
+
+We can also connect directly to Slack without using Make.com (it's free and faster).
+
+#### 1. Create a Slack App
+
+1. Go to **[Slack API Apps](https://api.slack.com/apps)**.
+2. Click **Create New App** -> **From scratch**.
+3. Name it (e.g., "Workflow Bot") and select your Workspace.
+
+#### 2. Enable Webhooks
+
+1. In the sidebar, click **Incoming Webhooks**.
+2. Toggle the switch to **On**.
+
+#### 3. Create the Webhook URL
+
+1. Scroll down and click **Add New Webhook to Workspace**.
+2. Select the channel where you want messages to appear (e.g., `#general` or `#testing`).
+3. Click **Allow**.
+4. **Copy the Webhook URL** (it starts with `https://hooks.slack.com/services/...`).
+    * *Save this URL! You will paste it into the "Slack (Direct)" node in our App.*
+
+---
+
+### Step 5: Run & Test
 
 1. Run the app:
 
@@ -127,3 +152,4 @@ We use Make.com to handle complex APIs (Slack, Jira, etc.).
 2. Go to `http://localhost:5000/test`.
 3. **Test Google:** Drag a Google Node, enter a real Sheet ID, and run.
 4. **Test Make:** Drag a Make Node, paste your Webhook URL, and run.
+5. **Test Slack:** Drag a Slack Node, paste your Slack Webhook URL, and run.
