@@ -234,6 +234,7 @@ body.builder-page {
     display: flex;
     flex-direction: column;
     background: var(--builder-bg);
+    position: relative;
 }
 
 .canvas-header {
@@ -319,11 +320,32 @@ body.builder-page {
 .workflow-canvas.connect-mode .workflow-node {
     cursor: crosshair;
 }
+
+.workflow-canvas.connect-mode .workflow-node.valid-target {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+    border-color: #6366f1;
+}
+
+.workflow-canvas.connect-mode .workflow-node.valid-target:hover {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.6);
+    background-color: rgba(99, 102, 241, 0.05);
+}
+
 .workflow-canvas.cursor-mode .workflow-node {
     cursor: move;
 }
 .workflow-canvas.zoom-mode {
     cursor: zoom-in;
+}
+.workflow-canvas.connect-mode .node-connections {
+    opacity: 1;
+}
+.workflow-canvas.connect-mode .connection-point {
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    background: #7c3aed;
+    z-index: 10;
 }
 .connection-point:hover {
     transform: scale(1.2);
@@ -336,6 +358,7 @@ body.builder-page {
     width: 100%;
     height: 100%;
     pointer-events: none;
+    z-index: 1;
 }
 
 .drop-zone {
@@ -436,6 +459,8 @@ body.builder-page {
     display: flex;
     justify-content: space-between;
     opacity: 0.6;
+    position: relative;
+    z-index: 2;
 }
 
 .connection-point {
@@ -443,6 +468,7 @@ body.builder-page {
     height: 10px;
     border-radius: 50%;
     background: #6366f1;
+    border: 2px solid rgba(255, 255, 255, 0.6);
 }
 
 .property-panel {
@@ -453,13 +479,47 @@ body.builder-page {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
 }
 
 .property-panel.open {
-    display: flex;
+    transform: translateX(0);
 }
 
-.property-header {
+.connection-point {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #6366f1;
+    border: 3px solid #ffffff;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.connection-point::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.connection-point:hover {
+    transform: scale(1.2);
+    background: #4f46e5;
+    border-color: #e0e7ff;
+}
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -518,10 +578,17 @@ body.builder-page {
 
 .floating-toolbar {
     position: absolute;
-    bottom: 32px;
-    right: 32px;
+    top: 110px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 12px;
+    z-index: 100;
+    background: var(--builder-panel);
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid var(--builder-border);
 }
 
 .toolbar-btn {
