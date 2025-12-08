@@ -12,7 +12,7 @@ class Utils:
     def parse_json_safely(json_string, default=None):
         try:
             return json.loads(json_string) if json_string else default
-        except:
+        except (json.JSONDecodeError, ValueError, TypeError):
             return default
     
     @staticmethod

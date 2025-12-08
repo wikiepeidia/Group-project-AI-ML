@@ -20,16 +20,21 @@ We will connect directly to Google so users can log in with their own accounts.
     * **Google Sheets API**
     * **Google Drive API**
     * **Google Docs API**
+    * **Gmail API** (New! For sending emails)
 
 ### Step 3: Configure OAuth Consent Screen
 
 1. Go to **APIs & Services > OAuth consent screen**.
-2. Choose **External** (so any Google account can test it) or **Internal** (if you have a Workspace org).
-3. Fill in the App Name and Support Email.
-4. Add **Scopes** (Permissions):
-    * `.../auth/spreadsheets.readonly` (Read Sheets)
+    * *If you already created the app, click the **"Edit App"** button (usually at the top).*
+2. Click **Save and Continue** on the first screen (App Information) to get to the **Scopes** page.
+3. Click the **"Add or Remove Scopes"** button.
+4. Search for and select these permissions (you may need to type "gmail" in the filter):
+    * `.../auth/spreadsheets` (Read/Write Sheets)
     * `.../auth/drive.readonly` (Read Drive)
-5. Add **Test Users**: Add your own email address so you can log in during development.
+    * `.../auth/documents.readonly` (Read Docs)
+    * `.../auth/gmail.send` (Send Emails)
+5. Click **Update** at the bottom of the list, then **Save and Continue**.
+6. On the **Test Users** step, make sure your email is added.
 
 ### Step 4: Get Credentials
 

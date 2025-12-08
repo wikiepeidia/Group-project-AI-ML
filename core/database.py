@@ -102,6 +102,17 @@ class Database:
             FOREIGN KEY (granted_by) REFERENCES users (id),
             UNIQUE(user_id, permission_type)
         )''')
+
+        # Workflows table
+        c.execute('''CREATE TABLE IF NOT EXISTS workflows (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )''')
         
         # Customers table (Khách hàng)
         c.execute('''CREATE TABLE IF NOT EXISTS customers (

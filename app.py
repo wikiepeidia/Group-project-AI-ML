@@ -42,12 +42,11 @@ Talisman(app,
          content_security_policy={
              'default-src': ["'self'","*"],
              'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
-                'style-src': ["'self'", "'unsafe-inline'", "*"],
-                'img-src': ["'self'", "data:", "*"],
-            'style-src': ["'self'", "'unsafe-inline'", "*"],
-            'font-src': ["'self'", "*"],
-            'object-src': ["'none'"],
-            'frame-ancestors': ["'none'"],
+             'style-src': ["'self'", "'unsafe-inline'", "*"],
+             'img-src': ["'self'", "data:", "*"],
+             'font-src': ["'self'", "*"],
+             'object-src': ["'none'"],
+             'frame-ancestors': ["'none'"],
          },
          strict_transport_security=True,
          frame_options='DENY',
@@ -1802,7 +1801,74 @@ def google_authorize():
         flash('Lỗi kết nối với Google. Vui lòng thử lại.', 'error')
         return redirect(url_for('auth.signin'))
 
+# Workflow API Routes
+@app.route('/api/workflows', methods=['GET'])
+@login_required
+def get_user_workflows():
+    try:
+        conn = db.get_connection()
+        c = conn.cursor()
+        c.execute('SELECT id, name, data, created_at, updated_at FROM workflows WHERE user_id = ? ORDER BY updated_at DESC', (current_user.id,))
+        rows = c.fetchall()
+        conn.close()
+        
+        workflows = []
+        for row in rows:
+            workflows.append({
+                'id': row[0],
+                'name': row[1],
+                'data': json.loads(row[2]) if row[2] else {},
+                'created_at': row[3],
+                'updated_at': row[4]
+            })
+        return jsonify({'success': True, 'workflows': workflows})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/workflows', methods=['POST'])
+@login_required
+def save_workflow():
+    try:
+        data = request.get_json()
+        name = data.get('name', 'Untitled Workflow')
+        workflow_data = json.dumps(data.get('data', {}))
+        workflow_id = data.get('id')
+
+        conn = db.get_connection()
+        c = conn.cursor()
+        
+        if workflow_id:
+            # Update existing
+            c.execute('UPDATE workflows SET name = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+                     (name, workflow_data, workflow_id, current_user.id))
+        else:
+            # Create new
+            c.execute('INSERT INTO workflows (user_id, name, data) VALUES (?, ?, ?)',
+                     (current_user.id, name, workflow_data))
+            workflow_id = c.lastrowid
+            
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'id': workflow_id, 'message': 'Workflow saved successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/workflows/<int:workflow_id>', methods=['DELETE'])
+@login_required
+def delete_workflow(workflow_id):
+    try:
+        conn = db.get_connection()
+        c = conn.cursor()
+        c.execute('DELETE FROM workflows WHERE id = ? AND user_id = ?', (workflow_id, current_user.id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Workflow deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     db_manager.init_database()
-    app.run(host='0.0.0.0', port=5000, debug=True, ssl_context='adhoc')
+    # Changed to HTTP for development - no SSL certificate warnings
+    app.run(host='0.0.0.0', port=5000, debug=True)
 

@@ -380,7 +380,7 @@ function setupNotifications() {
 /**
  * Show Notification
  */
-const NOTIFICATION_AUTO_DISMISS_MS = 30 * 1000;  // auto-dismiss notifications every 30 seconds
+const NOTIFICATION_AUTO_DISMISS_MS = 2000;  // auto-dismiss notifications every 2 seconds
 
 function showNotification(message, type = 'info') {
     let container = document.querySelector('.notification-container');
