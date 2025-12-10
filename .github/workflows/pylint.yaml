@@ -52,9 +52,9 @@ jobs:
           # Convert file list to arguments
           args=( ${{ steps.files.outputs.files }} )
           # Run only errors & fatal to keep linting useful on CI
-          pylint -E --rcfile=.pylintrc "${args[@]}" || true
+          pylint -E --rcfile=.github/.pylintrc "${args[@]}" || true
           # Also produce a JSON report for inspection (don't fail the step on warnings)
-          pylint --rcfile=.pylintrc --output-format=json "${args[@]}" > pylint_report.json || true
+          pylint --rcfile=.github/.pylintrc --output-format=json "${args[@]}" > pylint_report.json || true
 
       - name: Convert JSON to HTML
         if: always() && steps.files.outputs.files != ''
