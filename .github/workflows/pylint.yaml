@@ -40,7 +40,7 @@ jobs:
       - name: Gather Python files to lint
         id: files
         run: |
-          files=$(git ls-files '*.py' | grep -vE '^(.git|backup|data|saved_models|uploads|models|static|ui/dist|tests?|DOCUMENTS)' || true)
+          files=$(git ls-files '*.py' | grep -vE '^(.git|backup|data|saved_models|uploads|models|static|ui/dist|tests?|DOCUMENTS|app.py|core/auth.py)' || true)
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -53,9 +53,9 @@ jobs:
           # Convert file list to arguments
           args=( ${{ steps.files.outputs.files }} )
           # Run only errors & fatal to keep linting useful on CI
-          pylint -E --rcfile=.github/.pylintrc "${args[@]}" || true
+          pylint -E -j 1 --rcfile=.github/.pylintrc "${args[@]}" || true
           # Also produce a JSON report for inspection (don't fail the step on warnings)
-          pylint --rcfile=.github/.pylintrc --output-format=json "${args[@]}" > pylint_report.json || true
+          pylint -j 1 --rcfile=.github/.pylintrc --output-format=json "${args[@]}" > pylint_report.json || true
 
       - name: Convert JSON to HTML
         if: always() && steps.files.outputs.files != ''

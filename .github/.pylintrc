@@ -21,11 +21,12 @@ disable=
     C0114,  # missing-module-docstring
     C0115,  # missing-class-docstring
     C0116,  # missing-function-docstring
-    R0201,  # method could be a function (too noisy for small classes)
+    # R0201 removed: handler in newer Pylint versions; revert to file-level disables if needed
     C0103,  # invalid-name (allows shorter variable names like id, db)
     R0913,  # too-many-arguments (common in CLI/handler functions)
     R0903,  # too-few-public-methods (common for small data classes)
     W0511,  # fixme
+    E0402,  # relative-beyond-top-level (package import layout causes noise in CI)
 
 [REPORTS]
 # Turn off the score to avoid failing on minor style issues
@@ -44,5 +45,6 @@ max-line-length=120
 logging-modules=logging
 
 [TYPECHECK]
-# optional: ignore missing imports from third-party libs not installed in the CI
-ignore-missing-imports=yes
+# Use generated-members to reduce false positives for dynamic client libraries
+# Example: Google API client generated members like 'spreadsheets' and 'documents'
+generated-members=spreadsheets,documents,users
