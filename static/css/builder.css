@@ -60,8 +60,7 @@ body.builder-page {
     background: var(--builder-panel-alt);
     border-bottom: 1px solid var(--builder-border);
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 16px;
 }
 
@@ -91,6 +90,7 @@ body.builder-page {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 6px;
+    color: var(--builder-text);
 }
 
 .sidebar-subtitle {
@@ -146,6 +146,7 @@ body.builder-page {
     border: 1px solid var(--builder-border);
     background: var(--builder-panel);
     color: var(--builder-text);
+    box-sizing: border-box;
 }
 
 .search-input::placeholder {
@@ -211,7 +212,7 @@ body.builder-page {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    color: var(--builder-text);
+    color: #ffffff;
 }
 
 .tool-info {
@@ -222,6 +223,7 @@ body.builder-page {
 
 .tool-name {
     font-weight: 600;
+    color: var(--builder-text);
 }
 
 .tool-description {
@@ -249,6 +251,20 @@ body.builder-page {
 .canvas-title {
     font-size: 1.5rem;
     font-weight: 700;
+}
+
+.workflow-name-input {
+    background: transparent;
+    border: none;
+    color: var(--builder-text);
+    font-size: 1.2em;
+    font-weight: bold;
+    width: 100%;
+}
+
+.workflow-name-input:focus {
+    outline: none;
+    border-bottom: 1px solid var(--builder-border-strong);
 }
 
 .nav-breadcrumb {
@@ -372,28 +388,19 @@ body.builder-page {
     gap: 12px;
     color: var(--builder-muted);
     padding: 40px;
+    pointer-events: none;
 }
 
-.drop-zone-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
-    background: rgba(99, 102, 241, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #6366f1;
+.drop-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+    color: var(--builder-border-strong);
 }
 
-.drop-zone-title {
+.drop-text {
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--builder-text);
-}
-
-.drop-zone-description {
-    max-width: 360px;
+    color: var(--builder-muted);
 }
 
 .workflow-node {
@@ -493,33 +500,7 @@ body.builder-page {
     transform: translateX(0);
 }
 
-.connection-point {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #6366f1;
-    border: 3px solid #ffffff;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.2s ease;
-}
-
-.connection-point::after {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
-    border-radius: 50%;
-    background: transparent;
-}
-
-.connection-point:hover {
-    transform: scale(1.2);
-    background: #4f46e5;
-    border-color: #e0e7ff;
-}
+.panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -529,12 +510,13 @@ body.builder-page {
 .property-title {
     font-size: 1.05rem;
     font-weight: 700;
+    color: var(--builder-text);
 }
 
-.close-panel {
+.close-btn {
     border: none;
     background: transparent;
-    font-size: 1rem;
+    font-size: 1.5rem;
     color: var(--builder-muted);
     cursor: pointer;
 }
@@ -543,17 +525,16 @@ body.builder-page {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    margin-bottom: 15px;
 }
 
-.form-label {
+.form-group label {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--builder-muted);
 }
 
-.form-input,
-.form-select,
-.form-textarea {
+.form-control {
     border-radius: 12px;
     border: 1px solid var(--builder-border);
     background: var(--builder-card);
@@ -561,17 +542,17 @@ body.builder-page {
     padding: 12px 14px;
     font-size: 0.95rem;
     font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
+.form-control:focus {
     outline: none;
     border-color: var(--builder-border-strong);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.form-textarea {
+textarea.form-control {
     resize: vertical;
     min-height: 110px;
 }
@@ -631,6 +612,206 @@ body.builder-page {
 }
 .zoom-controls .zoom-btn:hover {
     transform: translateY(-2px);
+}
+
+/* Dynamic Settings Styles */
+.dynamic-settings {
+    margin-top: 15px;
+    border-top: 1px solid var(--builder-border);
+    padding-top: 15px;
+}
+
+.dynamic-settings label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--builder-muted);
+}
+
+.dynamic-settings input,
+.dynamic-settings textarea,
+.dynamic-settings select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--builder-border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-family: inherit;
+    background: var(--builder-card);
+    color: var(--builder-text);
+    box-sizing: border-box;
+}
+
+.dynamic-settings input:focus,
+.dynamic-settings textarea:focus,
+.dynamic-settings select:focus {
+    outline: none;
+    border-color: var(--builder-border-strong);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.dynamic-settings small {
+    display: block;
+    color: var(--builder-muted);
+    font-size: 0.8em;
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
+
+/* Context Menu */
+.node-context-menu {
+    position: fixed;
+    background: var(--builder-panel);
+    border: 1px solid var(--builder-border);
+    border-radius: 12px;
+    box-shadow: var(--builder-shadow);
+    padding: 6px;
+    z-index: 1000;
+    min-width: 160px;
+    animation: fadeIn 0.1s ease;
+}
+
+.context-menu-item {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--builder-text);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.context-menu-item:hover {
+    background: var(--builder-panel-alt);
+    color: #6366f1;
+}
+
+.context-menu-item i {
+    width: 16px;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background-color: var(--builder-panel);
+    margin: 10% auto;
+    padding: 0;
+    border: 1px solid var(--builder-border);
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: var(--builder-shadow);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--builder-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--builder-text);
+}
+
+.close-modal {
+    color: var(--builder-muted);
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: var(--builder-text);
+}
+
+.modal-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.workflow-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.workflow-item {
+    padding: 16px;
+    background: var(--builder-bg);
+    border: 1px solid var(--builder-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflow-item:hover {
+    border-color: var(--builder-border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.workflow-item-info h4 {
+    margin: 0 0 4px 0;
+    color: var(--builder-text);
+}
+
+.workflow-item-date {
+    font-size: 0.8rem;
+    color: var(--builder-muted);
+}
+
+.workflow-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.delete-workflow-btn {
+    padding: 6px;
+    color: #f44336;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.delete-workflow-btn:hover {
+    opacity: 1;
 }
 
 @media (max-width: 1100px) {

@@ -8,6 +8,7 @@ from core.database import Database
 from core.auth import AuthManager
 from core.config import Config
 from core.utils import Utils
+from core.workflow_engine import execute_workflow
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 import secrets
@@ -17,21 +18,24 @@ import sqlite3
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
-
+# Allow OAuth over HTTP for local development
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Update template folder to use ui/templates
 app = Flask(__name__, template_folder='ui/templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_me_to_a_secure_random_value')
 app.config['WTF_CSRF_ENABLED'] = True
 app.secret_key = app.config['SECRET_KEY']
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['PREFERRED_URL_SCHEME'] = 'http'
 
 #OAuth2 configuration
 # Load secrets from file
 try:
     with open('secrets/google_oauth.json') as f:
-        secrets = json.load(f)
-        app.config['GOOGLE_CLIENT_ID'] = secrets.get('GOOGLE_CLIENT_ID')
-        app.config['GOOGLE_CLIENT_SECRET'] = secrets.get('GOOGLE_CLIENT_SECRET')
+        oauth_secrets = json.load(f)
+        app.config['GOOGLE_CLIENT_ID'] = oauth_secrets.get('GOOGLE_CLIENT_ID')
+        app.config['GOOGLE_CLIENT_SECRET'] = oauth_secrets.get('GOOGLE_CLIENT_SECRET')
 except FileNotFoundError:
     print("Warning: secrets/google_oauth.json not found. OAuth will not work.")
     app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
@@ -48,9 +52,11 @@ Talisman(app,
              'object-src': ["'none'"],
              'frame-ancestors': ["'none'"],
          },
-         strict_transport_security=True,
+         strict_transport_security=False,
          frame_options='DENY',
          x_content_type_options=True,
+         session_cookie_secure=False,
+         force_file_save=False
          )
 
 oauth = OAuth(app)
@@ -59,7 +65,7 @@ google = oauth.register(
     client_id=app.config['GOOGLE_CLIENT_ID'],
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
+    client_kwargs={'scope': 'openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'}
 )
 
 # Session configuration - 30 minutes
@@ -172,19 +178,32 @@ def handle_csrf_error(error):
     return redirect(referer)
 
 class User(UserMixin):
-    def __init__(self, id, email, first_name, last_name, role='user'):
+    def __init__(self, id, email, first_name, last_name, role='user', google_token=None, avatar=None):
         self.id = id
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
         self.role = role
+        self.google_token = google_token
+        self.avatar = avatar
+
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}"
 
 @login_manager.user_loader
 def load_user(user_id):
     user_data = auth_manager.get_user_by_id(int(user_id))
     if user_data:
-        return User(user_data['id'], user_data['email'], user_data['first_name'], 
-                    user_data['last_name'],user_data.get('role','user'))
+        return User(
+            user_data['id'], 
+            user_data['email'], 
+            user_data['first_name'], 
+            user_data['last_name'],
+            user_data.get('role','user'), 
+            user_data.get('google_token'),
+            user_data.get('avatar')
+        )
 
     return None
 
@@ -202,7 +221,7 @@ def signin():
         user_data = auth_manager.verify_user(email, password)
         if user_data:
             user = User(user_data['id'], user_data['email'], user_data['first_name'], 
-                        user_data['last_name'],user_data.get('role','user'))
+                        user_data['last_name'],user_data.get('role','user'), user_data.get('google_token'))
             print(">>> Đăng nhập:", user.email, "role =", user.role)
             login_user(user, remember=True)  # Remember user to extend session
             session.permanent = True  # Set session to use PERMANENT_SESSION_LIFETIME
@@ -595,6 +614,28 @@ def delete_scenario(scenario_id):
         return jsonify({'success': True, 'message': 'Scenario deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/workflow/execute', methods=['POST'])
+@login_required
+@csrf.exempt
+def run_workflow():
+    try:
+        workflow_data = request.json
+        
+        # Get token from current_user
+        token_info = None
+        if current_user.google_token:
+            try:
+                token_info = json.loads(current_user.google_token)
+            except Exception as e:
+                print(f"Error parsing google_token for user {current_user.id}: {e}")
+        
+        result = execute_workflow(workflow_data, token_info)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 @app.route('/logout')
 @login_required
@@ -1730,11 +1771,13 @@ def api_admin_process_wallet_transaction(transaction_id):
 def google_login():
     # Redirect to Google signin
     redirect_uri = url_for('google_authorize', _external=True)
+    print(f"DEBUG: Generated Redirect URI: {redirect_uri}")
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/auth/google/callback')
 def google_authorize():
     try:
+        print(f"DEBUG: Callback URL: {request.url}")
         # Receive token from Google
         token = google.authorize_access_token()
         user_info = token['userinfo']  # Include email, name, picture
@@ -1750,11 +1793,15 @@ def google_authorize():
         
         user_id = None
         role = 'user'
+        token_json = json.dumps(token)
         
         if user_row:
             # User already exists -> Get ID
             user_id = user_row[0]
             role = user_row[1]
+            # Update token
+            c.execute("UPDATE users SET google_token = ? WHERE id = ?", (token_json, user_id))
+            conn.commit()
         else:
             # User does not exist -> Automatically register new
             # Random password because Google login
@@ -1767,9 +1814,9 @@ def google_authorize():
             first_name = names[0]
             last_name = ' '.join(names[1:]) if len(names) > 1 else ''
             
-            c.execute('''INSERT INTO users (email, password, name, first_name, last_name, role, avatar) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                     (email, hashed_pw, name, first_name, last_name, 'user', user_info.get('picture')))
+            c.execute('''INSERT INTO users (email, password, name, first_name, last_name, role, avatar, google_token) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                     (email, hashed_pw, name, first_name, last_name, 'user', user_info.get('picture'), token_json))
             user_id = c.lastrowid
             conn.commit()
             print(f"Đã tạo user mới từ Google: {email}")
@@ -1784,7 +1831,9 @@ def google_authorize():
             user_data['email'], 
             user_data['first_name'], 
             user_data['last_name'],
-            user_data.get('role', 'user')
+            user_data.get('role', 'user'),
+            user_data.get('google_token'),
+            user_data.get('avatar')
         )
         
         login_user(user_obj, remember=True)
@@ -1798,7 +1847,9 @@ def google_authorize():
 
     except Exception as e:
         print(f"Lỗi OAuth: {e}")
-        flash('Lỗi kết nối với Google. Vui lòng thử lại.', 'error')
+        import traceback
+        traceback.print_exc()
+        flash(f'Lỗi kết nối với Google: {str(e)}', 'error')
         return redirect(url_for('auth.signin'))
 
 # Workflow API Routes
@@ -1870,5 +1921,6 @@ def delete_workflow(workflow_id):
 if __name__ == '__main__':
     db_manager.init_database()
     # Changed to HTTP for development - no SSL certificate warnings
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True) 
 
+ 

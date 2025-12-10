@@ -4,297 +4,7 @@
 
 {% block styles %}
 {{ super() }}
-<style>
-    .dashboard-container {
-        padding: 60px;
-        max-width: 1200px;
-        margin: 0 auto;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 60px;
-    }
-    
-    .dashboard-header h1 {
-        font-size: 3.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 15px;
-        letter-spacing: -1px;
-    }
-    
-    .dashboard-header p {
-        font-size: 1.2rem;
-        color: #6b7280;
-        font-weight: 500;
-    }
-    
-    .dashboard-header p strong {
-        color: #667eea;
-        font-weight: 700;
-    }
-    
-    .dashboard-grid {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        max-width: 500px;
-    }
-    
-    .dashboard-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-        border-radius: 24px;
-        padding: 50px 40px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-        display: block;
-        border: 2px solid transparent;
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-    }
-    
-    .dashboard-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, rgba(56, 249, 215, 0.1) 100%);
-        opacity: 0;
-        transition: opacity 0.4s;
-        z-index: 0;
-    }
-    
-    .dashboard-card:hover::before {
-        opacity: 1;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-12px) scale(1.02);
-        box-shadow: 0 30px 80px rgba(67, 233, 123, 0.3);
-        border-color: #43e97b;
-    }
-    
-    .card-icon {
-        width: 90px;
-        height: 90px;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        color: white;
-        margin: 0 auto 30px;
-        position: relative;
-        z-index: 1;
-        box-shadow: 0 10px 30px rgba(67, 233, 123, 0.4);
-    }
-    
-    .card-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 15px;
-        text-align: center;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .card-desc {
-        color: #6b7280;
-        line-height: 1.8;
-        text-align: center;
-        font-size: 1.05rem;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .gradient-green { 
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    }
-    
-    /* Canvas kéo thả */
-    .canvas-section {
-        background: white;
-        border-radius: 16px;
-        padding: 30px;
-        margin-top: 40px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    .canvas-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .canvas-header h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .canvas-board {
-        background: #1f2937;
-        border-radius: 12px;
-        min-height: 400px;
-        padding: 20px;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .canvas-svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
-    }
-    
-    .toolbox {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
-    
-    .tool-item {
-        background: white;
-        padding: 6px 10px;
-        border-radius: 6px;
-        cursor: move;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-weight: 500;
-        font-size: 0.75rem;
-        transition: all 0.3s;
-    }
-    
-    .tool-item:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-    
-    .tool-item i {
-        font-size: 0.9rem;
-    }
-    
-    .canvas-node {
-        position: absolute;
-        background: white;
-        padding: 8px;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        cursor: move;
-        width: 40px;
-        height: 40px;
-        z-index: 2;
-        font-size: 0.75rem;
-        transition: all 0.3s;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .canvas-node.expanded {
-        width: auto;
-        min-width: 90px;
-        padding: 8px 10px;
-    }
-    
-    .node-header {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 600;
-        font-size: 0.8rem;
-        width: 100%;
-    }
-    
-    .node-header i {
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-    
-    .canvas-node.expanded .node-header i {
-        font-size: 1rem;
-    }
-    
-    .node-label {
-        display: none;
-        white-space: nowrap;
-    }
-    
-    .canvas-node.expanded .node-label {
-        display: inline;
-    }
-    
-    .node-remove {
-        margin-left: auto;
-        cursor: pointer;
-        color: #ef4444;
-        font-size: 1rem;
-        padding: 0 2px;
-        display: none;
-        flex-shrink: 0;
-    }
-    
-    .canvas-node.expanded .node-remove {
-        display: inline;
-    }
-    
-    .node-connect {
-        position: absolute;
-        bottom: -6px;
-        right: 50%;
-        transform: translateX(50%);
-        width: 12px;
-        height: 12px;
-        background: #3b82f6;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 2px solid white;
-        z-index: 3;
-        display: none;
-    }
-    
-    .canvas-node.expanded .node-connect {
-        display: block;
-    }
-    
-    .node-connect:hover {
-        background: #2563eb;
-        transform: translateX(50%) scale(1.3);
-    }
-    
-    .canvas-placeholder {
-        color: #6b7280;
-        text-align: center;
-        padding: 100px 20px;
-        font-size: 1.1rem;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace_scenario.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -302,272 +12,90 @@
     {% include 'components/sidebar.html' %}
     
     <main class="scenario-main">
-        <div class="dashboard-container">
-            <div class="dashboard-header">
-                <h1>🚀 Dashboard Kiếm Tiền</h1>
-                <p>Xin chào <strong>{{ user.email }}</strong> ({{ user.role|upper }})</p>
+        <!-- Header / Launchpad -->
+        <div class="workspace-launchpad">
+            <div>
+                <p class="launch-eyebrow">Dashboard</p>
+                <h2>Xin chào, {{ user.name or user.email.split('@')[0] }}</h2>
             </div>
-
-            <div class="dashboard-grid">
-                <a href="{{ url_for('workspace_builder') }}" class="dashboard-card">
-                    <div class="card-icon gradient-green">
-                        <i class="fas fa-cubes"></i>
-                    </div>
-                    <div class="card-title">🏗️ Workspace Builder</div>
-                    <div class="card-desc">Thiết kế và quản lý không gian làm việc của bạn</div>
+            <div class="launch-cta">
+                <a href="{{ url_for('workspace_builder') }}" class="btn btn-primary rounded-pill">
+                    <i class="fas fa-plus me-2"></i>New Project
                 </a>
             </div>
         </div>
+
+        <!-- Wallet / Subscription Glance -->
+        <div class="wallet-glance">
+            <div class="glance-head">
+                <h3><i class="fas fa-wallet me-2"></i>Subscription</h3>
+                <span class="glance-chip">Free Plan</span>
+            </div>
+            <div class="glance-grid">
+                <div class="glance-card">
+                    <p>Credits</p>
+                    <h3>100</h3>
+                    <div class="glance-subtext">Monthly Reset</div>
+                </div>
+                <div class="glance-card">
+                    <p>Projects</p>
+                    <h3>2 / 5</h3>
+                    <div class="glance-subtext">Active Projects</div>
+                </div>
+                <div class="glance-card">
+                    <p>Status</p>
+                    <h3>Active</h3>
+                    <div class="glance-subtext">Next billing: N/A</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="workspace-collections">
+            <div class="collection-block">
+                <div class="collection-head">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="collection-grid">
+                    <!-- Workspace Builder Card -->
+                    <a href="{{ url_for('workspace_builder') }}" class="collection-card">
+                        <div class="collection-icon gradient-green">
+                            <i class="fas fa-cubes"></i>
+                        </div>
+                        <div class="collection-body">
+                            <h4>Workspace Builder</h4>
+                            <p>Thiết kế và quản lý không gian làm việc</p>
+                        </div>
+                        <div class="collection-cta">Open <i class="fas fa-arrow-right ms-1"></i></div>
+                    </a>
+
+                    <!-- Templates Card (Placeholder) -->
+                    <div class="collection-card">
+                        <div class="collection-icon gradient-blue">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="collection-body">
+                            <h4>Templates</h4>
+                            <p>Start from pre-built scenarios</p>
+                        </div>
+                        <div class="collection-cta">Browse <i class="fas fa-arrow-right ms-1"></i></div>
+                    </div>
+
+                    <!-- Tutorials Card (Placeholder) -->
+                    <div class="collection-card">
+                        <div class="collection-icon gradient-purple">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="collection-body">
+                            <h4>Tutorials</h4>
+                            <p>Learn how to build workflows</p>
+                        </div>
+                        <div class="collection-cta">Learn <i class="fas fa-arrow-right ms-1"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 </div>
-
-<script>
-let nodeCounter = 0;
-let connections = [];
-let connectingFrom = null;
-
-function allowDrop(ev) {
-    ev.preventDefault();
-}
-
-function drag(ev) {
-    const type = ev.target.getAttribute('data-type');
-    ev.dataTransfer.setData("nodeType", type);
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    const nodeType = ev.dataTransfer.getData("nodeType");
-    const canvas = document.getElementById('canvasBoard');
-    
-    // Remove placeholder if exists
-    const placeholder = canvas.querySelector('.canvas-placeholder');
-    if (placeholder) {
-        placeholder.remove();
-    }
-    
-    // Create new node
-    const node = document.createElement('div');
-    node.className = 'canvas-node';
-    node.draggable = true;
-    node.id = 'node-' + (++nodeCounter);
-    
-    // Calculate position
-    const rect = canvas.getBoundingClientRect();
-    const x = ev.clientX - rect.left - 60;
-    const y = ev.clientY - rect.top - 20;
-    
-    node.style.left = x + 'px';
-    node.style.top = y + 'px';
-    
-    // Node content
-    const icons = {
-        trigger: '<i class="fas fa-bolt" style="color: #f59e0b;"></i>',
-        action: '<i class="fas fa-play-circle" style="color: #10b981;"></i>',
-        condition: '<i class="fas fa-code-branch" style="color: #3b82f6;"></i>',
-        api: '<i class="fas fa-plug" style="color: #8b5cf6;"></i>',
-        database: '<i class="fas fa-database" style="color: #ec4899;"></i>'
-    };
-    
-    const labels = {
-        trigger: 'Trigger',
-        action: 'Action',
-        condition: 'If',
-        api: 'API',
-        database: 'DB'
-    };
-    
-    node.innerHTML = `
-        <div class="node-header">
-            ${icons[nodeType]}
-            <span class="node-label">${labels[nodeType]}</span>
-            <span class="node-remove" onclick="removeNode('${node.id}')">×</span>
-        </div>
-        <div class="node-connect" onclick="startConnection('${node.id}')" title="Kết nối tới node khác"></div>
-    `;
-    
-    // Toggle expand/collapse on click
-    node.onclick = function(e) {
-        if (e.target.classList.contains('node-remove') || e.target.classList.contains('node-connect')) {
-            return; // Don't toggle if clicking remove or connect button
-        }
-        node.classList.toggle('expanded');
-        updateConnections();
-    };
-    
-    // Add drag event for moving nodes
-    node.ondragstart = function(e) {
-        e.dataTransfer.setData("nodeId", node.id);
-    };
-    
-    node.ondragend = function(e) {
-        updateConnections();
-    };
-    
-    canvas.appendChild(node);
-    updateStats();
-}
-
-function updateStats() {
-    const canvas = document.getElementById('canvasBoard');
-    const nodes = canvas.querySelectorAll('.canvas-node');
-    document.getElementById('nodeCount').textContent = nodes.length;
-    document.getElementById('connectionCount').textContent = connections.length;
-}
-
-function startConnection(fromNodeId) {
-    if (connectingFrom === null) {
-        connectingFrom = fromNodeId;
-        document.getElementById(fromNodeId).style.border = '2px solid #3b82f6';
-    } else {
-        if (connectingFrom !== fromNodeId) {
-            connections.push({ from: connectingFrom, to: fromNodeId });
-            updateConnections();
-        }
-        document.getElementById(connectingFrom).style.border = 'none';
-        connectingFrom = null;
-    }
-}
-
-function updateConnections() {
-    const svg = document.getElementById('connectionsSvg');
-    svg.innerHTML = '';
-    
-    connections.forEach(conn => {
-        const fromNode = document.getElementById(conn.from);
-        const toNode = document.getElementById(conn.to);
-        
-        if (fromNode && toNode) {
-            const fromRect = fromNode.getBoundingClientRect();
-            const toRect = toNode.getBoundingClientRect();
-            const canvasRect = document.getElementById('canvasBoard').getBoundingClientRect();
-            
-            const x1 = fromRect.left - canvasRect.left + fromRect.width / 2;
-            const y1 = fromRect.top - canvasRect.top + fromRect.height / 2;
-            const x2 = toRect.left - canvasRect.left + toRect.width / 2;
-            const y2 = toRect.top - canvasRect.top + toRect.height / 2;
-            
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const midX = (x1 + x2) / 2;
-            const d = `M ${x1} ${y1} Q ${midX} ${y1}, ${midX} ${(y1 + y2) / 2} T ${x2} ${y2}`;
-            
-            line.setAttribute('d', d);
-            line.setAttribute('stroke', '#60a5fa');
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('fill', 'none');
-            line.setAttribute('marker-end', 'url(#arrowhead)');
-            
-            svg.appendChild(line);
-        }
-    });
-    
-    // Add arrowhead marker
-    if (connections.length > 0 && !document.getElementById('arrowhead')) {
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-        marker.setAttribute('id', 'arrowhead');
-        marker.setAttribute('markerWidth', '10');
-        marker.setAttribute('markerHeight', '10');
-        marker.setAttribute('refX', '9');
-        marker.setAttribute('refY', '3');
-        marker.setAttribute('orient', 'auto');
-        
-        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        polygon.setAttribute('points', '0 0, 10 3, 0 6');
-        polygon.setAttribute('fill', '#60a5fa');
-        
-        marker.appendChild(polygon);
-        defs.appendChild(marker);
-        svg.appendChild(defs);
-    }
-}
-
-function removeNode(nodeId) {
-    const node = document.getElementById(nodeId);
-    if (node) {
-        // Remove connections
-        connections = connections.filter(conn => conn.from !== nodeId && conn.to !== nodeId);
-        updateConnections();
-        node.remove();
-        updateStats();
-    }
-    
-    // Add placeholder if canvas is empty
-    const canvas = document.getElementById('canvasBoard');
-    const nodes = canvas.querySelectorAll('.canvas-node');
-    if (nodes.length === 0) {
-        canvas.innerHTML = `
-            <svg class="canvas-svg" id="connectionsSvg"></svg>
-            <div class="canvas-placeholder">
-                <i class="fas fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.3;"></i>
-                <p>Kéo các công cụ vào đây để bắt đầu xây dựng workflow</p>
-            </div>
-        `;
-    }
-}
-
-function saveCanvas() {
-    const canvas = document.getElementById('canvasBoard');
-    const nodes = canvas.querySelectorAll('.canvas-node');
-    
-    if (nodes.length === 0) {
-        alert('⚠️ Canvas trống! Vui lòng thêm các nodes trước khi save.');
-        return;
-    }
-    
-    const canvasData = {
-        nodes: [],
-        connections: connections,
-        timestamp: new Date().toISOString()
-    };
-    
-    nodes.forEach(node => {
-        canvasData.nodes.push({
-            id: node.id,
-            type: node.querySelector('.node-header').textContent.trim().split(' ')[1],
-            x: node.style.left,
-            y: node.style.top
-        });
-    });
-    
-    // Save to localStorage
-    localStorage.setItem('canvasData', JSON.stringify(canvasData));
-    
-    // Also download as JSON file
-    const blob = new Blob([JSON.stringify(canvasData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `workflow_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    alert('✅ Canvas đã được lưu! Tải xuống file JSON thành công.');
-}
-
-function clearCanvas() {
-    const canvas = document.getElementById('canvasBoard');
-    const nodes = canvas.querySelectorAll('.canvas-node');
-    
-    if (nodes.length === 0) {
-        alert('⚠️ Canvas đã trống rồi!');
-        return;
-    }
-    
-    if (confirm(`🗑️ Bạn có chắc muốn xóa ${nodes.length} nodes và ${connections.length} connections?`)) {
-        canvas.innerHTML = `
-            <svg class="canvas-svg" id="connectionsSvg"></svg>
-            <div class="canvas-placeholder">
-                <i class="fas fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.3;"></i>
-                <p>Kéo các công cụ vào đây để bắt đầu xây dựng workflow</p>
-            </div>
-        `;
-        nodeCounter = 0;
-        connections = [];
-        connectingFrom = null;
-        updateStats();
-        alert('✅ Đã xóa toàn bộ canvas!');
-    }
-}
-</script>
 {% endblock %}

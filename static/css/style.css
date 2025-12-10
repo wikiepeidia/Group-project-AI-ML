@@ -113,6 +113,21 @@ body.dark-mode {
     --table-header-color: var(--gray-900);
 }
 
+/* Fix for dark mode text color in tables */
+body.dark-mode .table {
+    color: var(--gray-900);
+}
+
+body.dark-mode .table thead th {
+    color: var(--gray-900);
+    border-bottom-color: var(--border-strong);
+}
+
+body.dark-mode .table td, 
+body.dark-mode .table th {
+    border-color: var(--border-soft);
+}
+
 html {
     font-size: 16px;
     scroll-behavior: smooth;
@@ -451,6 +466,7 @@ body.dark-mode .social-btn {
     color: #fff;
     margin-right: 12px;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .user-info {
@@ -1249,11 +1265,28 @@ body.dark-mode .table {
     --bs-table-hover-bg: var(--surface-300);
     --bs-table-color: var(--gray-900);
 }
+/* Dark mode table overrides */
+html[data-theme='dark'] .table,
+body.dark-mode .table {
+    color: var(--gray-900);
+    --bs-table-color: var(--gray-900);
+}
+
 html[data-theme='dark'] .table thead th,
 body.dark-mode .table thead th {
     background: var(--surface-200);
-    color: var(--table-header-color) !important;
+    color: var(--gray-900) !important;
     font-weight: 700;
+    border-bottom-color: var(--border-strong);
+}
+
+/* Fix for dark mode table rows */
+body.dark-mode .table tbody tr {
+    border-color: var(--border-soft);
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    color: var(--gray-900);
 }
 
 /* Responsive */
@@ -1321,9 +1354,25 @@ body.dark-mode .table thead th {
 }
 
 /* Dark Mode */
+body.dark-mode {
+    color: var(--gray-900);
+}
+
 body.dark-mode .login-panel {
     background: #1e1e1e;
     color: #ffffff;
+}
+
+body.dark-mode .login-title {
+    color: #ffffff;
+}
+
+body.dark-mode .login-subtitle {
+    color: var(--gray-300);
+}
+
+body.dark-mode.auth-page {
+    color: var(--gray-900);
 }
 
 /* Dark-mode adjustments for alerts */

@@ -102,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
             name: tool.querySelector('.tool-name')?.textContent.trim() || 'Custom block',
             description: tool.querySelector('.tool-description')?.textContent.trim() || 'Describe this step...',
             icon: tool.querySelector('.tool-icon i')?.className || 'fas fa-puzzle-piece',
-            category: tool.dataset.category || 'custom'
+            category: tool.dataset.category || 'custom',
+            type: tool.dataset.type || 'custom'
         };
     }
 
@@ -324,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
         node.className = 'workflow-node';
         node.dataset.title = toolData.name;
         node.dataset.category = toolData.category;
+        node.dataset.type = toolData.type;
+        node.dataset.config = JSON.stringify({}); // Init empty config
         node.style.top = `${position.y - 40}px`;
         node.style.left = `${position.x - 100}px`;
         node.style.position = 'absolute';
@@ -667,10 +670,127 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerUndoBtn = document.querySelector('.canvas-header .canvas-actions [data-action="undo"]');
     const headerSaveBtn = document.querySelector('.canvas-header .canvas-actions [data-action="save-workflow"]');
     const headerClearBtn = document.querySelector('.canvas-header .canvas-actions [data-action="clear-canvas"]');
-    const headerResetBtn = document.querySelector('.canvas-header .canvas-actions [data-action="reset-demo"]');
+    const headerRunBtn = document.querySelector('.canvas-header .canvas-actions [data-action="run-workflow"]');
 
     if (headerUndoBtn) headerUndoBtn.addEventListener('click', () => undo());
     if (headerSaveBtn) headerSaveBtn.addEventListener('click', () => saveWorkflow());
+    if (headerRunBtn) headerRunBtn.addEventListener('click', () => runWorkflow());
+
+    // Load Workflow Logic
+    const headerLoadBtn = document.querySelector('.canvas-header .canvas-actions [data-action="load-workflow"]');
+    if (headerLoadBtn) headerLoadBtn.addEventListener('click', () => openLoadModal());
+
+    // Modal Elements
+    const loadModal = document.getElementById('loadWorkflowModal');
+    const closeModalBtn = loadModal?.querySelector('.close-modal');
+    const workflowListContainer = document.getElementById('workflowList');
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            loadModal.style.display = 'none';
+        });
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === loadModal) {
+            loadModal.style.display = 'none';
+        }
+    });
+
+    function openLoadModal() {
+        if (!loadModal) return;
+        loadModal.style.display = 'block';
+        loadWorkflowsList();
+    }
+
+    function loadWorkflowsList() {
+        if (!workflowListContainer) return;
+        workflowListContainer.innerHTML = '<div class="loading-spinner">Loading...</div>';
+        
+        fetch('/api/workflows')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderWorkflowList(data.workflows);
+                } else {
+                    workflowListContainer.innerHTML = '<div class="error-message">Failed to load workflows</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading workflows:', error);
+                workflowListContainer.innerHTML = '<div class="error-message">Network error</div>';
+            });
+    }
+
+    function renderWorkflowList(workflows) {
+        if (!workflows || workflows.length === 0) {
+            workflowListContainer.innerHTML = '<div class="empty-message">No saved workflows found</div>';
+            return;
+        }
+
+        workflowListContainer.innerHTML = '';
+        workflows.forEach(workflow => {
+            const item = document.createElement('div');
+            item.className = 'workflow-item';
+            
+            const date = new Date(workflow.updated_at || workflow.created_at).toLocaleDateString();
+            
+            item.innerHTML = `
+                <div class="workflow-item-info">
+                    <h4>${workflow.name}</h4>
+                    <div class="workflow-item-date">Last updated: ${date}</div>
+                </div>
+                <div class="workflow-item-actions">
+                    <button class="delete-workflow-btn" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            // Click to load
+            item.addEventListener('click', (e) => {
+                if (!e.target.closest('.delete-workflow-btn')) {
+                    loadWorkflow(workflow.id);
+                    loadModal.style.display = 'none';
+                }
+            });
+
+            // Delete button
+            const deleteBtn = item.querySelector('.delete-workflow-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete workflow "${workflow.name}"?`)) {
+                    deleteWorkflow(workflow.id);
+                }
+            });
+
+            workflowListContainer.appendChild(item);
+        });
+    }
+
+    function deleteWorkflow(id) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        fetch(`/api/workflows/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Workflow deleted', 'success');
+                loadWorkflowsList(); // Refresh list
+            } else {
+                showNotification('Error deleting workflow', 'error');
+            }
+        });
+    }
+
+    function loadWorkflow(id) {
+        // Redirect to load via URL
+        window.location.href = `/workspace/builder?id=${id}`;
+    }
 
     if (headerClearBtn) {
         headerClearBtn.addEventListener('click', () => {
@@ -686,28 +806,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (headerResetBtn) {
-        headerResetBtn.addEventListener('click', () => {
-            if (confirm('This will clear current work and load the demo. Continue?')) {
-                // Clear first
-                document.querySelectorAll('.workflow-node').forEach(n => n.remove());
-                document.querySelectorAll('.connection-line').forEach(l => l.remove());
-                builderState.connections = [];
-                
-                // Add demo nodes
-                const demoNodes = [
-                    { name: 'New order', category: 'trigger', description: 'Sync new orders from the POS every five minutes.', x: 300, y: 220, icon: 'fas fa-shopping-basket' },
-                    { name: 'Webhook', category: 'trigger', description: 'Receive events from the POS', x: 500, y: 220, icon: 'fas fa-bolt' },
-                    { name: 'Slack notify', category: 'custom', description: 'Send a message to #retail-ops when a VIP order exceeds limit.', x: 400, y: 400, icon: 'fas fa-comments' }
-                ];
-                
-                demoNodes.forEach(data => {
-                    createWorkflowNode(data, { x: data.x, y: data.y });
-                });
-                
-                showNotification('Demo workflow loaded', 'success');
-            }
+    async function runWorkflow() {
+        showNotification('Executing workflow...', 'info');
+        
+        const nodes = [];
+        document.querySelectorAll('.workflow-node').forEach((node) => {
+            nodes.push({
+                id: node.dataset.nodeId.replace('node-', ''),
+                type: node.dataset.type,
+                config: node.dataset.config ? JSON.parse(node.dataset.config) : {}
+            });
         });
+
+        const edges = [];
+        const svg = document.getElementById('connectionLines');
+        if (svg) {
+            svg.querySelectorAll('.connection-line').forEach((line) => {
+                edges.push({ 
+                    from: line.dataset.source.replace('node-', ''), 
+                    to: line.dataset.target.replace('node-', '') 
+                });
+            });
+        }
+
+        const payload = { nodes, edges };
+        console.log("Executing Payload:", payload);
+
+        try {
+            const response = await fetch('/api/workflow/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            console.log("Execution Result:", result);
+
+            if (result.status === 'completed') {
+                showNotification('Workflow completed successfully!', 'success');
+            } else {
+                showNotification('Workflow failed: ' + (result.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error executing workflow:', error);
+            showNotification('Network error executing workflow', 'error');
+        }
     }
 
     function saveWorkflow() {
@@ -908,6 +1054,70 @@ document.addEventListener('DOMContentLoaded', () => {
             nodeDescriptionInput.value = node.querySelector('.node-content')?.textContent.trim() || '';
         }
 
+        // --- Dynamic Settings Generation ---
+        const settingsContainer = document.getElementById('nodeSettings');
+        if (settingsContainer) {
+            settingsContainer.innerHTML = ''; // Clear previous settings
+            const type = node.dataset.type;
+            const config = node.dataset.config ? JSON.parse(node.dataset.config) : {};
+
+            let html = '';
+            
+            if (type === 'google_sheet_read') {
+                html = `
+                    <label>Spreadsheet ID</label>
+                    <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <label>Range</label>
+                    <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1:B10'}">
+                `;
+            } else if (type === 'google_sheet_write') {
+                html = `
+                    <label>Spreadsheet ID</label>
+                    <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <label>Range</label>
+                    <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1'}">
+                    <label>Write Mode</label>
+                    <select id="cfg-write-mode">
+                        <option value="json" ${config.writeMode === 'json' ? 'selected' : ''}>JSON (List of Lists)</option>
+                        <option value="row" ${config.writeMode === 'row' ? 'selected' : ''}>Row (Comma Separated)</option>
+                        <option value="column" ${config.writeMode === 'column' ? 'selected' : ''}>Column (Newline Separated)</option>
+                        <option value="cell" ${config.writeMode === 'cell' ? 'selected' : ''}>Single Cell</option>
+                    </select>
+                    <label>Data</label>
+                    <textarea id="cfg-data" style="height: 80px;">${config.data || ''}</textarea>
+                    <small>Use {{nodeId}} to reference other nodes.</small>
+                `;
+            } else if (type === 'google_doc_read') {
+                html = `
+                    <label>Document ID</label>
+                    <input type="text" id="cfg-doc-id" value="${config.docId || ''}">
+                `;
+            } else if (type === 'gmail_send') {
+                html = `
+                    <label>To</label>
+                    <input type="text" id="cfg-to" value="${config.to || ''}">
+                    <label>Subject</label>
+                    <input type="text" id="cfg-subject" value="${config.subject || ''}">
+                    <label>Body</label>
+                    <textarea id="cfg-body" style="height: 100px;">${config.body || ''}</textarea>
+                `;
+            } else if (type === 'make_webhook' || type === 'slack_notify' || type === 'discord_notify') {
+                html = `
+                    <label>Webhook URL</label>
+                    <input type="text" id="cfg-url" value="${config.url || ''}">
+                    <label>Message/Body</label>
+                    <textarea id="cfg-message" style="height: 80px;">${config.message || config.body || ''}</textarea>
+                `;
+            } else if (type === 'filter') {
+                html = `
+                    <label>Contains Keyword</label>
+                    <input type="text" id="cfg-keyword" value="${config.keyword || ''}">
+                `;
+            }
+
+            settingsContainer.innerHTML = html;
+        }
+
         propertyPanel?.classList.add('open');
     }
 
@@ -934,11 +1144,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const oldDescription = node.querySelector('.node-content')?.textContent || '';
             const newTitle = nodeNameInput.value || oldTitle;
             const newDescription = nodeDescriptionInput.value || oldDescription;
+            
+            // Save basic info
             node.dataset.title = newTitle;
             const titleEl = node.querySelector('.node-title');
             if (titleEl) titleEl.textContent = newTitle;
             const contentEl = node.querySelector('.node-content');
             if (contentEl) contentEl.textContent = newDescription;
+
+            // Save Config
+            const config = node.dataset.config ? JSON.parse(node.dataset.config) : {};
+            const type = node.dataset.type;
+
+            if (type === 'google_sheet_read') {
+                config.sheetId = document.getElementById('cfg-sheet-id')?.value;
+                config.range = document.getElementById('cfg-range')?.value;
+            } else if (type === 'google_sheet_write') {
+                config.sheetId = document.getElementById('cfg-sheet-id')?.value;
+                config.range = document.getElementById('cfg-range')?.value;
+                config.writeMode = document.getElementById('cfg-write-mode')?.value;
+                config.data = document.getElementById('cfg-data')?.value;
+            } else if (type === 'google_doc_read') {
+                config.docId = document.getElementById('cfg-doc-id')?.value;
+            } else if (type === 'gmail_send') {
+                config.to = document.getElementById('cfg-to')?.value;
+                config.subject = document.getElementById('cfg-subject')?.value;
+                config.body = document.getElementById('cfg-body')?.value;
+            } else if (type === 'make_webhook') {
+                config.url = document.getElementById('cfg-url')?.value;
+                config.body = document.getElementById('cfg-message')?.value;
+            } else if (type === 'slack_notify' || type === 'discord_notify') {
+                config.url = document.getElementById('cfg-url')?.value;
+                config.message = document.getElementById('cfg-message')?.value;
+            } else if (type === 'filter') {
+                config.keyword = document.getElementById('cfg-keyword')?.value;
+            }
+
+            node.dataset.config = JSON.stringify(config);
+
             pushHistory({ type: 'edit', nodeId: node.dataset.nodeId, from: { title: oldTitle, description: oldDescription }, to: { title: newTitle, description: newDescription } });
             showNotification('Node updated', 'success');
         });

@@ -33,6 +33,9 @@ class Database:
         if 'role' not in columns:
             c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
         
+        if 'google_token' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN google_token TEXT")
+        
         # Workspaces table
         c.execute('''CREATE TABLE IF NOT EXISTS workspaces (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
