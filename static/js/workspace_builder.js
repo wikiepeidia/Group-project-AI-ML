@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const googleConnected = document.querySelector('.builder-container')?.dataset.googleConnected === 'true';
     let googleWarningShown = false;
+    const googlePickerState = {
+        targetInputId: null,
+        type: 'sheets',
+        selected: null,
+        nextPageToken: null,
+        loading: false,
+        currentQuery: ''
+    };
     const categoryColors = {
         trigger: '#8bc34a',
         ai: '#00bcd4',
@@ -38,6 +46,177 @@ document.addEventListener('DOMContentLoaded', () => {
             googleWarningShown = true;
         }
     }
+
+    // --- Google Drive Picker ---
+    const pickerModal = document.getElementById('googlePickerModal');
+    const pickerList = document.getElementById('googlePickerList');
+    const pickerSearch = document.getElementById('googlePickerSearch');
+    const pickerType = document.getElementById('googlePickerType');
+    const pickerStatus = document.getElementById('googlePickerStatus');
+    const pickerSelectBtn = document.getElementById('googlePickerSelect');
+    const pickerLoadMoreBtn = document.getElementById('googlePickerLoadMore');
+
+    function closePicker() {
+        if (pickerModal) pickerModal.style.display = 'none';
+        googlePickerState.targetInputId = null;
+        googlePickerState.selected = null;
+        googlePickerState.nextPageToken = null;
+        googlePickerState.currentQuery = '';
+        if (pickerSelectBtn) pickerSelectBtn.disabled = true;
+    }
+
+    function renderPickerLoading({ append = false } = {}) {
+        if (!pickerList || append) return;
+        pickerList.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'workflow-item skeleton';
+            skeleton.innerHTML = `
+                <div>
+                    <div class="skeleton-line" style="width: 180px;"></div>
+                    <div class="skeleton-line" style="width: 120px; margin-top: 6px;"></div>
+                </div>
+                <div class="skeleton-line" style="width: 90px;"></div>
+            `;
+            pickerList.appendChild(skeleton);
+        }
+    }
+
+    function renderPickerList(files, append = false) {
+        if (!pickerList) return;
+        if (!append) pickerList.innerHTML = '';
+        if (!files || files.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'workflow-empty';
+            empty.textContent = 'No files found';
+            pickerList.appendChild(empty);
+            return;
+        }
+        files.forEach((file) => {
+            const item = document.createElement('div');
+            item.className = 'workflow-item';
+            item.dataset.fileId = file.id;
+            item.dataset.fileName = file.name;
+            item.innerHTML = `
+                <div>
+                    <div style="font-weight:600;">${file.name}</div>
+                    <div style="font-size:12px;color:#666;">${file.mimeType || ''}</div>
+                </div>
+                <div style="font-size:12px;color:#777;">${file.modifiedTime ? new Date(file.modifiedTime).toLocaleString() : ''}</div>
+            `;
+            item.addEventListener('click', () => {
+                pickerList.querySelectorAll('.workflow-item').forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
+                googlePickerState.selected = { id: file.id, name: file.name, mimeType: file.mimeType };
+                if (pickerSelectBtn) pickerSelectBtn.disabled = false;
+            });
+            pickerList.appendChild(item);
+        });
+    }
+
+    function setPickerLoading(isLoading, { append = false } = {}) {
+        googlePickerState.loading = isLoading;
+        if (pickerStatus) pickerStatus.style.display = isLoading ? 'block' : 'none';
+        if (isLoading) {
+            renderPickerLoading({ append });
+        }
+    }
+
+    function fetchPickerFiles({ query = '', pageToken = null, append = false } = {}) {
+        if (!googleConnected) {
+            showNotification('Connect Google to browse Drive.', 'warning');
+            return;
+        }
+        if (!pickerModal) return;
+        const type = pickerType?.value || 'sheets';
+        googlePickerState.type = type;
+        googlePickerState.currentQuery = query;
+        setPickerLoading(true, { append });
+        pickerLoadMoreBtn && (pickerLoadMoreBtn.style.display = 'none');
+
+        const params = new URLSearchParams();
+        params.set('type', type);
+        if (query) params.set('q', query);
+        params.set('pageSize', '50');
+        if (pageToken) params.set('pageToken', pageToken);
+
+        fetch(`/api/google/files?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    showNotification(data.message || 'Failed to load files', 'error');
+                    return;
+                }
+                renderPickerList(data.files || [], append);
+                googlePickerState.nextPageToken = data.nextPageToken || null;
+                if (pickerLoadMoreBtn) {
+                    pickerLoadMoreBtn.style.display = googlePickerState.nextPageToken ? 'inline-block' : 'none';
+                }
+            })
+            .catch(() => {
+                showNotification('Network error while loading Drive files', 'error');
+            })
+            .finally(() => setPickerLoading(false, { append }));
+    }
+
+    function openGooglePicker(options) {
+        if (!googleConnected) {
+            showNotification('Connect Google to browse Drive.', 'warning');
+            return;
+        }
+        googlePickerState.targetInputId = options?.targetInputId || null;
+        if (pickerType && options?.type) pickerType.value = options.type;
+        googlePickerState.type = pickerType?.value || 'sheets';
+        googlePickerState.selected = null;
+        pickerSelectBtn && (pickerSelectBtn.disabled = true);
+        if (pickerModal) pickerModal.style.display = 'block';
+        setPickerLoading(true);
+        fetchPickerFiles();
+    }
+
+    if (pickerSelectBtn) {
+        pickerSelectBtn.addEventListener('click', () => {
+            const selected = googlePickerState.selected;
+            if (!selected || !googlePickerState.targetInputId) return;
+            const target = document.getElementById(googlePickerState.targetInputId);
+            if (target) {
+                target.value = selected.id;
+                target.dataset.displayName = selected.name;
+            }
+            closePicker();
+        });
+    }
+
+    if (pickerLoadMoreBtn) {
+        pickerLoadMoreBtn.addEventListener('click', () => {
+            if (googlePickerState.nextPageToken) {
+                fetchPickerFiles({ query: googlePickerState.currentQuery, pageToken: googlePickerState.nextPageToken, append: true });
+            }
+        });
+    }
+
+    if (pickerSearch) {
+        let searchDebounce;
+        pickerSearch.addEventListener('input', (e) => {
+            const q = e.target.value || '';
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => fetchPickerFiles({ query: q }), 250);
+        });
+    }
+
+    if (pickerType) {
+        pickerType.addEventListener('change', () => fetchPickerFiles({ query: pickerSearch?.value || '' }));
+    }
+
+    document.querySelectorAll('[data-close="googlePickerModal"]').forEach(btn => {
+        btn.addEventListener('click', closePicker);
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === pickerModal) {
+            closePicker();
+        }
+    });
 
 
     function pushHistory(action) {
@@ -1088,6 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html = `
                     <label>Spreadsheet ID</label>
                     <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <button type="button" class="action-btn" id="cfg-sheet-picker">Browse Drive</button>
                     <label>Range</label>
                     <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1:B10'}">
                 `;
@@ -1095,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html = `
                     <label>Spreadsheet ID</label>
                     <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <button type="button" class="action-btn" id="cfg-sheet-picker">Browse Drive</button>
                     <label>Range</label>
                     <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1'}">
                     <label>Write Mode</label>
@@ -1112,6 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html = `
                     <label>Document ID</label>
                     <input type="text" id="cfg-doc-id" value="${config.docId || ''}">
+                    <button type="button" class="action-btn" id="cfg-doc-picker">Browse Drive</button>
                 `;
             } else if (type === 'gmail_send') {
                 html = `
@@ -1137,6 +1319,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             settingsContainer.innerHTML = html;
+
+            const sheetPickerBtn = document.getElementById('cfg-sheet-picker');
+            const docPickerBtn = document.getElementById('cfg-doc-picker');
+            if (sheetPickerBtn) {
+                sheetPickerBtn.addEventListener('click', () => {
+                    openGooglePicker({ type: 'sheets', targetInputId: 'cfg-sheet-id' });
+                });
+            }
+            if (docPickerBtn) {
+                docPickerBtn.addEventListener('click', () => {
+                    openGooglePicker({ type: 'docs', targetInputId: 'cfg-doc-id' });
+                });
+            }
         }
 
         propertyPanel?.classList.add('open');
@@ -1373,11 +1568,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Skip drag when clicking action buttons
             if (event.target.closest('.console-action-btn')) return;
             event.preventDefault();
-            if (consolePanel.classList.contains('minimized')) {
-                consolePanel.classList.remove('minimized');
-                consolePanel.style.height = `${consoleHeight}px`;
-                if (toggleConsoleBtn) toggleConsoleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
-            }
+            // Do not auto-expand when minimized; allow dragging in minimized state
             isDraggingConsole = true;
             dragStartX = event.clientX;
             dragStartY = event.clientY;

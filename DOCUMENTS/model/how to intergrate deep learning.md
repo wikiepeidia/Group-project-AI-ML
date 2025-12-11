@@ -1,5 +1,7 @@
 # Deep Learning App Integration Plan
 
+project scope: Quan ly abn hang+Workflow automation
+
 ## 1) What the deep-learning app already does (from `backup/deep learning models/app.py`)
 
 - Flask service exposes blueprints: `model1_routes` (YOLO layout + OCR invoice detection), `model2_routes` (LSTM quantity forecast), `ocr_routes` (raw OCR), and `history_routes` (view/clear invoice history).

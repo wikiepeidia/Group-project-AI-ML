@@ -8,6 +8,7 @@ from core.database import Database
 from core.auth import AuthManager
 from core.config import Config
 from core.utils import Utils
+from core import google_integration
 from core.workflow_engine import execute_workflow
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
@@ -65,7 +66,9 @@ google = oauth.register(
     client_id=app.config['GOOGLE_CLIENT_ID'],
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'}
+    client_kwargs={
+        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'
+    }
 )
 
 # Session configuration - 30 minutes
@@ -1793,7 +1796,13 @@ def google_login():
     # Redirect to Google signin
     redirect_uri = url_for('google_authorize', _external=True)
     print(f"DEBUG: Generated Redirect URI: {redirect_uri}")
-    return google.authorize_redirect(redirect_uri)
+    # Request offline access so we receive refresh_token and can reuse tokens server-side
+    return google.authorize_redirect(
+        redirect_uri,
+        access_type='offline',
+        prompt='consent',
+        include_granted_scopes='true'
+    )
 
 @app.route('/auth/google/callback')
 def google_authorize():
@@ -1802,6 +1811,20 @@ def google_authorize():
         # Receive token from Google
         token = google.authorize_access_token()
         user_info = token['userinfo']  # Include email, name, picture
+
+        # Normalize token to the format expected by google.oauth2.credentials.Credentials
+        normalized_token = {
+            'access_token': token.get('access_token') or token.get('token'),
+            'refresh_token': token.get('refresh_token'),
+            'token_uri': 'https://oauth2.googleapis.com/token',
+            'client_id': app.config.get('GOOGLE_CLIENT_ID'),
+            'client_secret': app.config.get('GOOGLE_CLIENT_SECRET'),
+            'scope': token.get('scope') or ' '.join(google_integration.SCOPES),
+            'expires_at': token.get('expires_at'),
+            'id_token': token.get('id_token'),
+            # Preserve original for debugging/forward compatibility
+            'raw_token': token
+        }
         
         email = user_info['email']
         name = user_info.get('name', 'Google User')
@@ -1814,7 +1837,7 @@ def google_authorize():
         
         user_id = None
         role = 'user'
-        token_json = json.dumps(token)
+        token_json = json.dumps(normalized_token)
         
         if user_row:
             # User already exists -> Get ID
@@ -1876,6 +1899,50 @@ def google_authorize():
         traceback.print_exc()
         flash(f'Google login failed. Please try again. ({str(e)})', 'error')
         return redirect(url_for('auth.signin'))
+
+
+@app.route('/api/google/files', methods=['GET'])
+@login_required
+def list_google_files():
+    """List Google Drive files (Sheets/Docs) for the logged-in user."""
+    if not current_user.google_token:
+        return jsonify({'success': False, 'message': 'Google account not connected'}), 400
+
+    try:
+        token_info = json.loads(current_user.google_token)
+    except Exception:
+        return jsonify({'success': False, 'message': 'Invalid Google token'}), 400
+
+    file_type = request.args.get('type', 'sheets')
+    search = request.args.get('q', '').strip()
+    page_token = request.args.get('pageToken') or None
+    page_size = min(int(request.args.get('pageSize', 50)), 100)
+
+    mime_map = {
+        'sheets': ['application/vnd.google-apps.spreadsheet'],
+        'docs': ['application/vnd.google-apps.document'],
+        'files': None
+    }
+    mime_types = mime_map.get(file_type, mime_map['sheets'])
+
+    resp = google_integration.list_files(
+        token_info=token_info,
+        mime_types=mime_types,
+        query_text=search,
+        page_size=page_size,
+        page_token=page_token
+    )
+
+    if resp.get('error') == 'service_unavailable':
+        return jsonify({'success': False, 'message': 'Google API unavailable on server'}), 503
+    if resp.get('error'):
+        return jsonify({'success': False, 'message': resp['error']}), 400
+
+    return jsonify({
+        'success': True,
+        'files': resp.get('files', []),
+        'nextPageToken': resp.get('nextPageToken')
+    })
 
 # Workflow API Routes
 @app.route('/api/workflows', methods=['GET'])
