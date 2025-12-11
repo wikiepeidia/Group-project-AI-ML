@@ -1,12 +1,16 @@
 import time
 import os.path
 import json
+from datetime import datetime, timezone
 
 # --- Google API Setup (Placeholder/Real) ---
 # In a real environment, you would install:
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file'
+]
 
 # Get the directory where this script is located
 # core/google_integration.py -> core/ -> root/
@@ -28,14 +32,64 @@ def get_google_service(service_name, version, token_info=None):
         print("[Google] Google API libraries not installed. Using Mock mode.")
         return None
 
+    def _load_client_credentials():
+        """Load client_id/client_secret from secrets file or environment."""
+        client_id = os.environ.get('GOOGLE_CLIENT_ID')
+        client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+        try:
+            with open(CREDENTIALS_FILE) as f:
+                data = json.load(f)
+                client_id = data.get('GOOGLE_CLIENT_ID') or data.get('client_id') or client_id
+                client_secret = data.get('GOOGLE_CLIENT_SECRET') or data.get('client_secret') or client_secret
+        except FileNotFoundError:
+            pass
+        return client_id, client_secret
+
+    def _build_credentials_from_token(token_data):
+        """Normalize Authlib token payload into google.oauth2.credentials.Credentials."""
+        client_id, client_secret = _load_client_credentials()
+        token_uri = token_data.get('token_uri') or 'https://oauth2.googleapis.com/token'
+        scopes = token_data.get('scopes') or token_data.get('scope') or SCOPES
+        if isinstance(scopes, str):
+            scopes = scopes.split()
+
+        # Convert expiry to naive UTC datetime to avoid offset-naive/aware comparisons.
+        expiry_raw = token_data.get('expiry') or token_data.get('expires_at')
+        expiry = None
+        try:
+            if isinstance(expiry_raw, (int, float)):
+                expiry = datetime.utcfromtimestamp(expiry_raw)
+            elif isinstance(expiry_raw, str):
+                dt = datetime.fromisoformat(expiry_raw)
+                # If aware, move to UTC then drop tzinfo to keep naive UTC
+                if dt.tzinfo is not None:
+                    dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+                expiry = dt
+            elif hasattr(expiry_raw, 'tzinfo'):
+                dt = expiry_raw
+                if dt.tzinfo is not None:
+                    dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+                expiry = dt
+        except Exception:
+            expiry = None
+
+        return Credentials(
+            token=token_data.get('token') or token_data.get('access_token'),
+            refresh_token=token_data.get('refresh_token'),
+            token_uri=token_uri,
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=scopes,
+            expiry=expiry
+        )
+
     creds = None
     
     if token_info:
         try:
             # Use provided token info (from DB)
-            # Ensure token_info has all required fields or handle missing ones
-            creds = Credentials.from_authorized_user_info(token_info, SCOPES)
-        except ValueError as e:
+            creds = _build_credentials_from_token(token_info)
+        except Exception as e:
             print(f"[Google] Error loading provided token info: {e}")
             creds = None
 
@@ -103,6 +157,38 @@ def get_google_service(service_name, version, token_info=None):
     except Exception as e:
         print(f"[Google] Error building service: {e}")
         return None
+
+
+def list_files(token_info=None, mime_types=None, query_text=None, page_size=50, page_token=None):
+    """List Drive files using provided token. Respects drive.file scope."""
+    service = get_google_service('drive', 'v3', token_info)
+    if not service:
+        return {'files': [], 'nextPageToken': None, 'error': 'service_unavailable'}
+
+    q_parts = ["trashed=false"]
+    if mime_types:
+        mime_filters = [f"mimeType='{m}'" for m in mime_types]
+        q_parts.append("(" + " or ".join(mime_filters) + ")")
+    if query_text:
+        safe = query_text.replace("'", "\'")
+        q_parts.append(f"name contains '{safe}'")
+    q = " and ".join(q_parts)
+
+    try:
+        resp = service.files().list(
+            q=q,
+            spaces='drive',
+            fields='nextPageToken, files(id, name, mimeType, modifiedTime, owners(displayName,emailAddress))',
+            pageSize=page_size,
+            pageToken=page_token
+        ).execute()
+        return {
+            'files': resp.get('files', []),
+            'nextPageToken': resp.get('nextPageToken')
+        }
+    except Exception as e:
+        print(f"[Google] list_files error: {e}")
+        return {'files': [], 'nextPageToken': None, 'error': str(e)}
 
 def read_sheet(sheet_id, range_name, token_info=None):
     """

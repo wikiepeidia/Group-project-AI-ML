@@ -217,6 +217,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Google Drive Picker Modal -->
+    <div id="googlePickerModal" class="modal">
+        <div class="modal-content" style="max-width: 720px;">
+            <div class="modal-header">
+                <h3>Select from Google Drive</h3>
+                <span class="close-modal" data-close="googlePickerModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="googlePickerSearch" class="form-control" placeholder="Search by name...">
+                    <select id="googlePickerType" class="form-control" style="max-width: 180px;">
+                        <option value="sheets">Sheets</option>
+                        <option value="docs">Docs</option>
+                        <option value="files">All files</option>
+                    </select>
+                </div>
+                <div id="googlePickerStatus" class="picker-loading" style="display:none;">
+                    <div class="loading-spinner">Loading...</div>
+                    <div class="picker-progress"><span class="bar"></span></div>
+                </div>
+                <div id="googlePickerList" class="workflow-list" style="max-height: 360px; overflow: auto;"></div>
+                <div style="display:flex; justify-content: space-between; margin-top: 10px;">
+                    <button id="googlePickerLoadMore" class="action-btn" style="display:none;">Load more</button>
+                    <div style="flex:1"></div>
+                    <div style="display:flex; gap: 8px;">
+                        <button class="action-btn" data-close="googlePickerModal">Cancel</button>
+                        <button id="googlePickerSelect" class="action-btn primary" disabled>Select</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
