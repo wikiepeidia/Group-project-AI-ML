@@ -10,10 +10,10 @@ async function loadExports() {
             renderExportsTable();
             updateStats();
         } else {
-            showAlert('error', 'Lỗi tải dữ liệu');
+            showAlert('error', 'Error loading data');
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
@@ -28,13 +28,13 @@ function renderExportsTable() {
     tbody.innerHTML = exportsData.map(exp => `
         <tr>
             <td><strong>${exp.code}</strong></td>
-            <td>${exp.customer_name || 'Khách lẻ'}</td>
+            <td>${exp.customer_name || 'Retail customer'}</td>
             <td class="text-end"><strong>${Number(exp.total_amount).toLocaleString('en-US')} VND</strong></td>
-            <td><span class="badge bg-${exp.status === 'completed' ? 'success' : 'warning'}">${exp.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</span></td>
+            <td><span class="badge bg-${exp.status === 'completed' ? 'success' : 'warning'}">${exp.status === 'completed' ? 'Completed' : 'Processing'}</span></td>
             <td>${new Date(exp.created_at).toLocaleDateString('en-US')}</td>
             <td>${exp.notes || '-'}</td>
             <td>
-                <button class="btn btn-sm btn-info" onclick="alert('Xem chi tiết: ' + '${exp.code}')">
+                <button class="btn btn-sm btn-info" onclick="alert('View details: ' + '${exp.code}')">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>

@@ -27,7 +27,7 @@ class Database:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )''')
 
-        # Nếu bảng cũ chưa có cột role thì thêm
+        # If the old table doesn't have a 'role' column, add it
         c.execute("PRAGMA table_info(users)")
         columns = [col[1] for col in c.fetchall()]
         if 'role' not in columns:

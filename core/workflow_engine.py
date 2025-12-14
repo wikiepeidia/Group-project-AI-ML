@@ -77,10 +77,15 @@ def execute_workflow(workflow_data, token_info=None):
     """
     Executes the workflow defined in the JSON data using a topological sort.
     """
+    logs = []
+    def log(msg):
+        print(msg)
+        logs.append(msg)
+
     nodes = {str(n['id']): n for n in workflow_data.get('nodes', [])}
     edges = workflow_data.get('edges', [])
     
-    print(f"Executing workflow with {len(nodes)} nodes and {len(edges)} edges.")
+    log(f"Executing workflow with {len(nodes)} nodes and {len(edges)} edges.")
     
     # 1. Build Adjacency List and In-Degree Count
     adj_list = {node_id: [] for node_id in nodes}
@@ -110,7 +115,7 @@ def execute_workflow(workflow_data, token_info=None):
                 queue.append(neighbor)
                 
     if len(execution_order) != len(nodes):
-        return {"status": "error", "message": "Cycle detected in workflow!"}
+        return {"status": "error", "message": "Cycle detected in workflow!", "logs": logs}
         
     # 3. Execute Nodes in Order
     context = {} # Stores output of each node: {node_id: output_data}
@@ -132,11 +137,11 @@ def execute_workflow(workflow_data, token_info=None):
                 break
         
         if parent_failed:
-            print(f"Skipping Node {node_id} because parent failed/skipped.")
+            log(f"Skipping Node {node_id} because parent failed/skipped.")
             node_results[node_id] = {"status": "skipped", "reason": "Parent failed or skipped"}
             continue
 
-        print(f"--- Running Node {node_id} ({node_type}) ---")
+        log(f"--- Running Node {node_id} ({node_type}) ---")
         
         try:
             result = None
@@ -153,12 +158,12 @@ def execute_workflow(workflow_data, token_info=None):
                 data_template = config.get('data', '')
                 write_mode = config.get('writeMode', 'json') # json, row, single
 
-                print(f"[Workflow] Node {node_id} Write Mode: {write_mode}")
-                print(f"[Workflow] Raw Template: '{data_template}'")
+                log(f"[Workflow] Node {node_id} Write Mode: {write_mode}")
+                log(f"[Workflow] Raw Template: '{data_template}'")
 
                 resolved_data = resolve_template(data_template, context)
                 
-                print(f"[Workflow] Resolved Data: '{resolved_data}' (Type: {type(resolved_data)})")
+                log(f"[Workflow] Resolved Data: '{resolved_data}' (Type: {type(resolved_data)})")
 
                 data_to_write = []
                 method = 'append' # Default method
@@ -214,8 +219,8 @@ def execute_workflow(workflow_data, token_info=None):
                 elif data_to_write and not isinstance(data_to_write[0], list):
                     data_to_write = [data_to_write]
                 
-                print(f"[Workflow] Writing to Sheet {sheet_id} at {range_name}. Mode: {write_mode}, Method: {method}")
-                print(f"[Workflow] Payload: {data_to_write}")
+                log(f"[Workflow] Writing to Sheet {sheet_id} at {range_name}. Mode: {write_mode}, Method: {method}")
+                log(f"[Workflow] Payload: {data_to_write}")
 
                 result = write_sheet(sheet_id, range_name, data_to_write, method=method, token_info=token_info)
                 
@@ -260,7 +265,7 @@ def execute_workflow(workflow_data, token_info=None):
                 # AUTO-PASS: If template is empty, try to use parent output
                 if not message_template and parents:
                     p_id = parents[0]
-                    print(f"[Workflow] Auto-passing output from Parent Node {p_id} to Discord")
+                    log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Discord")
                     resolved_message = context.get(p_id)
                 else:
                     resolved_message = resolve_template(message_template, context)
@@ -282,7 +287,7 @@ def execute_workflow(workflow_data, token_info=None):
                 # AUTO-PASS: If body is empty, try to use parent output
                 if not body_template and parents:
                     p_id = parents[0]
-                    print(f"[Workflow] Auto-passing output from Parent Node {p_id} to Gmail")
+                    log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Gmail")
                     resolved_body = context.get(p_id)
                 else:
                     resolved_body = resolve_template(body_template, context)
@@ -328,9 +333,9 @@ def execute_workflow(workflow_data, token_info=None):
             node_results[node_id] = {"status": "success", "output": result}
             
         except Exception as e:
-            print(f"Error in Node {node_id}: {str(e)}")
+            log(f"Error in Node {node_id}: {str(e)}")
             node_results[node_id] = {"status": "error", "error": str(e)}
             # Stop execution on error? For now, yes.
-            return {"status": "failed", "node_results": node_results, "error_node": node_id}
+            return {"status": "failed", "node_results": node_results, "error_node": node_id, "logs": logs}
 
-    return {"status": "completed", "node_results": node_results}
+    return {"status": "completed", "node_results": node_results, "logs": logs}

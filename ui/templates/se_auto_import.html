@@ -13,115 +13,112 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        {% include 'components/sidebar.html' %}
+<div class="app-layout">
+    {% include 'components/sidebar.html' %}
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content auto-import-page">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-sync-alt"></i> SE - Auto Import</h1>
-                <button class="btn btn-primary" onclick="openAddAutomationModal()">
-                    <i class="fas fa-plus"></i> Create automation
-                </button>
-            </div>
+    <main class="app-content main-content auto-import-page">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2"><i class="fas fa-sync-alt"></i> SE - Auto Import</h1>
+            <button class="btn btn-primary" onclick="openAddAutomationModal()">
+                <i class="fas fa-plus"></i> Create automation
+            </button>
+        </div>
 
-            <div class="alert alert-info">
-                <i class="fas fa-magic"></i> <strong>Feature:</strong> Set up automation scenarios to auto-import when
-                product stock is below threshold or on scheduled intervals.
-            </div>
+        <div class="alert alert-info">
+            <i class="fas fa-magic"></i> <strong>Feature:</strong> Set up automation scenarios to auto-import when
+            product stock is below threshold or on scheduled intervals.
+        </div>
 
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-robot"></i> Active automations</h5>
-                            <h2 id="activeAutomations" class="text-white">0</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-check-circle"></i> Completed</h5>
-                            <h2 id="completedRuns" class="text-white">0</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-warning">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-clock"></i> Lần chạy cuối</h5>
-                            <h5 id="lastRun" class="text-white">None</h5>
-                        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-robot"></i> Active automations</h5>
+                        <h2 id="activeAutomations" class="text-white">0</h2>
                     </div>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Automation list</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Tên</th>
-                                    <th>Loại</th>
-                                    <th>Trạng thái</th>
-                                    <th>Lần chạy cuối</th>
-                                    <th>Cấu hình</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="automationsTableBody">
-                                <tr>
-                                    <td colspan="6" class="text-center">
-                                        No automations yet. Click "Create automation" to get started.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="col-md-4">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-check-circle"></i> Completed</h5>
+                        <h2 id="completedRuns" class="text-white">0</h2>
                     </div>
                 </div>
             </div>
-
-            <div class="card mt-3">
-                <div class="card-header card-header-surface">
-                    <h5><i class="fas fa-lightbulb"></i> Gợi ý Automation</h5>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-clock"></i> Last Run</h5>
+                        <h5 id="lastRun" class="text-white">None</h5>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-warehouse"></i> Auto import on low stock
-                                    </h6>
-                                    <p class="card-text">Automatically create import orders when product stock is below
-                                        threshold.</p>
-                                    <button class="btn btn-sm btn-info"
-                                        onclick="alert('Template: Auto Import on Low Stock')">
-                                        <i class="fas fa-plus"></i> Use template
-                                    </button>
-                                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Automation list</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Run</th>
+                                <th>Config</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="automationsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    No automations yet. Click "Create automation" to get started.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header card-header-surface">
+                <h5><i class="fas fa-lightbulb"></i> Automation Suggestions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-warehouse"></i> Auto import on low stock
+                                </h6>
+                                <p class="card-text">Automatically create import orders when product stock is below
+                                    threshold.</p>
+                                <button class="btn btn-sm btn-info"
+                                    onclick="alert('Template: Auto Import on Low Stock')">
+                                    <i class="fas fa-plus"></i> Use template
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-success">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Scheduled imports</h6>
-                                    <p class="card-text">Automatically import on schedule: daily, weekly, monthly.</p>
-                                    <button class="btn btn-sm btn-success"
-                                        onclick="alert('Template: Scheduled Import')">
-                                        <i class="fas fa-plus"></i> Use template
-                                    </button>
-                                </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Scheduled imports</h6>
+                                <p class="card-text">Automatically import on schedule: daily, weekly, monthly.</p>
+                                <button class="btn btn-sm btn-success" onclick="alert('Template: Scheduled Import')">
+                                    <i class="fas fa-plus"></i> Use template
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 </div>
 
 <!-- Modal: Add Automation -->
@@ -134,12 +131,12 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Tên automation <span class="text-danger">*</span></label>
+                    <label class="form-label">Automation name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="automationName"
                         placeholder="e.g. Auto import when out of stock">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Loại automation</label>
+                    <label class="form-label">Automation type</label>
                     <select class="form-select" id="automationType">
                         <option value="low_stock">Low Stock</option>
                         <option value="scheduled">Scheduled</option>
@@ -147,7 +144,7 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Cấu hình (JSON)</label>
+                    <label class="form-label">Config (JSON)</label>
                     <textarea class="form-control" id="automationConfig" rows="5"
                         placeholder='{"threshold": 10, "quantity": 100}'></textarea>
                     <small class="text-muted">Configure using JSON format</small>

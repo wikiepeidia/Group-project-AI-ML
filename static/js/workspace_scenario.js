@@ -362,7 +362,7 @@ function renderInspector(tab = 'properties') {
             <h5>Versions</h5>
             <ul class="list-unstyled small">
                 <li>v1.4-draft · 2 minutes ago · You</li>
-                <li>v1.3 · 1 ngày trước · Jenny</li>
+                <li>v1.3 · 1 day ago · Jenny</li>
             </ul>
         `;
     }
@@ -466,7 +466,7 @@ function showToast(message, type = 'info') {
 
 function openScrapingScenario() {
     document.getElementById('scenarioTop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    showToast('Đang mở workflow Scraping + CRM Sync', 'info');
+    showToast('Opening workflow Scraping + CRM Sync', 'info');
 }
 
 document.addEventListener('DOMContentLoaded', initScenarioUI);

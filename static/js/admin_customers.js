@@ -117,7 +117,7 @@ async function saveCustomer() {
             showAlert('error', data.message);
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 

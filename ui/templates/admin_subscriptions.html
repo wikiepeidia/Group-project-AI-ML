@@ -13,285 +13,283 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        {% include 'components/sidebar.html' %}
+<div class="app-layout">
+    {% include 'components/sidebar.html' %}
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content subscriptions-page">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-credit-card"></i> Manager Subscription Management</h1>
-                <div class="btn-group">
-                    <button class="btn btn-danger" onclick="checkExpiredSubscriptions()">
-                        <i class="fas fa-sync"></i> Check Expirations
-                    </button>
-                    <a href="{{ url_for('wallet_dashboard') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-wallet"></i> View Wallet
-                    </a>
-                </div>
+    <main class="app-content main-content subscriptions-page">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2"><i class="fas fa-credit-card"></i> Manager Subscription Management</h1>
+            <div class="btn-group">
+                <button class="btn btn-danger" onclick="checkExpiredSubscriptions()">
+                    <i class="fas fa-sync"></i> Check Expirations
+                </button>
+                <a href="{{ url_for('wallet_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-wallet"></i> View Wallet
+                </a>
             </div>
+        </div>
 
-            <div class="row g-3 mb-4" id="automationOverview">
-                <div class="col-md-4">
-                    <div class="auto-card">
-                        <div class="auto-card-icon bg-gradient-primary"><i class="fas fa-magic"></i></div>
-                        <div class="auto-card-body">
-                            <h6>Auto Upgrade</h6>
-                            <p class="auto-card-value" id="autoUpgradeStatus">On</p>
-                            <small>Valid transactions automatically upgrade the Manager role</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="auto-card">
-                        <div class="auto-card-icon bg-gradient-warning"><i class="fas fa-bell"></i></div>
-                        <div class="auto-card-body">
-                            <h6>Owner Notifications</h6>
-                            <p class="auto-card-value" id="ownerAlertStatus">On</p>
-                            <small>Send email and dashboard alerts on successful payments</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="auto-card">
-                        <div class="auto-card-icon bg-gradient-success"><i class="fas fa-university"></i></div>
-                        <div class="auto-card-body">
-                            <h6>Bank Account</h6>
-                            <p class="auto-card-value" id="bankLinkStatus">Not linked</p>
-                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="linkBankAccount()">Link
-                                now</button>
-                        </div>
+        <div class="row g-3 mb-4" id="automationOverview">
+            <div class="col-md-4">
+                <div class="auto-card">
+                    <div class="auto-card-icon bg-gradient-primary"><i class="fas fa-magic"></i></div>
+                    <div class="auto-card-body">
+                        <h6>Auto Upgrade</h6>
+                        <p class="auto-card-value" id="autoUpgradeStatus">On</p>
+                        <small>Valid transactions automatically upgrade the Manager role</small>
                     </div>
                 </div>
             </div>
-
-            <div class="row mt-4">
-                <div class="col-lg-5 mb-4">
-                    <div class="card automation-panel">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0"><i class="fas fa-robot"></i> Automation Flow</h5>
-                                <span class="badge bg-success" id="automationHealth">ON</span>
-                            </div>
-                            <p class="text-muted small mb-3">When a user completes payment, the system logs the
-                                transaction, upgrades the Manager role and notifies the owner.</p>
-                            <ul class="timeline">
-                                <li>
-                                    <div class="timeline-icon bg-primary"><i class="fas fa-university"></i></div>
-                                    <div>
-                                        <h6>Receive Payment</h6>
-                                        <small>Bank webhook / E-wallet</small>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="timeline-icon bg-warning"><i class="fas fa-file-invoice-dollar"></i>
-                                    </div>
-                                    <div>
-                                        <h6>Create receipt + store proof</h6>
-                                        <small id="receiptInfo">Bank not linked</small>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="timeline-icon bg-success"><i class="fas fa-user-shield"></i></div>
-                                    <div>
-                                        <h6>Auto-upgrade to Manager</h6>
-                                        <small>Activate account immediately</small>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="timeline-icon bg-info"><i class="fas fa-paper-plane"></i></div>
-                                    <div>
-                                        <h6>Notify Owner</h6>
-                                        <small>Email + Dashboard</small>
-                                    </div>
-                                </li>
-                            </ul>
-                            <div class="mt-3">
-                                <label class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="autoUpgradeToggle" checked
-                                        onchange="toggleAutoUpgrade(this.checked)">
-                                    <span class="form-check-label">Auto-upgrade upon payment</span>
-                                </label>
-                                <label class="form-check form-switch mt-2">
-                                    <input class="form-check-input" type="checkbox" id="autoNotifyToggle" checked
-                                        onchange="toggleOwnerNotify(this.checked)">
-                                    <span class="form-check-label">Auto-notify owner</span>
-                                </label>
-                            </div>
-                        </div>
+            <div class="col-md-4">
+                <div class="auto-card">
+                    <div class="auto-card-icon bg-gradient-warning"><i class="fas fa-bell"></i></div>
+                    <div class="auto-card-body">
+                        <h6>Owner Notifications</h6>
+                        <p class="auto-card-value" id="ownerAlertStatus">On</p>
+                        <small>Send email and dashboard alerts on successful payments</small>
                     </div>
                 </div>
-                <div class="col-lg-7">
-                    <div class="card automation-panel">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0"><i class="fas fa-inbox"></i> Pending Transactions</h5>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="refreshPaymentQueue()"><i
-                                        class="fas fa-sync-alt"></i></button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-align-middle mb-0" id="pendingPaymentsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Ref</th>
-                                            <th>Customer</th>
-                                            <th>Plan</th>
-                                            <th>Amount</th>
-                                            <th>Method</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                            <div class="text-end mt-3">
-                                <button class="btn btn-sm btn-primary" onclick="triggerManualPayout()">
-                                    <i class="fas fa-paper-plane"></i> Send manual bank reconciliation
-                                </button>
-                            </div>
+            </div>
+            <div class="col-md-4">
+                <div class="auto-card">
+                    <div class="auto-card-icon bg-gradient-success"><i class="fas fa-university"></i></div>
+                    <div class="auto-card-body">
+                        <h6>Bank Account</h6>
+                        <p class="auto-card-value" id="bankLinkStatus">Not linked</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="linkBankAccount()">Link
+                            now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-5 mb-4">
+                <div class="card automation-panel">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0"><i class="fas fa-robot"></i> Automation Flow</h5>
+                            <span class="badge bg-success" id="automationHealth">ON</span>
+                        </div>
+                        <p class="text-muted small mb-3">When a user completes payment, the system logs the
+                            transaction, upgrades the Manager role and notifies the owner.</p>
+                        <ul class="timeline">
+                            <li>
+                                <div class="timeline-icon bg-primary"><i class="fas fa-university"></i></div>
+                                <div>
+                                    <h6>Receive Payment</h6>
+                                    <small>Bank webhook / E-wallet</small>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="timeline-icon bg-warning"><i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                                <div>
+                                    <h6>Create receipt + store proof</h6>
+                                    <small id="receiptInfo">Bank not linked</small>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="timeline-icon bg-success"><i class="fas fa-user-shield"></i></div>
+                                <div>
+                                    <h6>Auto-upgrade to Manager</h6>
+                                    <small>Activate account immediately</small>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="timeline-icon bg-info"><i class="fas fa-paper-plane"></i></div>
+                                <div>
+                                    <h6>Notify Owner</h6>
+                                    <small>Email + Dashboard</small>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="mt-3">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoUpgradeToggle" checked
+                                    onchange="toggleAutoUpgrade(this.checked)">
+                                <span class="form-check-label">Auto-upgrade upon payment</span>
+                            </label>
+                            <label class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="autoNotifyToggle" checked
+                                    onchange="toggleOwnerNotify(this.checked)">
+                                <span class="form-check-label">Auto-notify owner</span>
+                            </label>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Subscription Plans -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="plan-card">
-                        <div class="plan-header bg-secondary">
-                            <i class="fas fa-gift"></i>
-                            <h4>Trial</h4>
+            <div class="col-lg-7">
+                <div class="card automation-panel">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0"><i class="fas fa-inbox"></i> Pending Transactions</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshPaymentQueue()"><i
+                                    class="fas fa-sync-alt"></i></button>
                         </div>
-                        <div class="plan-price">
-                            <span class="amount">0 VND</span>
-                            <span class="period">/30 days</span>
+                        <div class="table-responsive">
+                            <table class="table table-align-middle mb-0" id="pendingPaymentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Ref</th>
+                                        <th>Customer</th>
+                                        <th>Plan</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
-                        <div class="plan-features">
-                            <div class="feature"><i class="fas fa-check"></i> Free trial</div>
-                            <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
-                            <div class="feature"><i class="fas fa-check"></i> Basic support</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="plan-card">
-                        <div class="plan-header bg-primary">
-                            <i class="fas fa-calendar-day"></i>
-                            <h4>Monthly</h4>
-                        </div>
-                        <div class="plan-price">
-                            <span class="amount">500K</span>
-                            <span class="period">/month</span>
-                        </div>
-                        <div class="plan-features">
-                            <div class="feature"><i class="fas fa-check"></i> Flexible renewals</div>
-                            <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
-                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ ưu tiên</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="plan-card popular">
-                        <div class="plan-badge">POPULAR</div>
-                        <div class="plan-header bg-warning">
-                            <i class="fas fa-calendar-alt"></i>
-                            <h4>Quarterly</h4>
-                        </div>
-                        <div class="plan-price">
-                            <span class="amount">1.2M</span>
-                            <span class="period">/3 months</span>
-                            <div class="plan-save">Save 300K VND</div>
-                        </div>
-                        <div class="plan-features">
-                            <div class="feature"><i class="fas fa-check"></i> Save 20%</div>
-                            <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
-                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ VIP</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="plan-card">
-                        <div class="plan-header bg-success">
-                            <i class="fas fa-calendar"></i>
-                            <h4>Yearly</h4>
-                        </div>
-                        <div class="plan-price">
-                            <span class="amount">4M</span>
-                            <span class="period">/year</span>
-                            <div class="plan-save">Save 2M VND</div>
-                        </div>
-                        <div class="plan-features">
-                            <div class="feature"><i class="fas fa-check"></i> Save 33%</div>
-                            <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
-                            <div class="feature"><i class="fas fa-check"></i> Hỗ trợ 24/7</div>
+                        <div class="text-end mt-3">
+                            <button class="btn btn-sm btn-primary" onclick="triggerManualPayout()">
+                                <i class="fas fa-paper-plane"></i> Send manual bank reconciliation
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Active Subscriptions -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-users"></i> Active Managers
-                    </h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Manager</th>
-                                    <th>Email</th>
-                                    <th>Current Plan</th>
-                                    <th>Start Date</th>
-                                    <th>Ngày hết hạn</th>
-                                    <th>Status</th>
-                                    <th>Auto Renew</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="subscriptionsTable">
-                                <tr>
-                                    <td colspan="8" class="text-center">
-                                        <div class="spinner-border" role="status"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <!-- Subscription Plans -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="plan-card">
+                    <div class="plan-header bg-secondary">
+                        <i class="fas fa-gift"></i>
+                        <h4>Trial</h4>
+                    </div>
+                    <div class="plan-price">
+                        <span class="amount">0 VND</span>
+                        <span class="period">/30 days</span>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature"><i class="fas fa-check"></i> Free trial</div>
+                        <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
+                        <div class="feature"><i class="fas fa-check"></i> Basic support</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Payment History -->
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-history"></i> Payment History
-                    </h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Ngày</th>
-                                    <th>Manager</th>
-                                    <th>Gói</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Trạng thái</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentHistoryTable">
-                                <tr>
-                                    <td colspan="6" class="text-center">
-                                        <div class="spinner-border spinner-border-sm" role="status"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="col-md-3">
+                <div class="plan-card">
+                    <div class="plan-header bg-primary">
+                        <i class="fas fa-calendar-day"></i>
+                        <h4>Monthly</h4>
+                    </div>
+                    <div class="plan-price">
+                        <span class="amount">500K</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature"><i class="fas fa-check"></i> Flexible renewals</div>
+                        <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
+                        <div class="feature"><i class="fas fa-check"></i> Hỗ trợ ưu tiên</div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+            <div class="col-md-3">
+                <div class="plan-card popular">
+                    <div class="plan-badge">POPULAR</div>
+                    <div class="plan-header bg-warning">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h4>Quarterly</h4>
+                    </div>
+                    <div class="plan-price">
+                        <span class="amount">1.2M</span>
+                        <span class="period">/3 months</span>
+                        <div class="plan-save">Save 300K VND</div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature"><i class="fas fa-check"></i> Save 20%</div>
+                        <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
+                        <div class="feature"><i class="fas fa-check"></i> Hỗ trợ VIP</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="plan-card">
+                    <div class="plan-header bg-success">
+                        <i class="fas fa-calendar"></i>
+                        <h4>Yearly</h4>
+                    </div>
+                    <div class="plan-price">
+                        <span class="amount">4M</span>
+                        <span class="period">/year</span>
+                        <div class="plan-save">Save 2M VND</div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature"><i class="fas fa-check"></i> Save 33%</div>
+                        <div class="feature"><i class="fas fa-check"></i> Full Manager access</div>
+                        <div class="feature"><i class="fas fa-check"></i> Hỗ trợ 24/7</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Subscriptions -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-users"></i> Active Managers
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Manager</th>
+                                <th>Email</th>
+                                <th>Current Plan</th>
+                                <th>Start Date</th>
+                                <th>Ngày hết hạn</th>
+                                <th>Status</th>
+                                <th>Auto Renew</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionsTable">
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="spinner-border" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-history"></i> Payment History
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Manager</th>
+                                <th>Gói</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentHistoryTable">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
 
 <!-- Extend Subscription Modal -->

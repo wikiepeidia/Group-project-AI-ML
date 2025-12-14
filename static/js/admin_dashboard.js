@@ -11,10 +11,10 @@
     };
 
     const ACTIVITIES = [
-        { icon: 'fas fa-user-plus', title: 'User mới đã đăng ký', time: '5 phút trước' },
-        { icon: 'fas fa-shopping-cart', title: 'Đơn hàng mới được tạo', time: '15 phút trước' },
-        { icon: 'fas fa-box', title: 'Sản phẩm mới được thêm', time: '30 phút trước' },
-        { icon: 'fas fa-user-shield', title: 'Quyền user được cập nhật', time: '1 giờ trước' },
+        { icon: 'fas fa-user-plus', title: 'New user registered', time: '5 minutes ago' },
+        { icon: 'fas fa-shopping-cart', title: 'New order created', time: '15 minutes ago' },
+        { icon: 'fas fa-box', title: 'New product added', time: '30 minutes ago' },
+        { icon: 'fas fa-user-shield', title: 'User role updated', time: '1 hour ago' },
     ];
 
     const safeSetText = (id, value) => {

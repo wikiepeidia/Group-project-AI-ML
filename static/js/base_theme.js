@@ -61,13 +61,53 @@
     }
 })();
 
+// Global session expiry handler
+window.handleSessionExpired = function() {
+    if (window.__sessionExpiredHandled) return;
+    window.__sessionExpiredHandled = true;
+
+    // Create and show a modal
+    const modalHtml = `
+        <div class="modal fade" id="sessionExpiredModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="sessionExpiredLabel" aria-hidden="true" style="z-index: 10000;">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="sessionExpiredLabel"><i class="fas fa-exclamation-circle me-2"></i>Session Expired</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Your session has expired due to inactivity or security reasons.</p>
+                        <p>Please log in again to continue working.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/auth/signin" class="btn btn-danger w-100">Log In Again</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    // Try to use Bootstrap modal if available
+    if (window.bootstrap && window.bootstrap.Modal) {
+        const modal = new bootstrap.Modal(document.getElementById('sessionExpiredModal'));
+        modal.show();
+    } else {
+        // Fallback if bootstrap JS isn't loaded (unlikely in this app but good practice)
+        alert('Session expired. Please log in again.');
+        window.location.href = '/auth/signin';
+    }
+};
+
 // Periodically check session status (keepalive/notify) to warn users
 ;(function sessionKeepalive() {
     if (typeof window.fetch !== 'function') return;
     
     // ĐỊNH NGHĨA ROUTE ĐĂNG NHẬP MỚI VÀ CÁC TRANG KHÔNG CẦN CHUYỂN HƯỚNG
-    const LOGIN_URL = '/auth/login'; 
-    // Thêm /auth/authorize vì đây là trang callback sau khi Google xác thực
+    const LOGIN_URL = '/auth/signin'; 
+    // Add /auth/authorize because this is the callback route after Google authentication
     const UNAUTHENTICATED_PAGES = ['/auth/login', '/auth/signin', '/auth/authorize', '/']; 
 
     const check = async () => {
@@ -84,16 +124,7 @@
                 
                 // CHỈ CHUYỂN HƯỚNG NẾU NGƯỜI DÙNG KHÔNG Ở TRÊN CÁC TRANG CÔNG KHAI/ĐĂNG NHẬP
                 if (!UNAUTHENTICATED_PAGES.some(p => currentPath === p || currentPath.startsWith(p))) {
-                    try { 
-                        if (typeof showNotification === 'function') {
-                            showNotification('Session expired. Please log in again.', 'error'); 
-                        }
-                    } catch (e) {}
-                    
-                    // Chuyển hướng đến route OAuth mới sau 3 giây
-                    setTimeout(() => { 
-                        window.location.href = LOGIN_URL; 
-                    }, 3000);
+                    window.handleSessionExpired();
                 }
             }
         } catch (e) {
@@ -112,7 +143,7 @@
     window.__unauthorizedFetchPatched = true;
     
     // ĐỊNH NGHĨA ROUTE ĐĂNG NHẬP MỚI
-    const LOGIN_URL = '/auth/login'; 
+    const LOGIN_URL = '/auth/signin'; 
 
     const originalFetch = window.fetch.bind(window);
     window.fetch = function(resource, config) {
@@ -120,15 +151,7 @@
             if (res && (res.status === 401 || res.status === 403)) {
                 // Chỉ xử lý chuyển hướng nếu không phải là API Call to /api/session
                 if (resource !== '/api/session') {
-                    try {
-                        if (typeof showNotification === 'function') {
-                            showNotification('Session expired. Please log in again.', 'error');
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
-                    // Chuyển hướng đến route OAuth mới sau 3 giây
-                    setTimeout(() => window.location.href = LOGIN_URL, 3000); 
+                    window.handleSessionExpired();
                 }
             }
             return res;

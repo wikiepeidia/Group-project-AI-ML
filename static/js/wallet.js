@@ -1,6 +1,6 @@
 /* Wallet Page JavaScript (extracted from wallet.html) */
 
-let walletState = {
+var walletState = {
     wallet: null,
     subscription: null,
     plans: {}
@@ -9,11 +9,9 @@ let walletState = {
 async function loadWalletDashboard() {
     try {
         const response = await fetch('/api/user/wallet', { credentials: 'same-origin' });
-            // If not authenticated, server will return 401/403 with JSON; handle proactively
-            if (response.status === 401 || response.status === 403) {
-                showNotification('Session expired. Please log in again.', 'error');
-                return;
-            }
+        // 401/403 handled globally by base_theme.js
+        if (!response.ok) return;
+
         const data = await response.json();
         if (!data.success) {
             showNotification(data.message || 'Could not load wallet data', 'error');
@@ -25,9 +23,7 @@ async function loadWalletDashboard() {
         walletState.transactions = data.transactions || [];
         renderWalletDashboard();
     } catch (error) {
-        if (error.message.includes('JSON')) {
-            showNotification('Session expired. Please log in again.', 'error');
-        } else {
+        if (!error.message.includes('JSON')) {
             showNotification('Error loading data: ' + error.message, 'error');
         }
     }
@@ -145,11 +141,9 @@ async function submitTopup() {
             body: JSON.stringify({ amount, method, reference }),
             credentials: 'same-origin'
         });
-        if (response.status === 401 || response.status === 403) {
-            showNotification('Session expired. Please log in again.', 'error');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) return;
+
         const data = await response.json();
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('topupModal')).hide();
@@ -177,11 +171,9 @@ async function upgradePlan(planKey) {
             body: JSON.stringify({ plan: planKey }),
             credentials: 'same-origin'
         });
-        if (response.status === 401 || response.status === 403) {
-            showNotification('Session expired. Please log in again.', 'error');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) return;
+
         const data = await response.json();
         if (data.success) {
             showNotification(data.message || 'Upgrade successful!', 'success');
@@ -203,12 +195,12 @@ async function toggleAutoRenew(isEnabled) {
             body: JSON.stringify({ enabled: isEnabled }),
             credentials: 'same-origin'
         });
-        if (response.status === 401 || response.status === 403) {
-            showNotification('Session expired. Please log in again.', 'error');
+        
+        if (!response.ok) {
             document.getElementById('autoRenewToggle').checked = !isEnabled;
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
             return;
         }
+
         const data = await response.json();
         if (data.success) {
             showNotification(data.message || 'Auto-renew updated', 'success');
@@ -219,7 +211,7 @@ async function toggleAutoRenew(isEnabled) {
         }
     } catch (error) {
         document.getElementById('autoRenewToggle').checked = !isEnabled;
-        showNotification('Lỗi: ' + error.message, 'error');
+        showNotification('Error: ' + error.message, 'error');
     }
 }
 
@@ -244,7 +236,8 @@ window.addEventListener('DOMContentLoaded', () => {
 async function initWalletGlance() {
     try {
         const resp = await fetch('/api/user/wallet', { credentials: 'same-origin' });
-        if (resp.status === 401 || resp.status === 403) return;
+        // 401/403 handled globally
+        if (!resp.ok) return;
         const data = await resp.json();
         if (!data.success) return;
         const w = data.wallet || {};
@@ -320,14 +313,14 @@ async function submitWithdraw() {
 
         const data = await response.json();
         if (data.success) {
-            showNotification('Yêu cầu rút tiền thành công! Tiền sẽ được chuyển trong 1-2 ngày làm việc.', 'success');
+            showNotification('Withdrawal request submitted successfully! Funds will be transferred in 1-2 business days.', 'success');
             bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide();
             loadWalletDashboard();
         } else {
             showNotification(data.message || 'Unable to withdraw funds', 'error');
         }
     } catch (error) {
-        showNotification('Lỗi: ' + error.message, 'error');
+        showNotification('Error: ' + error.message, 'error');
     }
 }
 

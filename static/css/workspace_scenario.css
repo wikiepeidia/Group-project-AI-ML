@@ -776,6 +776,7 @@ body.dark-mode .collection-body p {
 .gradient-gold { background: linear-gradient(135deg, #f6d365, #fda085); }
 .gradient-cyan { background: linear-gradient(135deg, #30cfd0, #330867); }
 .gradient-violet { background: linear-gradient(135deg, #9333ea, #7c3aed); }
+.gradient-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
 
 .scenario-tier-board {
     display: grid;

@@ -33,6 +33,48 @@ document.addEventListener('DOMContentLoaded', () => {
         custom: '#667eea'
     };
 
+    // --- Templates Logic ---
+    const templates = {
+        invoice_scan: {
+            nodes: [
+                { id: 'node-1', title: 'Upload Invoice', category: 'trigger', type: 'manual_trigger', left: 100, top: 100, description: 'Start by uploading an invoice file' },
+                { id: 'node-2', title: 'OCR Processing', category: 'ai', type: 'ocr_service', left: 400, top: 100, description: 'Extract text from image (DL Service)' },
+                { id: 'node-3', title: 'AI Analysis', category: 'ai', type: 'ai_service', left: 700, top: 100, description: 'Analyze invoice content' },
+                { id: 'node-4', title: 'Notify Slack', category: 'integration', type: 'slack_notify', left: 1000, top: 100, description: 'Send results to team' }
+            ],
+            connections: [
+                { source: 'node-1', target: 'node-2' },
+                { source: 'node-2', target: 'node-3' },
+                { source: 'node-3', target: 'node-4' }
+            ]
+        },
+        customer_feedback: {
+            nodes: [
+                { id: 'node-1', title: 'Read Feedback', category: 'integration', type: 'google_sheet_read', left: 100, top: 100, description: 'Fetch new rows from Sheets' },
+                { id: 'node-2', title: 'Sentiment Analysis', category: 'ai', type: 'ai_service', left: 400, top: 100, description: 'Analyze sentiment (Positive/Negative)' },
+                { id: 'node-3', title: 'Filter Negative', category: 'logic', type: 'filter', left: 700, top: 100, description: 'Continue if sentiment is Negative' },
+                { id: 'node-4', title: 'Alert Manager', category: 'integration', type: 'gmail_send', left: 1000, top: 100, description: 'Email support manager' }
+            ],
+            connections: [
+                { source: 'node-1', target: 'node-2' },
+                { source: 'node-2', target: 'node-3' },
+                { source: 'node-3', target: 'node-4' }
+            ]
+        }
+    };
+
+    document.querySelectorAll('.template-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const templateId = item.dataset.template;
+            if (templates[templateId]) {
+                if (confirm('Load template? This will clear the current canvas.')) {
+                    loadWorkflowData(templates[templateId]);
+                    showNotification(`Loaded template: ${item.querySelector('.tool-name').textContent}`, 'success');
+                }
+            }
+        });
+    });
+
     // Notification function for workspace builder
     // Uses global showNotification from script.js
 
@@ -1004,13 +1046,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.ConsoleManager) window.ConsoleManager.log('Starting workflow execution...', 'system');
         
         const nodes = [];
+        let missingData = false;
+
         document.querySelectorAll('.workflow-node').forEach((node) => {
+            const config = node.dataset.config ? JSON.parse(node.dataset.config) : {};
+            const type = node.dataset.type;
+            const title = node.dataset.title || 'Untitled Node';
+            const nodeId = node.dataset.nodeId;
+
+            // Check for missing data
+            if (type === 'google_sheet_read' && !config.sheetId) {
+                missingData = true;
+                if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Sheet ID. Using mock data.`, 'warning');
+            }
+            if (type === 'google_sheet_write' && !config.sheetId) {
+                missingData = true;
+                if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Sheet ID. Using mock data.`, 'warning');
+            }
+            if (type === 'google_doc_read' && !config.docId) {
+                missingData = true;
+                if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Doc ID. Using mock data.`, 'warning');
+            }
+
             nodes.push({
                 id: node.dataset.nodeId.replace('node-', ''),
                 type: node.dataset.type,
-                config: node.dataset.config ? JSON.parse(node.dataset.config) : {}
+                config: config
             });
         });
+
+        if (missingData) {
+            console.warn("Some nodes are missing configuration. System will use mock data.");
+            if (window.ConsoleManager) window.ConsoleManager.log("Warning: Some nodes are missing configuration. System will use mock data.", 'warning');
+        }
 
         const edges = [];
         const svg = document.getElementById('connectionLines');
@@ -1039,19 +1107,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             console.log("Execution Result:", result);
-            if (window.ConsoleManager) window.ConsoleManager.log(`Execution finished. Status: ${result.status}`, result.status === 'completed' ? 'success' : 'error');
+            
+            // Log server-side logs
             if (window.ConsoleManager && result.logs) {
                  result.logs.forEach(log => window.ConsoleManager.log(log, 'info'));
             }
+
+            if (window.ConsoleManager) window.ConsoleManager.log(`Execution finished. Status: ${result.status}`, result.status === 'completed' ? 'success' : 'error');
 
             if (result.status === 'completed') {
                 showNotification('Workflow completed successfully!', 'success');
             } else {
                 showNotification('Workflow failed: ' + (result.message || 'Unknown error'), 'error');
+                if (window.ConsoleManager) window.ConsoleManager.log(`Error details: ${result.message || 'Unknown error'}`, 'error');
             }
         } catch (error) {
             console.error('Error executing workflow:', error);
             showNotification('Network error executing workflow', 'error');
+            if (window.ConsoleManager) window.ConsoleManager.log(`Network error: ${error.message}`, 'error');
         }
     }
 
@@ -1062,6 +1135,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: node.dataset.nodeId,
                 title: node.dataset.title,
                 category: node.dataset.category,
+                type: node.dataset.type,
+                config: node.dataset.config ? JSON.parse(node.dataset.config) : {},
                 left: parseInt(node.style.left, 10) || 0,
                 top: parseInt(node.style.top, 10) || 0,
                 description: node.querySelector('.node-content')?.textContent.trim() || ''
@@ -1080,12 +1155,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get workflow ID from URL if exists
         const urlParams = new URLSearchParams(window.location.search);
-        const workflowId = urlParams.get('id');
+        let workflowId = urlParams.get('id');
         
-        let name = 'Untitled Workflow';
-        if (!workflowId) {
-            name = prompt('Enter workflow name:', 'My Workflow');
-            if (!name) return;
+        // Always ask for name to allow saving as new version or renaming
+        const currentNameInput = document.querySelector('.workflow-name-input');
+        let defaultName = currentNameInput ? currentNameInput.value : 'Untitled Workflow';
+        
+        const name = prompt('Enter workflow name to save:', defaultName);
+        if (!name) return; // User cancelled
+
+        // If user changed name, treat as new workflow (optional, but good for history)
+        // Or we can ask "Save as new?"
+        // For now, let's just save. If ID exists, it updates.
+        // To support "Save as new", we would clear workflowId if the user wants a copy.
+        // Let's add a simple confirm for "Save as new" if ID exists.
+        
+        if (workflowId) {
+            if (confirm('Do you want to save as a NEW workflow? (Cancel to overwrite current)')) {
+                workflowId = null; // Clear ID to force create new
+            }
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -1106,8 +1194,10 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.success) {
                 showNotification('Workflow saved successfully', 'success');
-                if (!workflowId) {
-                    // Update URL without reload
+                if (currentNameInput) currentNameInput.value = name;
+                
+                // Update URL if it was a new save or we are on a new ID
+                if (!urlParams.get('id') || workflowId === null) {
                     const newUrl = new URL(window.location);
                     newUrl.searchParams.set('id', data.id);
                     window.history.pushState({}, '', newUrl);
@@ -1119,6 +1209,98 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(error => {
             console.error('Error:', error);
             showNotification('Network error saving workflow', 'error');
+        });
+    }
+
+    // Load workflow logic
+    const loadBtn = document.querySelector('button[data-action="load-workflow"]');
+    if (loadBtn) {
+        loadBtn.addEventListener('click', () => {
+            // Fetch list of workflows
+            fetch('/api/workflows')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.workflows.length === 0) {
+                        showNotification('No saved workflows found.', 'info');
+                        return;
+                    }
+                    
+                    // Simple prompt for now (could be a modal)
+                    // Let's build a simple modal dynamically
+                    showLoadModal(data.workflows);
+                } else {
+                    showNotification('Failed to fetch workflows', 'error');
+                }
+            });
+        });
+    }
+
+    function showLoadModal(workflows) {
+        // Remove existing if any
+        const existing = document.getElementById('loadWorkflowModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'loadWorkflowModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: var(--builder-panel); padding: 20px; border-radius: 12px;
+            width: 400px; max-height: 80vh; display: flex; flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        `;
+        
+        content.innerHTML = `
+            <h3 style="margin-top: 0; color: var(--builder-text);">Load Workflow</h3>
+            <div style="overflow-y: auto; flex: 1; margin-bottom: 15px; border: 1px solid var(--builder-border); border-radius: 8px;">
+                ${workflows.map(w => `
+                    <div class="workflow-list-item" data-id="${w.id}" style="padding: 10px; border-bottom: 1px solid var(--builder-border); cursor: pointer; hover: background: var(--builder-bg);">
+                        <div style="font-weight: bold; color: var(--builder-text);">${w.name}</div>
+                        <div style="font-size: 0.8rem; color: var(--builder-muted);">Last updated: ${new Date(w.updated_at).toLocaleString()}</div>
+                    </div>
+                `).join('')}
+            </div>
+            <button id="closeLoadModal" class="action-btn" style="align-self: flex-end;">Close</button>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // Event listeners
+        document.getElementById('closeLoadModal').addEventListener('click', () => modal.remove());
+        
+        modal.querySelectorAll('.workflow-list-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const id = item.dataset.id;
+                const workflow = workflows.find(w => w.id == id);
+                if (workflow) {
+                    if (confirm(`Load "${workflow.name}"? Unsaved changes will be lost.`)) {
+                        loadWorkflowData(workflow.data);
+                        showNotification(`Loaded: ${workflow.name}`, 'success');
+                        
+                        // Update URL
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('id', workflow.id);
+                        window.history.pushState({}, '', newUrl);
+                        
+                        // Update name input
+                        const nameInput = document.querySelector('.workflow-name-input');
+                        if (nameInput) nameInput.value = workflow.name;
+                        
+                        modal.remove();
+                    }
+                }
+            });
+            
+            // Add hover effect manually since inline styles are tricky for hover
+            item.addEventListener('mouseenter', () => item.style.background = 'var(--builder-bg)');
+            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
         });
     }
 
@@ -1158,18 +1340,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const node = createWorkflowNode({
                     name: nodeData.title,
                     category: nodeData.category,
+                    type: nodeData.type,
                     description: nodeData.description,
-                    icon: getIconForCategory(nodeData.category) // Helper needed
-                }, { x: nodeData.left + 100, y: nodeData.top + 40 }); // Adjust for offset in createWorkflowNode
+                    icon: getIconForCategory(nodeData.category)
+                }, { x: nodeData.left + 100, y: nodeData.top + 40 }); 
                 
-                // Restore ID to maintain connections
-                // Note: createWorkflowNode generates new ID. We might need to map old IDs to new IDs or force ID.
-                // For simplicity, let's update the dataset ID after creation if we want to keep history, 
-                // but connections rely on these IDs.
-                // A better approach is to allow createWorkflowNode to accept an ID.
-                // Let's hack it: update the ID after creation.
                 if (node) {
                     node.dataset.nodeId = nodeData.id;
+                    // Restore config if present
+                    if (nodeData.config) {
+                        node.dataset.config = JSON.stringify(nodeData.config);
+                    }
+                    
                     // Update counter to avoid collision
                     const numId = parseInt(nodeData.id.replace('node-', ''));
                     if (!isNaN(numId) && numId > builderState.nodeCounter) {

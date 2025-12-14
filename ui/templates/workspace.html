@@ -95,7 +95,7 @@
                             <h4>Workflow Builder</h4>
                             <p>Drag-and-drop automation scenarios and save drafts.</p>
                         </div>
-                        <span class="collection-cta">Go to builder</span>
+                        <span class="collection-cta"><i class="fas fa-tools"></i> Go to builder</span>
                     </button>
                     {% endif %}
                     <button type="button" class="collection-card" onclick="location.href='{{ url_for('se_reports') }}'">
@@ -234,7 +234,7 @@
                             <h4>Workflow Builder</h4>
                             <p>Drag-and-drop automation scenarios, edit nodes and save drafts.</p>
                         </div>
-                        <span class="collection-cta">Go to builder</span>
+                        <span class="collection-cta"><i class="fas fa-tools"></i> Go to builder</span>
                     </button>
                 </div>
             </div>
@@ -337,13 +337,13 @@
                     if (data.success && data.workflows.length > 0) {
                         workflowList.innerHTML = data.workflows.map(w => `
                             <div class="collection-card" onclick="location.href='{{ url_for('workspace_builder') }}?id=${w.id}'">
-                                <div class="collection-icon gradient-indigo"><i class="fas fa-project-diagram"></i></div>
+                                <div class="collection-icon gradient-indigo"><i class="fas fa-diagram-project"></i></div>
                                 <div class="collection-body">
                                     <h4>${w.name}</h4>
                                     <p>Last updated: ${new Date(w.updated_at).toLocaleDateString()}</p>
                                 </div>
                                 <div class="collection-actions" style="margin-top: auto; padding-top: 10px; display: flex; gap: 10px;">
-                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteWorkflow(${w.id})">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteWorkflow('${w.id}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>

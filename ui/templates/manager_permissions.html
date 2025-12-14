@@ -13,10 +13,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="manager-permissions-page">
+<div class="app-layout">
     {% include 'components/sidebar.html' %}
 
-    <main class="permissions-main">
+    <main class="app-content permissions-main">
         <header class="permissions-header">
             <div>
                 <p class="eyebrow">Smart Access Control</p>
@@ -96,11 +96,11 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Tên</th>
+                            <th>Name</th>
                             <th>Email</th>
-                            <th>Vai trò</th>
+                            <th>Role</th>
                             <th>Current permissions</th>
-                            <th>Hành động</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">

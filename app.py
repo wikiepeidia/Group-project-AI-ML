@@ -71,8 +71,8 @@ google = oauth.register(
     }
 )
 
-# Session configuration - 30 minutes
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+# Session configuration - 7 days
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
 limiter = Limiter(get_remote_address, app=app, default_limits=["100 per day", "66 per hour"])
@@ -115,9 +115,9 @@ app.extensions['database'] = db_manager
 
 # Central subscription plans (used in wallet/subscription logic)
 SUBSCRIPTION_PLANS = {
-    'monthly': {'name': 'Monthly', 'days': 30, 'amount': 500000, 'description': 'Gói hàng tháng'},
-    'quarterly': {'name': 'Quarterly', 'days': 90, 'amount': 1200000, 'description': 'Gói 3 tháng'},
-    'yearly': {'name': 'Yearly', 'days': 365, 'amount': 4000000, 'description': 'Gói hàng năm'}
+    'monthly': {'name': 'Monthly', 'days': 30, 'amount': 500000, 'description': 'Monthly plan'},
+    'quarterly': {'name': 'Quarterly', 'days': 90, 'amount': 1200000, 'description': 'Quarterly plan'},
+    'yearly': {'name': 'Yearly', 'days': 365, 'amount': 4000000, 'description': 'Yearly plan'}
 }
 
 def format_plan_dict(plan_key):
@@ -241,7 +241,7 @@ def signin():
             if user_data:
                 user = User(user_data['id'], user_data['email'], user_data['first_name'], 
                             user_data['last_name'],user_data.get('role','user'), user_data.get('google_token'))
-                print(">>> Đăng nhập:", user.email, "role =", user.role)
+                print(">>> Login:", user.email, "role =", user.role)
                 login_user(user, remember=True)  # Remember user to extend session
                 session.permanent = True  # Set session to use PERMANENT_SESSION_LIFETIME
                 flash('Login Successful!', 'success')
@@ -317,7 +317,7 @@ def admin_workspace():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """Main dashboard - chức năng kiếm tiền"""
+    """Main dashboard - monetization features"""
     return render_template('dashboard.html', user=current_user)
 
 @app.route('/workspace')
@@ -363,7 +363,13 @@ def admin_analytics():
     if not hasattr(current_user, 'role') or current_user.role != 'admin':
         flash('Bạn không có quyền truy cập trang này', 'error')
         return redirect(url_for('workspace'))
-    return render_template('admin_analytics.html', user=current_user)
+    
+    # Fetch Google Analytics Data
+    # TODO: Replace with your actual numeric Property ID from Google Analytics Admin
+    PROPERTY_ID = '516148383' 
+    analytics_data = google_integration.get_analytics_report(PROPERTY_ID)
+
+    return render_template('admin_analytics.html', user=current_user, analytics_data=analytics_data)
 
 @app.route('/admin/subscriptions')
 @login_required
@@ -1461,13 +1467,18 @@ def api_get_wallet():
     conn = db_manager.get_connection()
     c = conn.cursor()
     try:
-        # Ensure user has a wallet row
-        c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
-        conn.commit()
-
-        # Get wallet
+        # Get wallet (Read-first optimization)
         c.execute('SELECT balance, currency, updated_at FROM wallets WHERE user_id = ?', (current_user.id,))
         wallet_row = c.fetchone()
+
+        if not wallet_row:
+            # Ensure user has a wallet row
+            c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+            conn.commit()
+            # Fetch again
+            c.execute('SELECT balance, currency, updated_at FROM wallets WHERE user_id = ?', (current_user.id,))
+            wallet_row = c.fetchone()
+
         wallet_data = {
             'balance': wallet_row[0] if wallet_row else 0,
             'currency': wallet_row[1] if wallet_row else 'VND',
@@ -1755,7 +1766,7 @@ def api_admin_process_wallet_transaction(transaction_id):
     action = data.get('action')
     note = (data.get('note') or '').strip()
     if action not in ['approve', 'reject']:
-        return jsonify({'success': False, 'message': 'Hành động không hợp lệ'}), 400
+        return jsonify({'success': False, 'message': 'Invalid action'}), 400
 
     conn = db_manager.get_connection()
     c = conn.cursor()
@@ -1763,7 +1774,7 @@ def api_admin_process_wallet_transaction(transaction_id):
         c.execute('SELECT id, user_id, amount, currency, type, status, metadata FROM wallet_transactions WHERE id = ?', (transaction_id,))
         row = c.fetchone()
         if not row:
-            return jsonify({'success': False, 'message': 'Không tìm thấy giao dịch'}), 404
+            return jsonify({'success': False, 'message': 'Transaction not found'}), 404
         if row[5] != 'pending':
             return jsonify({'success': False, 'message': 'Transaction has already been processed'}), 400
 

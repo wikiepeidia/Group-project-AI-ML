@@ -13,143 +13,141 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        {% include 'components/sidebar.html' %}
+<div class="app-layout">
+    {% include 'components/sidebar.html' %}
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content reports-page">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-file-invoice-dollar"></i> SE - Revenue & Expense Reports</h1>
-                <button class="btn btn-primary" onclick="openScheduleReportModal()">
-                    <i class="fas fa-calendar-plus"></i> Schedule report
-                </button>
-            </div>
+    <main class="app-content main-content reports-page">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2"><i class="fas fa-file-invoice-dollar"></i> SE - Revenue & Expense Reports</h1>
+            <button class="btn btn-primary" onclick="openScheduleReportModal()">
+                <i class="fas fa-calendar-plus"></i> Schedule report
+            </button>
+        </div>
 
-            <div class="alert alert-info">
-                <i class="fas fa-magic"></i> <strong>Feature:</strong> Auto-generate and send revenue & expense reports
-                on a schedule (daily/weekly/monthly) via email or file export.
-            </div>
+        <div class="alert alert-info">
+            <i class="fas fa-magic"></i> <strong>Feature:</strong> Auto-generate and send revenue & expense reports
+            on a schedule (daily/weekly/monthly) via email or file export.
+        </div>
 
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h6 class="card-title">Revenue (This month)</h6>
-                            <h2 id="monthRevenue">0 VND</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-danger">
-                        <div class="card-body">
-                            <h6 class="card-title">Expense (This month)</h6>
-                            <h2 id="monthExpense">0 VND</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h6 class="card-title">Profit</h6>
-                            <h2 id="monthProfit">0 VND</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-warning">
-                        <div class="card-body">
-                            <h6 class="card-title">Reports sent</h6>
-                            <h2 id="reportsSent">0</h2>
-                        </div>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title">Revenue (This month)</h6>
+                        <h2 id="monthRevenue">0 VND</h2>
                     </div>
                 </div>
             </div>
-
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Scheduled reports</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Tên báo cáo</th>
-                                    <th>Loại</th>
-                                    <th>Tần suất</th>
-                                    <th>Kênh gửi</th>
-                                    <th>Trạng thái</th>
-                                    <th>Lần gửi cuối</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="scheduledReportsBody">
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        No scheduled reports yet. Click "Schedule report" to get started.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h6 class="card-title">Expense (This month)</h6>
+                        <h2 id="monthExpense">0 VND</h2>
                     </div>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-header card-header-surface">
-                    <h5><i class="fas fa-chart-line"></i> Biểu đồ Thu Chi</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="revenueChart" height="80"></canvas>
-                    <p class="text-center text-muted mt-3">
-                        <i class="fas fa-chart-bar"></i> Charts will display once revenue and expense data is available
-                    </p>
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h6 class="card-title">Profit</h6>
+                        <h2 id="monthProfit">0 VND</h2>
+                    </div>
                 </div>
             </div>
-
-            <div class="card mt-3">
-                <div class="card-header card-header-surface">
-                    <h5><i class="fas fa-lightbulb"></i> Template Báo cáo</h5>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title">Reports sent</h6>
+                        <h2 id="reportsSent">0</h2>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="card text-white bg-primary">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-calendar-day"></i> Daily report</h6>
-                                    <p class="card-text">Aggregate daily revenue & expense, sent at 18:00 daily.</p>
-                                    <button class="btn btn-sm btn-primary" onclick="alert('Template: Daily Report')">
-                                        <i class="fas fa-plus"></i> Sử dụng
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card text-white bg-success">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-calendar-week"></i> Báo cáo hàng tuần</h6>
-                                    <p class="card-text">Tổng kết thu chi 7 ngày, gửi vào Chủ nhật hàng tuần.</p>
-                                    <button class="btn btn-sm btn-success" onclick="alert('Template: Weekly Report')">
-                                        <i class="fas fa-plus"></i> Sử dụng
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card text-white bg-info">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Báo cáo hàng tháng</h6>
-                                    <p class="card-text">Báo cáo chi tiết cuối tháng, gửi vào ngày 1 hàng tháng.</p>
-                                    <button class="btn btn-sm btn-info" onclick="alert('Template: Monthly Report')">
-                                        <i class="fas fa-plus"></i> Sử dụng
-                                    </button>
-                                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Scheduled reports</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Type</th>
+                                <th>Frequency</th>
+                                <th>Channel</th>
+                                <th>Status</th>
+                                <th>Last Sent</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduledReportsBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    No scheduled reports yet. Click "Schedule report" to get started.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header card-header-surface">
+                <h5><i class="fas fa-chart-line"></i> Revenue & Expense Chart</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="80"></canvas>
+                <p class="text-center text-muted mt-3">
+                    <i class="fas fa-chart-bar"></i> Charts will display once revenue and expense data is available
+                </p>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header card-header-surface">
+                <h5><i class="fas fa-lightbulb"></i> Report Templates</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-day"></i> Daily report</h6>
+                                <p class="card-text">Aggregate daily revenue & expense, sent at 18:00 daily.</p>
+                                <button class="btn btn-sm btn-primary" onclick="alert('Template: Daily Report')">
+                                    <i class="fas fa-plus"></i> Use
+                                </button>
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-week"></i> Weekly report</h6>
+                                <p class="card-text">7-day summary of revenue & expense, sent every Sunday.</p>
+                                <button class="btn btn-sm btn-success" onclick="alert('Template: Weekly Report')">
+                                    <i class="fas fa-plus"></i> Use
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Monthly report</h6>
+                                <p class="card-text">Detailed end-of-month report, sent on the 1st of each month.</p>
+                                <button class="btn btn-sm btn-info" onclick="alert('Template: Monthly Report')">
+                                    <i class="fas fa-plus"></i> Use
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 </div>
 
 <!-- Modal: Schedule Report -->

@@ -14,7 +14,7 @@ async function loadUsers() {
             showAlert('error', data.message);
         }
     } catch (error) {
-        showAlert('error', 'Lỗi tải danh sách user: ' + error.message);
+        showAlert('error', 'Error loading users list: ' + error.message);
     }
 }
 
@@ -22,7 +22,7 @@ function renderUsersTable(data = []) {
     const tbody = document.getElementById('usersTableBody');
 
     if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Không có user nào phù hợp bộ lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No users match the filter</td></tr>';
         return;
     }
 
@@ -42,7 +42,7 @@ function renderUsersTable(data = []) {
                 <div class="user-cell">
                     <div class="avatar">${(user.name || user.email || '?').charAt(0).toUpperCase()}</div>
                     <div>
-                        <div class="user-name">${user.name || 'Không rõ'}</div>
+                        <div class="user-name">${user.name || 'Unknown'}</div>
                         <div class="user-email">${user.email || '-'}</div>
                     </div>
                 </div>
@@ -73,7 +73,7 @@ function renderUsersTable(data = []) {
                     user.role === 'user'
                         ? `
                     <button class="btn btn-sm btn-primary" onclick="openGrantModal(${user.id}, '${user.name || user.email || ''}')">
-                        <i class="fas fa-plus"></i> Cấp quyền
+                        <i class="fas fa-plus"></i> Grant permission
                     </button>
                 `
                         : '<span class="text-muted">N/A</span>'
@@ -133,19 +133,19 @@ async function grantPermission() {
         const data = await response.json();
 
         if (data.success) {
-            showAlert('success', 'Cấp quyền thành công!');
+            showAlert('success', 'Permission granted successfully!');
             bootstrap.Modal.getInstance(document.getElementById('grantPermissionModal')).hide();
             loadUsers();
         } else {
             showAlert('error', data.message);
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
 async function revokePermission(userId, permissionType) {
-    if (!confirm(`Bạn chắc chắn muốn thu hồi quyền "${permissionType}"?`)) return;
+    if (!confirm(`Are you sure you want to revoke permission "${permissionType}"?`)) return;
 
     try {
         const response = await fetch('/api/manager/permissions/revoke', {
@@ -157,13 +157,13 @@ async function revokePermission(userId, permissionType) {
         const data = await response.json();
 
         if (data.success) {
-            showAlert('success', 'Thu hồi quyền thành công!');
+            showAlert('success', 'Permission revoked successfully!');
             loadUsers();
         } else {
             showAlert('error', data.message);
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 

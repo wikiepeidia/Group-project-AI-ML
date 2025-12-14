@@ -40,7 +40,8 @@ body.builder-page {
 
 .builder-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background: var(--builder-bg);
 }
 
@@ -173,6 +174,20 @@ body.builder-page {
     flex-direction: column;
     gap: 24px;
 }
+
+.tools-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tools-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tools-list::-webkit-scrollbar-thumb {
+    background-color: var(--builder-border-strong);
+    border-radius: 3px;
+}
+
 
 .category-title {
     font-size: 0.75rem;

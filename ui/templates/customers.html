@@ -13,47 +13,45 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        {% include 'components/sidebar.html' %}
+<div class="app-layout">
+    {% include 'components/sidebar.html' %}
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content customers-page">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-users"></i> Customer Management</h1>
-                <button class="btn btn-primary" onclick="openAddCustomerModal()">
-                    <i class="fas fa-plus"></i> Thêm khách hàng
-                </button>
-            </div>
+    <main class="app-content main-content customers-page">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2"><i class="fas fa-users"></i> Customer Management</h1>
+            <button class="btn btn-primary" onclick="openAddCustomerModal()">
+                <i class="fas fa-plus"></i> Add Customer
+            </button>
+        </div>
 
-            <div class="card">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Mã KH</th>
-                                    <th>Tên khách hàng</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Email</th>
-                                    <th>Địa chỉ</th>
-                                    <th>Ghi chú</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="customersTableBody">
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        <div class="spinner-border" role="status"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Customer name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 </div>
 
 <!-- Modal: Add/Edit Customer -->
@@ -61,7 +59,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="customerModalTitle">Thêm Khách hàng</h5>
+                <h5 class="modal-title" id="customerModalTitle">Add Customer</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -97,7 +95,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveCustomer()">Lưu</button>
+                <button type="button" class="btn btn-primary" onclick="saveCustomer()">Save</button>
             </div>
         </div>
     </div>

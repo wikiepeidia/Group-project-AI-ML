@@ -520,7 +520,9 @@ function logout() {
  */
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
-    showNotification('An unexpected error occurred', 'error');
+    // Show more detailed error in development/debug
+    const errorMessage = event.error ? event.error.message : (event.message || 'Unknown error');
+    showNotification('An unexpected error occurred: ' + errorMessage, 'error');
 });
 
 /**

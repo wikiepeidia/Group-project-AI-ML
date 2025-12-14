@@ -1,19 +1,13 @@
 async function loadSubscriptions() {
     try {
         const response = await fetch('/api/admin/subscriptions', { credentials: 'same-origin' });
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
-        if (!response.ok) throw new Error('Failed to load subscriptions');
+        // 401/403 handled globally
+        if (!response.ok) return;
 
         const data = await response.json();
         renderSubscriptionsTable(data.subscriptions || []);
         } catch (error) {
-        if (error.message.includes('JSON')) {
-            showAlert('error', 'Session expired. Please log in again.');
-        } else {
+        if (!error.message.includes('JSON')) {
             showAlert('error', 'Error loading list: ' + error.message);
         }
     }
@@ -22,19 +16,13 @@ async function loadSubscriptions() {
 async function loadPaymentHistory() {
     try {
         const response = await fetch('/api/admin/subscription-history', { credentials: 'same-origin' });
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
-        if (!response.ok) throw new Error('Failed to load history');
+        // 401/403 handled globally
+        if (!response.ok) return;
 
         const data = await response.json();
         renderPaymentHistory(data.history || []);
     } catch (error) {
-        if (error.message.includes('JSON')) {
-            showAlert('error', 'Session expired. Please log in again.');
-        } else {
+        if (!error.message.includes('JSON')) {
             console.error('Error loading payment history:', error);
         }
     }
@@ -159,10 +147,9 @@ async function processExtension() {
             }),
         });
 
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) return;
+
         const data = await response.json();
 
             if (data.success) {
@@ -174,7 +161,7 @@ async function processExtension() {
             showAlert('error', data.message || 'Unable to extend subscription');
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
@@ -185,10 +172,8 @@ async function checkExpiredSubscriptions() {
         const response = await fetch('/api/admin/check-expired-subscriptions', {
             method: 'POST',
         });
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) return;
 
         const data = await response.json();
 
@@ -199,7 +184,7 @@ async function checkExpiredSubscriptions() {
             showAlert('error', data.message || 'Failed to check expirations');
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
@@ -301,7 +286,7 @@ function toggleOwnerNotify(isOn) {
 
 function refreshPaymentQueue() { loadPendingPayments(true); }
 
-function triggerManualPayout() { showAlert('success', 'Đã gửi yêu cầu đối soát đến ngân hàng'); }
+function triggerManualPayout() { showAlert('success', 'Reconciliation request sent to bank'); }
 
 document.addEventListener('DOMContentLoaded', () => { initAutomationUI(); });
 
@@ -312,10 +297,8 @@ async function loadPendingPayments(showToastMessage = false) {
     }
     try {
         const response = await fetch('/api/admin/wallet/pending', { credentials: 'same-origin' });
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
+        if (!response.ok) {
             if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Access denied</td></tr>';
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
             return;
         }
         const data = await response.json();
@@ -350,9 +333,7 @@ async function loadPendingPayments(showToastMessage = false) {
         if (showToastMessage) showAlert('success', 'Loaded pending transactions.');
     } catch (error) {
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Unable to load transactions</td></tr>';
-        if (error.message.includes('JSON')) {
-            showAlert('error', 'Session expired. Please log in again.');
-        } else {
+        if (!error.message.includes('JSON')) {
             showAlert('error', 'Error: ' + error.message);
         }
     }
@@ -365,11 +346,9 @@ async function processQueuedPayment(paymentId, action) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ action })
         });
-        if (response.status === 401 || response.status === 403) {
-            showAlert('error', 'Session expired. Please log in again.');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) return;
+
         const data = await response.json();
         if (data.success) {
             showAlert('success', data.message || 'Transaction processed');
@@ -397,9 +376,9 @@ async function toggleAutoRenew(userId, enabled) {
 
         if (response.status === 401 || response.status === 403) {
             showAlert('error', 'Session expired. Please log in again.');
-            setTimeout(() => { window.location.href = '/auth/signin'; }, 3000);
-            return;
-        }
+        // 401/403 handled globally
+        if (!response.ok) {
+            document.getElementById(`autoRenew${userId}`).checked = !enabled
 
         const data = await response.json();
         if (data.success) {

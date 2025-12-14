@@ -10,10 +10,10 @@ async function loadImports() {
             renderImportsTable();
             updateStats();
         } else {
-            showAlert('error', 'Lỗi tải dữ liệu');
+            showAlert('error', 'Error loading data');
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
@@ -30,11 +30,11 @@ function renderImportsTable() {
             <td><strong>${imp.code}</strong></td>
             <td>${imp.supplier_name || '-'}</td>
             <td class="text-end"><strong>${Number(imp.total_amount).toLocaleString('en-US')} VND</strong></td>
-            <td><span class="badge bg-${imp.status === 'completed' ? 'success' : 'warning'}">${imp.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</span></td>
+            <td><span class="badge bg-${imp.status === 'completed' ? 'success' : 'warning'}">${imp.status === 'completed' ? 'Completed' : 'Processing'}</span></td>
             <td>${new Date(imp.created_at).toLocaleDateString('en-US')}</td>
             <td>${imp.notes || '-'}</td>
             <td>
-                <button class="btn btn-sm btn-info" onclick="alert('Xem chi tiết: ' + '${imp.code}')">
+                <button class="btn btn-sm btn-info" onclick="alert('View details: ' + '${imp.code}')">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>

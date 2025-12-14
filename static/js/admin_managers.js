@@ -87,12 +87,12 @@ async function saveManager() {
             showAlert('error', data.message);
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 
 async function removeManager(managerId, email) {
-    if (!confirm(`Bạn chắc chắn muốn xóa Manager "${email}"?`)) return;
+    if (!confirm(`Are you sure you want to delete Manager "${email}"?`)) return;
 
     try {
         const response = await fetch(`/api/admin/users/${managerId}`, {

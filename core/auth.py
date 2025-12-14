@@ -55,10 +55,10 @@ class AuthManager:
                       'Your personal productivity space'))
             
             conn.commit()
-            return True, "Đăng ký thành công!"
+            return True, "Registration successful!"
         except Exception as e:
             print(f"Error creating user: {e}")
-            return False, "Email đã được sử dụng!"
+            return False, "Email is already in use!"
         finally:
             conn.close()
     
@@ -111,7 +111,7 @@ class AuthManager:
                 if is_api or is_accepting_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': False, 'message': 'Unauthorized - please login'}), 401
                 # fallback to redirect for normal page loads
-                flash('Vui lòng đăng nhập để tiếp tục', 'error')
+                flash('Please log in to continue', 'error')
                 return redirect(url_for('auth.signin'))
             return f(*args, **kwargs)
         return decorated_function

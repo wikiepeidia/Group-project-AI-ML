@@ -109,7 +109,7 @@ async function promoteToManager(userId, email) {
             showAlert('error', data.message || 'Upgrade failed');
         }
     } catch (error) {
-        showAlert('error', 'Lỗi: ' + error.message);
+        showAlert('error', 'Error: ' + error.message);
     }
 }
 

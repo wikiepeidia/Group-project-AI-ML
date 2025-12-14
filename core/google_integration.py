@@ -5,7 +5,14 @@ from datetime import datetime, timezone
 
 # --- Google API Setup (Placeholder/Real) ---
 # In a real environment, you would install:
-# pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+# pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib google-analytics-data
+
+try:
+    from google.analytics.data_v1beta import BetaAnalyticsDataClient
+    from google.analytics.data_v1beta.types import RunReportRequest
+except ImportError:
+    BetaAnalyticsDataClient = None
+    RunReportRequest = None
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -434,9 +441,54 @@ def send_email(to, subject, body_text, token_info=None):
             print(f"[Google] Email sent! ID: {result['id']}")
             return result
         except Exception as e:
-            print(f"[Google] REAL API Failed: {e}")
-            return {"status": "error", "message": str(e)}
+            print(f"[Google] Failed to send email: {e}")
+            return None
             
     print(f"[Google] MOCK: Sending email to {to}...")
-    time.sleep(1)
-    return {"status": "mock_success", "message": "Email sent (simulated)"}
+    return {"id": "mock_email_id"}
+
+def get_analytics_report(property_id):
+    """
+    Fetches active users and page views from Google Analytics 4.
+    """
+    if not BetaAnalyticsDataClient:
+        print("[Google Analytics] Library not installed.")
+        return None
+    
+    service_account_path = os.path.join(BASE_DIR, 'secrets', 'analytics_service_account.json')
+    if not os.path.exists(service_account_path):
+        print(f"[Google Analytics] Service account file not found at {service_account_path}")
+        return None
+
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = service_account_path
+    
+    try:
+        client = BetaAnalyticsDataClient()
+        request = RunReportRequest(
+            property=f"properties/{property_id}",
+            dimensions=[{"name": "date"}],
+            metrics=[{"name": "activeUsers"}, {"name": "screenPageViews"}],
+            date_ranges=[{"start_date": "30daysAgo", "end_date": "today"}],
+        )
+        response = client.run_report(request)
+        
+        # Format data
+        labels = []
+        active_users = []
+        page_views = []
+        
+        for row in response.rows:
+            labels.append(row.dimension_values[0].value)
+            active_users.append(int(row.metric_values[0].value))
+            page_views.append(int(row.metric_values[1].value))
+            
+        return {
+            "labels": labels,
+            "active_users": active_users,
+            "page_views": page_views,
+            "total_users": sum(active_users),
+            "total_views": sum(page_views)
+        }
+    except Exception as e:
+        print(f"[Google Analytics] Error fetching data: {e}")
+        return None
