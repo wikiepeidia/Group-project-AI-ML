@@ -3,7 +3,8 @@ let managersData = [];
 async function loadManagers() {
     try {
         const response = await fetch('/api/admin/users');
-        const users = await response.json();
+        const data = await response.json();
+        const users = data.users || [];
         managersData = users.filter((u) => u.role === 'manager' || u.role === 'admin');
         renderManagersTable();
     } catch (error) {

@@ -1,6 +1,7 @@
 import hashlib
 from functools import wraps
 from flask import session, redirect, url_for, flash, request, jsonify
+from core.google_integration import send_email
 
 class AuthManager:
     def __init__(self, database):
@@ -55,6 +56,30 @@ class AuthManager:
                       'Your personal productivity space'))
             
             conn.commit()
+            
+            # Send Welcome Email
+            try:
+                subject = "Welcome to Workflow Automation for Retail!"
+                body = f"""Hello {first_name},
+
+Welcome to Workflow Automation for Retail! We are excited to have you on board.
+
+Your account has been successfully created. You can now start building intelligent automation workflows for your retail business.
+
+Get started by exploring your personal workspace:
+- Manage customers
+- Track inventory
+- Automate tasks
+
+If you have any questions, feel free to reply to this email.
+
+Best regards,
+The Workflow Automation Team
+"""
+                send_email(email, subject, body)
+            except Exception as e:
+                print(f"Failed to send welcome email: {e}")
+
             return True, "Registration successful!"
         except Exception as e:
             print(f"Error creating user: {e}")

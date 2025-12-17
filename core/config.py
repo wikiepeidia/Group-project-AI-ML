@@ -3,7 +3,7 @@ import os
 # Core Configuration
 class Config:
     # Project/branding configuration
-    PROJECT_NAME = "Group Project AI-ML"
+    PROJECT_NAME = "Workflow Automation for Retail"
 
     # Default secret key (override with environment variable in production)
     SECRET_KEY = os.environ.get('SECRET_KEY', "change_me_random_key")

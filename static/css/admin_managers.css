@@ -48,6 +48,33 @@
     border-top: 1px solid var(--border-soft);
 }
 
+/* Fix for modal inputs in light/dark mode */
+.managers-modal .form-control {
+    background-color: var(--surface-100);
+    color: var(--gray-900);
+    border-color: var(--border-soft);
+}
+
+.managers-modal .form-control:focus {
+    background-color: var(--surface-100);
+    color: var(--gray-900);
+    border-color: var(--primary-500);
+}
+
+.managers-modal .modal-content {
+    background-color: var(--surface-100);
+    color: var(--gray-900);
+}
+
+.managers-modal .modal-header,
+.managers-modal .modal-footer {
+    border-color: var(--border-soft);
+}
+
+.managers-modal .btn-close {
+    filter: var(--btn-close-filter, none);
+}
+
 .managers-page .table tbody tr {
     background: var(--surface-100);
     transition: background 0.25s ease;

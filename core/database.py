@@ -106,6 +106,17 @@ class Database:
             UNIQUE(user_id, permission_type)
         )''')
 
+        # Activity Logs table
+        c.execute('''CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            details TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )''')
+
         # Workflows table
         c.execute('''CREATE TABLE IF NOT EXISTS workflows (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -207,6 +218,21 @@ class Database:
             config TEXT,
             enabled BOOLEAN DEFAULT 1,
             last_run TIMESTAMP,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        )''')
+
+        # Scheduled Reports
+        c.execute('''CREATE TABLE IF NOT EXISTS scheduled_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            report_type TEXT NOT NULL,
+            frequency TEXT NOT NULL,
+            channel TEXT NOT NULL,
+            recipients TEXT,
+            status TEXT DEFAULT 'active',
+            last_sent_at TIMESTAMP,
             created_by INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (created_by) REFERENCES users (id)
@@ -659,3 +685,41 @@ class Database:
             })
         conn.close()
         return users
+
+    def log_activity(self, user_id, action, details=None, ip_address=None):
+        """Log user activity"""
+        try:
+            conn = self.get_connection()
+            c = conn.cursor()
+            c.execute('INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)',
+                     (user_id, action, details, ip_address))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error logging activity: {e}")
+            return False
+
+    def get_recent_activities(self, limit=10):
+        """Get recent system activities"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('''
+            SELECT a.id, a.action, a.details, a.created_at, u.name, u.email 
+            FROM activity_logs a
+            LEFT JOIN users u ON a.user_id = u.id
+            ORDER BY a.created_at DESC
+            LIMIT ?
+        ''', (limit,))
+        activities = []
+        for row in c.fetchall():
+            activities.append({
+                'id': row[0],
+                'action': row[1],
+                'details': row[2],
+                'created_at': row[3],
+                'user_name': row[4] or 'System',
+                'user_email': row[5]
+            })
+        conn.close()
+        return activities

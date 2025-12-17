@@ -16,7 +16,8 @@ except ImportError:
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.file'
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/gmail.send'
 ]
 
 # Get the directory where this script is located
@@ -24,6 +25,7 @@ SCOPES = [
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CREDENTIALS_FILE = os.path.join(BASE_DIR, 'secrets', 'google_oauth.json')
 TOKEN_FILE = os.path.join(BASE_DIR, 'secrets', 'token.json')
+ADMIN_TOKEN_FILE = os.path.join(BASE_DIR, 'secrets', 'token adminmail.json')
 
 def get_google_service(service_name, version, token_info=None):
     """
@@ -102,11 +104,18 @@ def get_google_service(service_name, version, token_info=None):
 
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first time.
-    if not creds and os.path.exists(TOKEN_FILE):
+    # Check for ADMIN_TOKEN_FILE first if we are sending email (or generally prefer it if it exists)
+    # For now, we check ADMIN_TOKEN_FILE first, then TOKEN_FILE
+    
+    token_path_to_use = TOKEN_FILE
+    if os.path.exists(ADMIN_TOKEN_FILE):
+        token_path_to_use = ADMIN_TOKEN_FILE
+        
+    if not creds and os.path.exists(token_path_to_use):
         try:
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+            creds = Credentials.from_authorized_user_file(token_path_to_use, SCOPES)
         except ValueError as e:
-            print(f"[Google] Error loading token.json: {e}")
+            print(f"[Google] Error loading {token_path_to_use}: {e}")
             print("[Google] The token file seems corrupt or missing the refresh_token.")
             creds = None # Force re-auth logic below
     

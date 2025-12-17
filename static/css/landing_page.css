@@ -388,9 +388,6 @@ html[data-theme='dark'] .landing-page .btn-secondary:hover {
     display: flex;
     gap: 0.75rem;
     align-items: center;
-    margin-left: 1.5rem;
-    padding-left: 1.5rem;
-    border-left: 1px solid var(--nav-border);
 }
 
 .landing-page .nav-actions .btn {
@@ -427,4 +424,170 @@ html[data-theme='dark'] .landing-page .btn-secondary:hover {
         padding-left: 0;
         border-left: none;
     }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--card-shadow);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.modal-overlay.active .modal-container {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: var(--card-bg);
+    z-index: 10;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #00d4aa;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #ff5f56;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.contact-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.contact-table th {
+    padding: 1rem;
+    border-bottom: 1px solid var(--card-border);
+    color: #00d4aa;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.contact-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.contact-table tr:last-child td {
+    border-bottom: none;
+}
+
+.contact-table a {
+    color: #00d4aa;
+    text-decoration: none;
+}
+
+.contact-table a:hover {
+    text-decoration: underline;
+}
+
+/* Footer Styles */
+.landing-footer {
+    background: var(--body-bg);
+    padding: 2rem 0;
+    border-top: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    margin-top: auto;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.landing-footer .copyright {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.landing-footer .copyright a {
+    color: #00d4aa;
+    text-decoration: none;
+}
+
+.landing-footer .social-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s;
+}
+
+.landing-footer .social-links a:hover {
+    color: #00d4aa;
+}
+
+.landing-footer .social-links i {
+    font-size: 1.5rem;
 }

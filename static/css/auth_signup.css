@@ -1,5 +1,5 @@
 :root {
-    --auth-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --auth-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     --auth-card: #ffffff;
     --auth-card-contrast: #141833;
     --auth-muted: #6b7280;
@@ -8,9 +8,12 @@
     --auth-divider-label-bg: #ffffff;
     --auth-soft-surface: #f8f9ff;
     --auth-soft-surface-strong: #e8ecff;
+    /* Light mode: Reverted to dark gradient */
     --auth-left-gradient: linear-gradient(135deg, #6366f1 0%, #7c3aed 45%, #0ea5e9 100%);
+    --auth-left-text: #ffffff;
     --auth-feature-icon-bg: rgba(255, 255, 255, 0.2);
     --auth-feature-icon-color: #ffffff;
+    
     --auth-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
     --auth-input-bg: #ffffff;
     --auth-input-border: #d7dbec;
@@ -39,6 +42,7 @@ body.dark-mode {
     --auth-soft-surface: rgba(15, 23, 42, 0.75);
     --auth-soft-surface-strong: rgba(35, 46, 70, 0.9);
     --auth-left-gradient: linear-gradient(135deg, #1f2657 0%, #4338ca 40%, #7c3aed 75%, #0ea5e9 100%);
+    --auth-left-text: #ffffff;
     --auth-feature-icon-bg: rgba(255, 255, 255, 0.12);
     --auth-feature-icon-color: #f8fafc;
     --auth-shadow: 0 40px 90px rgba(2, 6, 23, 0.8);
@@ -66,34 +70,33 @@ body.dark-mode {
 body.auth-page {
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 44px 18px;
+    display: block;
     background: var(--auth-bg);
     background-attachment: fixed;
     color: var(--auth-card-contrast);
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
+    padding: 0;
     transition: background 0.35s ease, color 0.25s ease;
 }
 
-.auth-container {
+body.auth-page .auth-container {
     width: 100%;
-    max-width: 1080px;
+    max-width: none;
+    height: 100vh;
+    min-height: 0;
     background: var(--auth-card);
-    border-radius: 28px;
-    border: 1px solid var(--auth-container-border);
-    box-shadow: var(--auth-shadow);
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
     overflow: hidden;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 40% 60%;
 }
 
 .auth-left {
     background: var(--auth-left-gradient);
     padding: 64px 50px;
-    color: #fff;
+    color: var(--auth-left-text);
     display: flex;
     flex-direction: column;
     gap: 28px;
@@ -113,18 +116,43 @@ body.auth-page {
     font-size: 16px;
     line-height: 1.6;
     opacity: 0.9;
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .benefit-list {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 14px;
 }
 
 .benefit-item {
     display: flex;
     gap: 14px;
     align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.benefit-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.benefit-content h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.benefit-content p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .benefit-icon {
@@ -150,12 +178,21 @@ body.auth-page {
 }
 
 .auth-right {
-    padding: 58px 48px;
+    padding: 60px 80px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 20px;
     background: var(--auth-card);
     color: var(--auth-card-contrast);
+    overflow-y: auto;
+}
+
+.auth-right > * {
+    max-width: 520px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .auth-header {
@@ -165,6 +202,7 @@ body.auth-page {
 .auth-title {
     font-size: 30px;
     font-weight: 700;
+    color: var(--auth-card-contrast);
 }
 
 .auth-subtitle {
@@ -239,79 +277,56 @@ body.auth-page {
     cursor: not-allowed;
 }
 
-.divider {
-    text-align: center;
-    margin: 24px 0;
-    position: relative;
-    color: var(--auth-muted);
-}
-
-.divider::before,
-.divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 42%;
-    height: 1px;
-    background: var(--auth-divider);
-}
-
-.divider::before {
-    left: 0;
-}
-
-.divider::after {
-    right: 0;
-}
-
-.divider span {
-    display: inline-block;
-    padding: 0 12px;
-    background: var(--auth-divider-label-bg);
-    font-size: 13px;
-}
-
-.social-login {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-}
-
-.social-btn {
-    padding: 12px;
-    border-radius: 12px;
-    border: 2px solid var(--auth-border);
-    text-decoration: none;
-    color: var(--auth-card-contrast);
-    font-weight: 600;
+/* Google Sign-In Button - Official Style */
+.google-signin-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 24px;
+    margin-top: 16px;
+    border-radius: 24px;
+    border: 1px solid #dadce0;
+    background: #ffffff;
+    color: #3c4043;
+    font-family: 'Google Sans', 'Roboto', -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.social-btn:hover {
-    border-color: #6366f1;
+.google-signin-btn:hover {
+    background: #f7f8f8;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
 }
 
-.social-btn--google {
-    background: var(--social-google-bg);
-    border-color: var(--social-google-border);
-    color: var(--social-google-text);
-    font-weight: 600;
+.google-signin-btn:active {
+    background: #f1f3f4;
 }
 
-.social-btn--google:hover {
-    background: linear-gradient(120deg, rgba(66, 133, 244, 0.12), rgba(15, 157, 88, 0.12));
-    border-color: rgba(66, 133, 244, 0.3);
+.google-signin-btn svg {
+    flex-shrink: 0;
+}
+
+html[data-theme='dark'] .google-signin-btn {
+    background: #131314;
+    border-color: #5f6368;
+    color: #e8eaed;
+}
+
+html[data-theme='dark'] .google-signin-btn:hover {
+    background: #1f1f21;
+    border-color: #8e918f;
 }
 
 .auth-switch {
     text-align: center;
     font-size: 14px;
     color: var(--auth-muted);
-    margin-top: 12px;
+    margin-top: 16px;
 }
 
 .auth-switch a {

@@ -20,8 +20,8 @@
         <div
             class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 class="h2"><i class="fas fa-arrow-down"></i> Manage Imports</h1>
-            <button class="btn btn-primary" onclick="alert('Feature under development')">
-                <i class="fas fa-plus"></i> Tạo phiếu nhập
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createImportModal">
+                <i class="fas fa-plus"></i> Create Import
             </button>
         </div>
 
@@ -80,6 +80,103 @@
             </div>
         </div>
     </main>
+</div>
+
+<!-- Create Import Modal -->
+<div class="modal fade" id="createImportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Import Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createImportForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier Name</label>
+                            <input type="text" class="form-control" name="supplier_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Notes</label>
+                            <input type="text" class="form-control" name="notes">
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6>Items</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered" id="importItemsTable">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th width="150">Quantity</th>
+                                    <th width="200">Unit Price</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="importItemsBody">
+                                <!-- Items will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addImportItemRow()">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitImport()">Create Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Import Modal -->
+<div class="modal fade" id="viewImportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Code:</strong> <span id="viewImportCode"></span><br>
+                        <strong>Supplier:</strong> <span id="viewImportSupplier"></span><br>
+                        <strong>Date:</strong> <span id="viewImportDate"></span>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong>Status:</strong> <span id="viewImportStatus"></span><br>
+                        <strong>Total:</strong> <span id="viewImportTotal" class="h5 text-primary"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong>Notes:</strong> <span id="viewImportNotes"></span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product Code</th>
+                                <th>Product Name</th>
+                                <th class="text-end">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viewImportItemsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

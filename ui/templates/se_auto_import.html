@@ -130,29 +130,38 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Automation name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="automationName"
-                        placeholder="e.g. Auto import when out of stock">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Automation type</label>
-                    <select class="form-select" id="automationType">
-                        <option value="low_stock">Low Stock</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Config (JSON)</label>
-                    <textarea class="form-control" id="automationConfig" rows="5"
-                        placeholder='{"threshold": 10, "quantity": 100}'></textarea>
-                    <small class="text-muted">Configure using JSON format</small>
-                </div>
+                <form id="automationForm">
+                    <div class="mb-3">
+                        <label class="form-label">Automation name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required
+                            placeholder="e.g. Auto import when out of stock">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Automation type</label>
+                        <select class="form-select" name="type" id="automationTypeSelect"
+                            onchange="updateConfigPlaceholder()">
+                            <option value="low_stock">Low Stock Trigger</option>
+                            <option value="scheduled">Scheduled Import</option>
+                            <option value="smart_forecast">Smart Forecast (AI)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Configuration (JSON)</label>
+                        <textarea class="form-control font-monospace" name="config" id="automationConfig" rows="5"
+                            required></textarea>
+                        <div class="form-text" id="configHelp">
+                            Define parameters like threshold, product_ids, or schedule frequency.
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" name="active" id="automationActive" checked>
+                        <label class="form-check-label" for="automationActive">Activate immediately</label>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="alert('Feature under development')">Save</button>
+                <button type="button" class="btn btn-primary" onclick="submitAutomation()">Save Automation</button>
             </div>
         </div>
     </div>

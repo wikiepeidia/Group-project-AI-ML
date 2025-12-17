@@ -48,6 +48,9 @@ function initScenariosPage() {
     scenarioState.tabs = document.querySelectorAll('[data-tab]');
     scenarioState.tabBadges = document.querySelectorAll('[data-tab-count]');
 
+    // Check for first-time user
+    checkFirstTimeUser();
+
     const searchInput = document.querySelector('[data-scenarios-search]');
     if (searchInput) {
         searchInput.addEventListener('input', (event) => {
@@ -55,6 +58,9 @@ function initScenariosPage() {
             applyScenarioFilters();
         });
     }
+
+    // Load scenarios (mock or real)
+    loadScenarios();
 
     scenarioState.folderItems.forEach((item) => {
         item.addEventListener('click', () => {
@@ -68,9 +74,51 @@ function initScenariosPage() {
             selectTab(tab.dataset.tab);
         });
     });
-
-    loadScenarios();
 }
+
+function checkFirstTimeUser() {
+    const hasSeenTutorial = localStorage.getItem('hasSeenWorkflowTutorial');
+    if (!hasSeenTutorial) {
+        // Small delay to ensure UI is loaded
+        setTimeout(() => {
+            showTutorialModal();
+        }, 1000);
+    }
+}
+
+window.showTutorialModal = function() {
+    const modalEl = document.getElementById('tutorialModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        // Handle "Don't show again" checkbox
+        const checkbox = document.getElementById('dontShowAgain');
+        if (checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    localStorage.setItem('hasSeenWorkflowTutorial', 'true');
+                } else {
+                    localStorage.removeItem('hasSeenWorkflowTutorial');
+                }
+            });
+        }
+        
+        // Also set it if they click "Start Tour" or "Maybe Later" if checkbox is checked
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            if (document.getElementById('dontShowAgain')?.checked) {
+                localStorage.setItem('hasSeenWorkflowTutorial', 'true');
+            }
+        });
+    }
+};
+
+window.startInteractiveTutorial = function() {
+    // Placeholder for interactive tour
+    bootstrap.Modal.getInstance(document.getElementById('tutorialModal')).hide();
+    localStorage.setItem('hasSeenWorkflowTutorial', 'true');
+    alert('Interactive tour starting... (This is a placeholder)');
+};
 
 document.addEventListener('DOMContentLoaded', initScenariosPage);
 

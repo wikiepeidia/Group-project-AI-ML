@@ -333,12 +333,7 @@
                 <i class="fas fa-rocket" aria-hidden="true"></i>
                 <span>{{ project_name }}</span>
             </div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
+            <!-- Nav links removed as per requirements -->
             <div class="nav-actions">
                 <a href="{{ url_for('auth.signin') }}" class="btn btn-secondary">Sign in</a>
                 <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Get started</a>
@@ -429,6 +424,99 @@
             </div>
         </div>
     </section>
+
+    <!-- Footer / Contact Section -->
+    <footer style="background: #1a1a1a; padding: 4rem 2rem; border-top: 1px solid #333;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h2 style="color: #00d4aa; margin-bottom: 2rem; font-size: 2rem;">Contact Us</h2>
+
+            <div style="overflow-x: auto; margin-bottom: 3rem;">
+                <table style="width: 100%; border-collapse: collapse; color: #cccccc; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #404040;">
+                            <th style="padding: 1rem;">No.</th>
+                            <th style="padding: 1rem;">Name</th>
+                            <th style="padding: 1rem;">Student ID</th>
+                            <th style="padding: 1rem;">Major</th>
+                            <th style="padding: 1rem;">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 1rem;">1</td>
+                            <td style="padding: 1rem;">Hà Thái Sơn</td>
+                            <td style="padding: 1rem;">23BI14386</td>
+                            <td style="padding: 1rem;">ICT</td>
+                            <td style="padding: 1rem;"><a href="mailto:sonht.23bi14386@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">sonht.23bi14386@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">2</td>
+                            <td style="padding: 1rem;">Nguyễn Duy Ngọc</td>
+                            <td style="padding: 1rem;">23BI14342</td>
+                            <td style="padding: 1rem;">ICT</td>
+                            <td style="padding: 1rem;"><a href="mailto:ngocnd.23bi14342@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">ngocnd.23bi14342@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">3</td>
+                            <td style="padding: 1rem;">Trần Quốc Thái</td>
+                            <td style="padding: 1rem;">23BI14396</td>
+                            <td style="padding: 1rem;">ICT</td>
+                            <td style="padding: 1rem;"><a href="mailto:thaitq.23bi14396@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">thaitq.23bi14396@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">4</td>
+                            <td style="padding: 1rem;">Phạm Thế Minh</td>
+                            <td style="padding: 1rem;">23BI14279</td>
+                            <td style="padding: 1rem;">ICT</td>
+                            <td style="padding: 1rem;"><a href="mailto:minhpt.23bi14279@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">minhpt.23bi14279@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">6</td>
+                            <td style="padding: 1rem;">Phạm Ngọc Tùng</td>
+                            <td style="padding: 1rem;">23BI14444</td>
+                            <td style="padding: 1rem;">ICT</td>
+                            <td style="padding: 1rem;"><a href="mailto:tungpn.23bi14444@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">tungpn.23bi14444@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">-</td>
+                            <td style="padding: 1rem;">Nghiêm Xuân Sơn</td>
+                            <td style="padding: 1rem;">23BI14388</td>
+                            <td style="padding: 1rem;">-</td>
+                            <td style="padding: 1rem;"><a href="mailto:sonnx.23BI14388@usth.edu.vn"
+                                    style="color: #00d4aa; text-decoration: none;">sonnx.23BI14388@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem;">-</td>
+                            <td style="padding: 1rem;">Trần Vũ Công Minh</td>
+                            <td style="padding: 1rem;">23BI14303</td>
+                            <td style="padding: 1rem;">-</td>
+                            <td style="padding: 1rem;">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div
+                style="border-top: 1px solid #404040; padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="color: #888;">
+                    &copy; 2025 {{ project_name }}. Licensed under <a href="#"
+                        style="color: #00d4aa; text-decoration: none;">MIT License</a>.
+                </div>
+                <div>
+                    <a href="https://github.com/wikiepeidia/Group-project-AI-ML" target="_blank"
+                        style="color: #cccccc; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.3s;">
+                        <i class="fab fa-github" style="font-size: 1.5rem;"></i>
+                        <span>View on GitHub</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 
 </html>

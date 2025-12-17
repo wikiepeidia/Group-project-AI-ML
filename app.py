@@ -67,7 +67,7 @@ google = oauth.register(
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
-        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'
+        'scope': 'openid email profile'
     }
 )
 
@@ -244,6 +244,10 @@ def signin():
                 print(">>> Login:", user.email, "role =", user.role)
                 login_user(user, remember=True)  # Remember user to extend session
                 session.permanent = True  # Set session to use PERMANENT_SESSION_LIFETIME
+                
+                # Log activity
+                db_manager.log_activity(user.id, 'Login', f'User {user.email} logged in', request.remote_addr)
+                
                 flash('Login Successful!', 'success')
                 
                 # Redirect based on role
@@ -273,6 +277,15 @@ def signup():
         
         success, message = auth_manager.register_user(email, password, first_name, last_name, phone)
         if success:
+            # Log activity (we don't have user_id here easily without querying, so maybe skip or query)
+            # For simplicity, let's just log it as system activity or try to get the user
+            try:
+                user_data = auth_manager.get_user_by_email(email)
+                if user_data:
+                    db_manager.log_activity(user_data['id'], 'Register', f'New user registered: {email}', request.remote_addr)
+            except:
+                pass
+                
             flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('auth.signin'))
         else:
@@ -689,13 +702,26 @@ def admin_get_users():
     users = c.fetchall()
     conn.close()
     
-    return jsonify([{
-        'id': user[0],
-        'email': user[1],
-        'name': user[2],
-        'role': user[3],
-        'created_at': user[4]
-    } for user in users])
+    return jsonify({
+        'success': True,
+        'users': [{
+            'id': user[0],
+            'email': user[1],
+            'name': user[2],
+            'role': user[3],
+            'created_at': user[4]
+        } for user in users]
+    })
+
+@app.route('/api/admin/activity')
+@login_required
+def admin_get_activity():
+    """Get recent activity logs"""
+    if not hasattr(current_user, 'role') or current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    activities = db_manager.get_recent_activities(limit=20)
+    return jsonify({'success': True, 'activities': activities})
 
 @app.route('/api/admin/stats')
 @login_required
@@ -971,6 +997,8 @@ def admin_promote_user():
         conn.commit()
         conn.close()
         
+        db_manager.log_activity(current_user.id, 'Promote User', f'Promoted user {user_id} to {new_role}', request.remote_addr)
+        
         return jsonify({'success': True, 'message': f'User promoted to {new_role} successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -1017,6 +1045,8 @@ def admin_demote_user():
         c.execute('UPDATE users SET role = ? WHERE id = ?', (new_role, user_id))
         conn.commit()
         conn.close()
+        
+        db_manager.log_activity(current_user.id, 'Demote User', f'Demoted user {user_id} to {new_role}', request.remote_addr)
         
         return jsonify({'success': True, 'message': f'User demoted to {new_role} successfully'})
     except Exception as e:
@@ -1188,6 +1218,95 @@ def api_get_imports():
     conn.close()
     return jsonify({'success': True, 'imports': imports})
 
+@app.route('/api/imports', methods=['POST'])
+@login_required
+def api_create_import():
+    """Create a new import transaction"""
+    data = request.get_json()
+    supplier_name = data.get('supplier_name')
+    notes = data.get('notes')
+    items = data.get('items', [])
+
+    if not items:
+        return jsonify({'success': False, 'message': 'No items in import'}), 400
+
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    try:
+        # Generate code
+        code = f"IMP-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        # Calculate total
+        total_amount = sum(float(item['quantity']) * float(item['unit_price']) for item in items)
+        
+        # Create transaction
+        c.execute('''INSERT INTO import_transactions 
+                     (code, supplier_name, total_amount, notes, created_by)
+                     VALUES (?, ?, ?, ?, ?)''',
+                  (code, supplier_name, total_amount, notes, current_user.id))
+        import_id = c.lastrowid
+        
+        # Create details and update stock
+        for item in items:
+            product_id = item['product_id']
+            quantity = int(item['quantity'])
+            unit_price = float(item['unit_price'])
+            total_price = quantity * unit_price
+            
+            c.execute('''INSERT INTO import_details 
+                         (import_id, product_id, quantity, unit_price, total_price)
+                         VALUES (?, ?, ?, ?, ?)''',
+                      (import_id, product_id, quantity, unit_price, total_price))
+            
+            # Update stock
+            c.execute('UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?',
+                      (quantity, product_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Import created successfully', 'id': import_id})
+        
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/imports/<int:import_id>', methods=['GET'])
+@login_required
+def api_get_import_details(import_id):
+    """Get import transaction details"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    c.execute('SELECT * FROM import_transactions WHERE id = ?', (import_id,))
+    row = c.fetchone()
+    
+    if not row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Import not found'}), 404
+        
+    transaction = {
+        'id': row[0], 'code': row[1], 'supplier_name': row[2],
+        'total_amount': row[3], 'notes': row[4], 'status': row[5], 'created_at': row[7]
+    }
+    
+    c.execute('''SELECT d.*, p.name as product_name, p.code as product_code 
+                 FROM import_details d
+                 JOIN products p ON d.product_id = p.id
+                 WHERE d.import_id = ?''', (import_id,))
+    
+    details = []
+    for d_row in c.fetchall():
+        details.append({
+            'id': d_row[0], 'product_id': d_row[2], 'quantity': d_row[3],
+            'unit_price': d_row[4], 'total_price': d_row[5],
+            'product_name': d_row[6], 'product_code': d_row[7]
+        })
+        
+    conn.close()
+    return jsonify({'success': True, 'transaction': transaction, 'details': details})
+
 @app.route('/api/exports', methods=['GET'])
 @login_required
 def api_get_exports():
@@ -1206,6 +1325,248 @@ def api_get_exports():
         })
     conn.close()
     return jsonify({'success': True, 'exports': exports})
+
+@app.route('/api/exports', methods=['POST'])
+@login_required
+def api_create_export():
+    """Create a new export transaction"""
+    data = request.get_json()
+    customer_id = data.get('customer_id')
+    notes = data.get('notes')
+    items = data.get('items', [])
+
+    if not items:
+        return jsonify({'success': False, 'message': 'No items in export'}), 400
+
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    try:
+        # Generate code
+        code = f"EXP-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        # Calculate total
+        total_amount = sum(float(item['quantity']) * float(item['unit_price']) for item in items)
+        
+        # Create transaction
+        c.execute('''INSERT INTO export_transactions 
+                     (code, customer_id, total_amount, notes, created_by)
+                     VALUES (?, ?, ?, ?, ?)''',
+                  (code, customer_id, total_amount, notes, current_user.id))
+        export_id = c.lastrowid
+        
+        # Create details and update stock
+        for item in items:
+            product_id = item['product_id']
+            quantity = int(item['quantity'])
+            unit_price = float(item['unit_price'])
+            total_price = quantity * unit_price
+            
+            # Check stock
+            c.execute('SELECT stock_quantity FROM products WHERE id = ?', (product_id,))
+            current_stock = c.fetchone()[0]
+            if current_stock < quantity:
+                raise Exception(f"Insufficient stock for product ID {product_id}")
+
+            c.execute('''INSERT INTO export_details 
+                         (export_id, product_id, quantity, unit_price, total_price)
+                         VALUES (?, ?, ?, ?, ?)''',
+                      (export_id, product_id, quantity, unit_price, total_price))
+            
+            # Update stock
+            c.execute('UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?',
+                      (quantity, product_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Export created successfully', 'id': export_id})
+        
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/exports/<int:export_id>', methods=['GET'])
+@login_required
+def api_get_export_details(export_id):
+    """Get export transaction details"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    c.execute('''SELECT e.*, c.name as customer_name, c.phone as customer_phone 
+                 FROM export_transactions e
+                 LEFT JOIN customers c ON e.customer_id = c.id
+                 WHERE e.id = ?''', (export_id,))
+    row = c.fetchone()
+    
+    if not row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Export not found'}), 404
+        
+    transaction = {
+        'id': row[0], 'code': row[1], 'customer_id': row[2],
+        'total_amount': row[3], 'notes': row[4], 'status': row[5],
+        'created_at': row[7], 'customer_name': row[8] if len(row) > 8 else '',
+        'customer_phone': row[9] if len(row) > 9 else ''
+    }
+    
+    c.execute('''SELECT d.*, p.name as product_name, p.code as product_code 
+                 FROM export_details d
+                 JOIN products p ON d.product_id = p.id
+                 WHERE d.export_id = ?''', (export_id,))
+    
+    details = []
+    for d_row in c.fetchall():
+        details.append({
+            'id': d_row[0], 'product_id': d_row[2], 'quantity': d_row[3],
+            'unit_price': d_row[4], 'total_price': d_row[5],
+            'product_name': d_row[6], 'product_code': d_row[7]
+        })
+        
+    conn.close()
+    return jsonify({'success': True, 'transaction': transaction, 'details': details})
+
+# ============= SE REPORTS & AUTOMATION API =============
+
+@app.route('/api/reports/stats', methods=['GET'])
+@login_required
+def api_get_report_stats():
+    """Get revenue, expense, profit stats for current month"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    
+    # Get start of current month
+    today = datetime.now()
+    start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Revenue (Exports)
+    c.execute("SELECT SUM(total_amount) FROM export_transactions WHERE created_at >= ?", (start_of_month,))
+    revenue = c.fetchone()[0] or 0
+    
+    # Expense (Imports)
+    c.execute("SELECT SUM(total_amount) FROM import_transactions WHERE created_at >= ?", (start_of_month,))
+    expense = c.fetchone()[0] or 0
+    
+    profit = revenue - expense
+    
+    # Reports sent count
+    c.execute("SELECT COUNT(*) FROM scheduled_reports WHERE last_sent_at >= ?", (start_of_month,))
+    reports_sent = c.fetchone()[0] or 0
+    
+    conn.close()
+    return jsonify({
+        'success': True,
+        'revenue': revenue,
+        'expense': expense,
+        'profit': profit,
+        'reports_sent': reports_sent
+    })
+
+@app.route('/api/reports/scheduled', methods=['GET'])
+@login_required
+def api_get_scheduled_reports():
+    """Get all scheduled reports"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM scheduled_reports ORDER BY created_at DESC')
+    reports = []
+    for row in c.fetchall():
+        reports.append({
+            'id': row[0], 'name': row[1], 'report_type': row[2],
+            'frequency': row[3], 'channel': row[4], 'recipients': row[5],
+            'status': row[6], 'last_sent_at': row[7]
+        })
+    conn.close()
+    return jsonify({'success': True, 'reports': reports})
+
+@app.route('/api/reports/scheduled', methods=['POST'])
+@login_required
+def api_create_scheduled_report():
+    """Create a scheduled report"""
+    data = request.get_json()
+    name = data.get('name')
+    report_type = data.get('report_type')
+    frequency = data.get('frequency')
+    channel = data.get('channel')
+    recipients = data.get('recipients')
+    
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('''INSERT INTO scheduled_reports 
+                     (name, report_type, frequency, channel, recipients, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?)''',
+                  (name, report_type, frequency, channel, recipients, current_user.id))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Report scheduled successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/reports/scheduled/<int:report_id>', methods=['DELETE'])
+@login_required
+def api_delete_scheduled_report(report_id):
+    """Delete a scheduled report"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM scheduled_reports WHERE id = ?', (report_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'message': 'Report deleted successfully'})
+
+@app.route('/api/automations', methods=['GET'])
+@login_required
+def api_get_automations():
+    """Get all automations"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM se_automations ORDER BY created_at DESC')
+    automations = []
+    for row in c.fetchall():
+        automations.append({
+            'id': row[0], 'name': row[1], 'type': row[2],
+            'config': json.loads(row[3]) if row[3] else {},
+            'enabled': bool(row[4]), 'last_run': row[5]
+        })
+    conn.close()
+    return jsonify({'success': True, 'automations': automations})
+
+@app.route('/api/automations', methods=['POST'])
+@login_required
+def api_create_automation():
+    """Create an automation"""
+    data = request.get_json()
+    name = data.get('name')
+    type = data.get('type')
+    config = json.dumps(data.get('config', {}))
+    
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('''INSERT INTO se_automations 
+                     (name, type, config, created_by)
+                     VALUES (?, ?, ?, ?)''',
+                  (name, type, config, current_user.id))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Automation created successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/automations/<int:automation_id>', methods=['DELETE'])
+@login_required
+def api_delete_automation(automation_id):
+    """Delete an automation"""
+    conn = db_manager.get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM se_automations WHERE id = ?', (automation_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'message': 'Automation deleted successfully'})
 
 # ============= SUBSCRIPTION MANAGEMENT API =============
 @app.route('/api/admin/subscriptions', methods=['GET'])
@@ -1830,7 +2191,7 @@ def google_authorize():
             'token_uri': 'https://oauth2.googleapis.com/token',
             'client_id': app.config.get('GOOGLE_CLIENT_ID'),
             'client_secret': app.config.get('GOOGLE_CLIENT_SECRET'),
-            'scope': token.get('scope') or ' '.join(google_integration.SCOPES),
+            'scope': token.get('scope') or 'openid email profile',
             'expires_at': token.get('expires_at'),
             'id_token': token.get('id_token'),
             # Preserve original for debugging/forward compatibility
@@ -1873,8 +2234,37 @@ def google_authorize():
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                      (email, hashed_pw, name, first_name, last_name, 'user', user_info.get('picture'), token_json))
             user_id = c.lastrowid
+            
+            # Create default workspace for Google user
+            c.execute('''INSERT INTO workspaces (user_id, name, type, description) 
+                        VALUES (?, ?, ?, ?)''',
+                     (user_id, f"{first_name}'s Personal Workspace", 'personal', 
+                      'Your personal productivity space'))
+            
             conn.commit()
             print(f"Created new user from Google: {email}")
+            
+            # Send Welcome Email
+            try:
+                subject = "Welcome to Workflow Automation for Retail!"
+                body = f"""Hello {first_name},
+
+Welcome to Workflow Automation for Retail! We are excited to have you on board.
+
+Your account has been successfully created via Google Login. You can now start building intelligent automation workflows for your retail business.
+
+Get started by exploring your personal workspace:
+- Manage customers
+- Track inventory
+- Automate tasks
+
+Best regards,
+The Workflow Automation Team
+"""
+                # Use core.google_integration.send_email
+                google_integration.send_email(email, subject, body)
+            except Exception as e:
+                print(f"Failed to send welcome email: {e}")
 
         conn.close()
         

@@ -1,5 +1,6 @@
 # main page
 
+- Revams:
 - Deltete: feature, aubot , contact, user, manageger
 - contact: bring to down , add informations and email
 No. Name Student ID Major Email
@@ -19,23 +20,23 @@ No. Name Student ID Major Email
 
 # User page
 
-- Import,export page from user is in development
+- Import,export page from user is in development (IMPLEMENT IT) (IMPLEMENT IT)
 - Eye icon: not do anything in Export
 
 # manager page
 
--Se/report: in development
--Template report: in development
--se/auto-import: template (automation)in development
+-Se/report: in development (IMPLEMENT IT) (IMPLEMENT IT) (IMPLEMENT IT)
+-Template report: in development (IMPLEMENT IT) (IMPLEMENT IT)
+-se/auto-import: template (automation)in development (IMPLEMENT IT) (IMPLEMENT IT)
 
-- Tutorial page: not working delete.
+- Tutorial page button: not working delete.
 
 # admin page
 
 - numbers not counting: User, manager,...
 - Recent activity: not working
 - admin/roles: not working
-- admin/managerL: ui in Add manager having light mode issue
+- admin/manager: ui (textboxes) in Add manager having light mode issue
 -
 
 # Workflow page
@@ -49,3 +50,7 @@ No. Name Student ID Major Email
 # Draw use case diagram
 
 - Find 2 use case diagram-->draw.
+
+# BUG
+
+- WHERE is the freaking Tutorial screen and the Tutorial buttons

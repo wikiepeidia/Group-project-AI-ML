@@ -17,13 +17,7 @@
                 <i class="fas fa-robot" aria-hidden="true"></i>
                 <span>Workflow Automation for Retail</span>
             </div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="{{ url_for('wallet_dashboard') }}">User</a></li>
-                <li><a href="{{ url_for('admin_subscriptions') }}">Manager</a></li>
-            </ul>
+            <!-- Nav links removed -->
         </div>
         <div class="nav-actions">
             <a href="{{ url_for('auth.signin') }}" class="btn btn-secondary">Sign In</a>
@@ -46,10 +40,10 @@
                     <i class="fas fa-rocket"></i>
                     Start Free Trial
                 </a>
-                <a href="#demo" class="btn btn-secondary">
-                    <i class="fas fa-play"></i>
-                    Watch Demo
-                </a>
+                <button id="contactBtn" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i>
+                    Contact Us
+                </button>
             </div>
 
             <div class="hero-features">
@@ -111,4 +105,128 @@
         </div>
     </div>
 </section>
+
+<!-- Contact Modal -->
+<div id="contactModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Contact Us</h3>
+            <button class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-responsive">
+                <table class="contact-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Name</th>
+                            <th>Student ID</th>
+                            <th>Major</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Hà Thái Sơn</td>
+                            <td>23BI14386</td>
+                            <td>ICT</td>
+                            <td><a href="mailto:sonht.23bi14386@usth.edu.vn">sonht.23bi14386@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Nguyễn Duy Ngọc</td>
+                            <td>23BI14342</td>
+                            <td>ICT</td>
+                            <td><a href="mailto:ngocnd.23bi14342@usth.edu.vn">ngocnd.23bi14342@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Trần Quốc Thái</td>
+                            <td>23BI14396</td>
+                            <td>ICT</td>
+                            <td><a href="mailto:thaitq.23bi14396@usth.edu.vn">thaitq.23bi14396@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Phạm Thế Minh</td>
+                            <td>23BI14279</td>
+                            <td>ICT</td>
+                            <td><a href="mailto:minhpt.23bi14279@usth.edu.vn">minhpt.23bi14279@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>Phạm Ngọc Tùng</td>
+                            <td>23BI14444</td>
+                            <td>ICT</td>
+                            <td><a href="mailto:tungpn.23bi14444@usth.edu.vn">tungpn.23bi14444@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td>Nghiêm Xuân Sơn</td>
+                            <td>23BI14388</td>
+                            <td>-</td>
+                            <td><a href="mailto:sonnx.23BI14388@usth.edu.vn">sonnx.23BI14388@usth.edu.vn</a></td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td>Trần Vũ Công Minh</td>
+                            <td>23BI14303</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('contactModal');
+        const btn = document.getElementById('contactBtn');
+        const close = document.querySelector('.modal-close');
+        const overlay = document.querySelector('.modal-overlay');
+
+        function openModal(e) {
+            e.preventDefault();
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        if (btn) btn.addEventListener('click', openModal);
+        if (close) close.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    });
+</script>
+
+<footer class="landing-footer">
+    <div class="footer-container">
+        <div class="footer-content">
+            <div class="copyright">
+                &copy; 2025 {{ project_name }}. Licensed under <a href="#">MIT License</a>.
+            </div>
+            <div class="social-links">
+                <a href="https://github.com/wikiepeidia/Group-project-AI-ML" target="_blank">
+                    <i class="fab fa-github"></i>
+                    <span>View on GitHub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
 {% endblock %}

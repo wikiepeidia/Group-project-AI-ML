@@ -10,13 +10,6 @@
         uptime: 'systemUptime',
     };
 
-    const ACTIVITIES = [
-        { icon: 'fas fa-user-plus', title: 'New user registered', time: '5 minutes ago' },
-        { icon: 'fas fa-shopping-cart', title: 'New order created', time: '15 minutes ago' },
-        { icon: 'fas fa-box', title: 'New product added', time: '30 minutes ago' },
-        { icon: 'fas fa-user-shield', title: 'User role updated', time: '1 hour ago' },
-    ];
-
     const safeSetText = (id, value) => {
         const el = document.getElementById(id);
         if (el) {
@@ -63,24 +56,64 @@
         }
     };
 
-    const renderActivities = () => {
+    const loadActivities = async () => {
         const container = document.getElementById(SELECTORS.activities);
-        if (!container) {
-            return;
-        }
-        container.innerHTML = ACTIVITIES.map(
-            (activity) => `
+        if (!container) return;
+
+        try {
+            const { activities = [] } = await fetchJson('/api/admin/activity');
+            
+            if (activities.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted p-3">No recent activity</div>';
+                return;
+            }
+
+            container.innerHTML = activities.map(
+                (activity) => `
                 <div class="activity-item">
                     <div class="activity-icon">
-                        <i class="${activity.icon}"></i>
+                        <i class="${getActivityIcon(activity.action)}"></i>
                     </div>
                     <div class="activity-content">
-                        <div class="activity-title">${activity.title}</div>
-                        <div class="activity-time">${activity.time}</div>
+                        <div class="activity-title">
+                            <strong>${activity.user_name}</strong> ${activity.action}
+                        </div>
+                        <div class="activity-time">${timeAgo(activity.created_at)}</div>
                     </div>
                 </div>
-            `,
-        ).join('');
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load activities', error);
+            container.innerHTML = '<div class="text-center text-danger p-3">Failed to load activity</div>';
+        }
+    };
+
+    const getActivityIcon = (action) => {
+        const lower = action.toLowerCase();
+        if (lower.includes('login')) return 'fas fa-sign-in-alt';
+        if (lower.includes('register') || lower.includes('create user')) return 'fas fa-user-plus';
+        if (lower.includes('delete')) return 'fas fa-trash';
+        if (lower.includes('update') || lower.includes('edit')) return 'fas fa-edit';
+        if (lower.includes('product')) return 'fas fa-box';
+        if (lower.includes('order')) return 'fas fa-shopping-cart';
+        return 'fas fa-info-circle';
+    };
+
+    const timeAgo = (dateString) => {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return Math.floor(seconds) + " seconds ago";
     };
 
     const updateUptime = () => {
@@ -99,7 +132,7 @@
         loadUserStats();
         loadProducts();
         loadCustomers();
-        renderActivities();
+        loadActivities();
         updateUptime();
         setInterval(updateUptime, 1000);
     };

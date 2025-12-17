@@ -1,4 +1,5 @@
 let importsData = [];
+let products = [];
 
 async function loadImports() {
     try {
@@ -14,6 +15,18 @@ async function loadImports() {
         }
     } catch (error) {
         showAlert('error', 'Error: ' + error.message);
+    }
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        if (data.success) {
+            products = data.products;
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
     }
 }
 
@@ -34,7 +47,7 @@ function renderImportsTable() {
             <td>${new Date(imp.created_at).toLocaleDateString('en-US')}</td>
             <td>${imp.notes || '-'}</td>
             <td>
-                <button class="btn btn-sm btn-info" onclick="alert('View details: ' + '${imp.code}')">
+                <button class="btn btn-sm btn-info" onclick="viewImport(${imp.id})">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -62,4 +75,126 @@ function showAlert(type, message) {
     setTimeout(() => alertDiv.remove(), 5000);
 }
 
-document.addEventListener('DOMContentLoaded', loadImports);
+// Create Import Logic
+function addImportItemRow() {
+    const tbody = document.getElementById('importItemsBody');
+    const row = document.createElement('tr');
+    
+    const productOptions = products.map(p => `<option value="${p.id}" data-price="${p.price}">${p.code} - ${p.name}</option>`).join('');
+    
+    row.innerHTML = `
+        <td>
+            <select class="form-select product-select" name="product_id" required onchange="updatePrice(this)">
+                <option value="">Select Product</option>
+                ${productOptions}
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="quantity" value="1" min="1" required>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="unit_price" value="0" min="0" required>
+        </td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+}
+
+function updatePrice(select) {
+    // Optional: Auto-fill price if needed, but for imports usually user enters cost price
+    // const price = select.options[select.selectedIndex].dataset.price;
+    // const row = select.closest('tr');
+    // row.querySelector('[name="unit_price"]').value = price;
+}
+
+async function submitImport() {
+    const form = document.getElementById('createImportForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const supplier_name = form.querySelector('[name="supplier_name"]').value;
+    const notes = form.querySelector('[name="notes"]').value;
+    
+    const items = [];
+    form.querySelectorAll('#importItemsBody tr').forEach(row => {
+        items.push({
+            product_id: row.querySelector('[name="product_id"]').value,
+            quantity: row.querySelector('[name="quantity"]').value,
+            unit_price: row.querySelector('[name="unit_price"]').value
+        });
+    });
+
+    if (items.length === 0) {
+        alert('Please add at least one item');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/imports', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: JSON.stringify({ supplier_name, notes, items })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createImportModal')).hide();
+            form.reset();
+            document.getElementById('importItemsBody').innerHTML = '';
+            loadImports();
+            showAlert('success', 'Import created successfully');
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function viewImport(id) {
+    try {
+        const response = await fetch(`/api/imports/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const t = data.transaction;
+            document.getElementById('viewImportCode').textContent = t.code;
+            document.getElementById('viewImportSupplier').textContent = t.supplier_name;
+            document.getElementById('viewImportDate').textContent = new Date(t.created_at).toLocaleString();
+            document.getElementById('viewImportStatus').textContent = t.status;
+            document.getElementById('viewImportTotal').textContent = Number(t.total_amount).toLocaleString('en-US') + ' VND';
+            document.getElementById('viewImportNotes').textContent = t.notes || '-';
+            
+            const tbody = document.getElementById('viewImportItemsBody');
+            tbody.innerHTML = data.details.map(d => `
+                <tr>
+                    <td>${d.product_code}</td>
+                    <td>${d.product_name}</td>
+                    <td class="text-end">${d.quantity}</td>
+                    <td class="text-end">${Number(d.unit_price).toLocaleString('en-US')}</td>
+                    <td class="text-end">${Number(d.total_price).toLocaleString('en-US')}</td>
+                </tr>
+            `).join('');
+            
+            new bootstrap.Modal(document.getElementById('viewImportModal')).show();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadImports();
+    loadProducts();
+});
