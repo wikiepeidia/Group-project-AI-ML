@@ -10,6 +10,7 @@ from core.config import Config
 from core.utils import Utils
 from core import google_integration
 from core.workflow_engine import execute_workflow
+from core.services.dl_client import DLClient
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 import secrets
@@ -67,7 +68,7 @@ google = oauth.register(
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
-        'scope': 'openid email profile'
+        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'
     }
 )
 
@@ -1249,19 +1250,37 @@ def api_create_import():
         
         # Create details and update stock
         for item in items:
-            product_id = item['product_id']
+            product_id = item.get('product_id')
+            product_name = item.get('product_name') # Handle new products from OCR
             quantity = int(item['quantity'])
             unit_price = float(item['unit_price'])
             total_price = quantity * unit_price
             
-            c.execute('''INSERT INTO import_details 
-                         (import_id, product_id, quantity, unit_price, total_price)
-                         VALUES (?, ?, ?, ?, ?)''',
-                      (import_id, product_id, quantity, unit_price, total_price))
-            
-            # Update stock
-            c.execute('UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?',
-                      (quantity, product_id))
+            # If product_id is missing (e.g. from OCR), try to find by name or create new
+            if not product_id and product_name:
+                # Try find by name
+                c.execute('SELECT id FROM products WHERE name = ?', (product_name,))
+                row = c.fetchone()
+                if row:
+                    product_id = row[0]
+                else:
+                    # Create new product
+                    # Generate a temp code
+                    p_code = f"P-{datetime.now().strftime('%H%M%S')}-{secrets.token_hex(2).upper()}"
+                    c.execute('''INSERT INTO products (code, name, price, stock_quantity, created_by)
+                                 VALUES (?, ?, ?, 0, ?)''', 
+                              (p_code, product_name, unit_price, current_user.id))
+                    product_id = c.lastrowid
+
+            if product_id:
+                c.execute('''INSERT INTO import_details 
+                             (import_id, product_id, quantity, unit_price, total_price)
+                             VALUES (?, ?, ?, ?, ?)''',
+                          (import_id, product_id, quantity, unit_price, total_price))
+                
+                # Update stock
+                c.execute('UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?',
+                          (quantity, product_id))
         
         conn.commit()
         return jsonify({'success': True, 'message': 'Import created successfully', 'id': import_id})
@@ -2411,9 +2430,102 @@ def delete_workflow(workflow_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-if __name__ == '__main__':
-    db_manager.init_database()
-    # Changed to HTTP for development - no SSL certificate warnings
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+ 
 
  
+@app.route('/api/dl/detect', methods=['POST'])
+@login_required
+def api_dl_detect():
+    """Proxy to DL Service for Invoice Detection"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    try:
+        client = DLClient()
+        # Read file into memory to pass to DL service
+        file_bytes = file.read()
+        
+        # Call DL Service
+        result = client.detect_invoice(file_bytes=file_bytes, filename=file.filename)
+        
+        if 'error' in result:
+             return jsonify({'success': False, 'error': result['error']}), 500
+             
+        return jsonify({'success': True, 'data': result})
+        
+    except Exception as e:
+        print(f"DL Proxy Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+if __name__ == '__main__':
+    import subprocess
+    import sys
+    import os
+    
+    # Only start DL service from the main process, not the reloader child
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        print("Starting Deep Learning Service (Sidecar)...")
+        try:
+            # Use Popen to run in background
+            subprocess.Popen([sys.executable, 'run_dl_service.py'])
+        except Exception as e:
+            print(f"Failed to start DL Service: {e}")
+
+    db_manager.init_database()
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+@app.route('/api/dl/forecast', methods=['POST'])
+@login_required
+def api_dl_forecast():
+    """Proxy to DL Service for Quantity Forecasting"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    try:
+        client = DLClient()
+        # Pass the JSON payload directly to the DL service
+        result = client.forecast_quantity(data)
+        
+        if 'error' in result:
+             return jsonify({'success': False, 'error': result['error']}), 500
+             
+        return jsonify({'success': True, 'data': result})
+        
+    except Exception as e:
+        print(f"DL Proxy Error (Forecast): {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/products/<int:product_id>/sales_history', methods=['GET'])
+@login_required
+def api_get_product_sales_history(product_id):
+    """Get sales history for a product (from export_details)"""
+    try:
+        conn = db_manager.get_connection()
+        c = conn.cursor()
+        
+        # Aggregate sales by week or just get last N transactions
+        # For simplicity, let's get the quantity of the last 10 export transactions
+        c.execute('''
+            SELECT d.quantity 
+            FROM export_details d
+            JOIN export_transactions t ON d.export_id = t.id
+            WHERE d.product_id = ?
+            ORDER BY t.created_at DESC
+            LIMIT 10
+        ''', (product_id,))
+        
+        rows = c.fetchall()
+        # Reverse to get chronological order (oldest to newest)
+        series = [r[0] for r in rows][::-1]
+        
+        return jsonify({'success': True, 'series': series})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()

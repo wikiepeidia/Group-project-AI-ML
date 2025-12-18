@@ -51,6 +51,10 @@ No. Name Student ID Major Email
 
 - Find 2 use case diagram-->draw.
 
+# Mobile UI?
+
+- In progress
+
 # BUG
 
 - WHERE is the freaking Tutorial screen and the Tutorial buttons

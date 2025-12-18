@@ -198,3 +198,151 @@ document.addEventListener('DOMContentLoaded', () => {
     loadImports();
     loadProducts();
 });
+
+// OCR Import Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const ocrFile = document.getElementById('ocrFile');
+    const ocrLoading = document.getElementById('ocrLoading');
+    const ocrResult = document.getElementById('ocrResult');
+    const ocrItemsBody = document.getElementById('ocrItemsBody');
+    const btnSaveOcrImport = document.getElementById('btnSaveOcrImport');
+    
+    let extractedData = null;
+
+    if (ocrFile) {
+        ocrFile.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Reset UI
+            ocrLoading.style.display = 'block';
+            ocrResult.style.display = 'none';
+            btnSaveOcrImport.disabled = true;
+            ocrItemsBody.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Call our backend proxy which calls the DL service
+                const response = await fetch('/api/dl/detect', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    extractedData = result.data;
+                    renderOcrPreview(extractedData);
+                    ocrResult.style.display = 'block';
+                    btnSaveOcrImport.disabled = false;
+                } else {
+                    alert('OCR Failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('OCR Error:', error);
+                alert('Error processing invoice: ' + error.message);
+            } finally {
+                ocrLoading.style.display = 'none';
+            }
+        });
+    }
+
+    function renderOcrPreview(data) {
+        // Assuming data structure from DL service: { invoice: { items: [...] } }
+        // Adjust based on actual DL service response
+        const items = data.invoice?.items || [];
+        
+        if (items.length === 0) {
+            ocrItemsBody.innerHTML = '<tr><td colspan="4" class="text-center">No items detected</td></tr>';
+            return;
+        }
+
+        ocrItemsBody.innerHTML = items.map(item => `
+            <tr>
+                <td>${item.name || 'Unknown'}</td>
+                <td>${item.quantity || 1}</td>
+                <td>${item.unit_price || 0}</td>
+                <td>${item.total || 0}</td>
+            </tr>
+        `).join('');
+    }
+
+    if (btnSaveOcrImport) {
+        btnSaveOcrImport.addEventListener('click', async function() {
+            if (!extractedData) return;
+            
+            // Convert OCR data to Import format and save
+            // This part depends on how your create import API works
+            // For now, we'll just show an alert
+            alert('Integration complete! In a real app, this would create the import record.');
+            
+            // TODO: Call /api/imports/create with extractedData
+            // const payload = { ... };
+            // await fetch('/api/imports', ...);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('ocrImportModal'));
+            modal.hide();
+        });
+    }
+});
+
+// Override the save button logic to actually save to DB
+if (btnSaveOcrImport) {
+    // Remove old listener by cloning (simple hack) or just add new one that handles the logic
+    // Since we can't easily remove anonymous listeners, we'll just update the existing one's behavior
+    // by checking a flag or we can just replace the element.
+    
+    const newBtn = btnSaveOcrImport.cloneNode(true);
+    btnSaveOcrImport.parentNode.replaceChild(newBtn, btnSaveOcrImport);
+    
+    newBtn.addEventListener('click', async function() {
+        if (!extractedData) return;
+        
+        // Prepare payload for /api/imports
+        // We need to map OCR items to our product structure
+        // For now, we'll create new products if they don't exist or just use raw names
+        
+        const items = (extractedData.invoice?.items || []).map(item => ({
+            product_id: null, // We don't know the ID yet, backend might handle name matching or we send raw name
+            product_name: item.name || 'Unknown Product',
+            quantity: parseInt(item.quantity) || 1,
+            unit_price: parseFloat(item.unit_price) || 0
+        }));
+
+        const payload = {
+            supplier_name: extractedData.invoice?.vendor_name || 'Unknown Supplier',
+            notes: 'Imported via OCR Smart Import',
+            items: items
+        };
+
+        try {
+            const response = await fetch('/api/imports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert('success', 'Import created successfully!');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('ocrImportModal'));
+                modal.hide();
+                loadImports(); // Refresh table
+            } else {
+                showAlert('error', 'Failed to save import: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Save Import Error:', error);
+            showAlert('error', 'Error saving import');
+        }
+    });
+}

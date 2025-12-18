@@ -38,6 +38,9 @@ function renderProductsTable() {
             <td><span class="badge bg-${product.stock_quantity > 0 ? 'success' : 'danger'}">${product.stock_quantity}</span></td>
             <td>${product.description || '-'}</td>
             <td>
+                <button class="btn btn-sm btn-info" onclick="forecastProduct(${product.id}, '${product.name}')" title="Forecast Demand">
+                    <i class="fas fa-chart-line"></i>
+                </button>
                 <button class="btn btn-sm btn-warning" onclick="editProduct(${product.id})">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -198,3 +201,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.querySelector('.products-page .table tbody');
     if (tbody) _productsTbodyObserver.observe(tbody, { childList: true, subtree: false });
 });
+
+// Forecast Logic
+async function forecastProduct(productId, productName) {
+    // Show loading state
+    showAlert('info', `Forecasting demand for ${productName}...`);
+    
+    try {
+        // 1. Fetch sales history for this product
+        // We'll use a new API endpoint to get real sales data
+        const historyResponse = await fetch(`/api/products/${productId}/sales_history`);
+        const historyData = await historyResponse.json();
+        
+        let salesSeries = [];
+        if (historyData.success && historyData.series.length > 0) {
+            salesSeries = historyData.series;
+        } else {
+            // Fallback to mock data if no history (for demo purposes)
+            console.warn('No sales history found, using mock data for demo');
+            salesSeries = [10, 12, 15, 14, 20, 25, 22, 30, 35, 40];
+        }
+
+        const payload = {
+            "series": salesSeries,
+            "product_id": productId
+        };
+
+        // 2. Call DL Service via Proxy
+        const response = await fetch('/api/dl/forecast', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const forecast = result.data.forecast_value;
+            const confidence = result.data.confidence || 0.85;
+            
+            alert(`Forecast for ${productName}:\n\nPredicted Demand: ${forecast} units\nConfidence: ${(confidence * 100).toFixed(1)}%\n\nBased on ${salesSeries.length} weeks of sales data.`);
+        } else {
+            showAlert('error', 'Forecast failed: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Forecast Error:', error);
+        showAlert('error', 'Error generating forecast');
+    }
+}

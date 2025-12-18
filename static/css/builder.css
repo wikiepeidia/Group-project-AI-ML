@@ -715,7 +715,7 @@ textarea.form-control {
 }
 
 /* Modal Styles */
-.modal {
+.builder-modal {
     display: none;
     position: fixed;
     z-index: 1000;
@@ -727,7 +727,7 @@ textarea.form-control {
     backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.builder-modal-content {
     background-color: var(--builder-panel);
     margin: 10% auto;
     padding: 0;
@@ -744,7 +744,7 @@ textarea.form-control {
     to { transform: translateY(0); opacity: 1; }
 }
 
-.modal-header {
+.builder-modal-header {
     padding: 16px 24px;
     border-bottom: 1px solid var(--builder-border);
     display: flex;
@@ -752,13 +752,13 @@ textarea.form-control {
     align-items: center;
 }
 
-.modal-header h3 {
+.builder-modal-header h3 {
     margin: 0;
     font-size: 1.2rem;
     color: var(--builder-text);
 }
 
-.close-modal {
+.builder-close-modal {
     color: var(--builder-muted);
     font-size: 24px;
     font-weight: bold;
@@ -766,11 +766,11 @@ textarea.form-control {
     transition: color 0.2s;
 }
 
-.close-modal:hover {
+.builder-close-modal:hover {
     color: var(--builder-text);
 }
 
-.modal-body {
+.builder-modal-body {
     padding: 24px;
     max-height: 60vh;
     overflow-y: auto;

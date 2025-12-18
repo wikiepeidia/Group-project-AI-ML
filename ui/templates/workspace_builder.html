@@ -93,6 +93,22 @@
                 </div>
             </div>
 
+            <div class="category-title">AI & ML</div>
+            <div class="tool-item" draggable="true" data-category="ai" data-type="invoice_ocr">
+                <div class="tool-icon" style="background: #00BCD4;"><i class="fas fa-file-invoice"></i></div>
+                <div class="tool-info">
+                    <div class="tool-name">Invoice OCR</div>
+                    <div class="tool-description">Extract data from invoice</div>
+                </div>
+            </div>
+            <div class="tool-item" draggable="true" data-category="ai" data-type="invoice_forecast">
+                <div class="tool-icon" style="background: #673AB7;"><i class="fas fa-chart-line"></i></div>
+                <div class="tool-info">
+                    <div class="tool-name">Demand Forecast</div>
+                    <div class="tool-description">Predict future sales (LSTM)</div>
+                </div>
+            </div>
+
             <div class="category-title">INTEGRATIONS</div>
             <div class="tool-item" draggable="true" data-category="integration" data-type="make_webhook">
                 <div class="tool-icon" style="background: #6f42c1;"><i class="fas fa-bolt"></i></div>
@@ -134,6 +150,9 @@
                 <input type="text" value="Untitled Workflow" class="workflow-name-input">
             </div>
             <div class="canvas-actions">
+                <button class="action-btn" onclick="showTutorialModal()" style="color: #9C27B0; border-color: #9C27B0;">
+                    <i class="fas fa-graduation-cap"></i> Tutorial
+                </button>
                 <button class="action-btn" data-action="run-workflow" style="color: #4CAF50; border-color: #4CAF50;">
                     <i class="fas fa-play"></i> Run
                 </button>
@@ -219,13 +238,13 @@
     </div>
 
     <!-- Load Workflow Modal -->
-    <div id="loadWorkflowModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div id="loadWorkflowModal" class="builder-modal">
+        <div class="builder-modal-content">
+            <div class="builder-modal-header">
                 <h3>Load Workflow</h3>
-                <span class="close-modal">&times;</span>
+                <span class="builder-close-modal">&times;</span>
             </div>
-            <div class="modal-body">
+            <div class="builder-modal-body">
                 <div id="workflowList" class="workflow-list">
                     <!-- Workflows will be populated here -->
                     <div class="loading-spinner">Loading...</div>
@@ -235,13 +254,13 @@
     </div>
 
     <!-- Google Drive Picker Modal -->
-    <div id="googlePickerModal" class="modal">
-        <div class="modal-content" style="max-width: 720px;">
-            <div class="modal-header">
+    <div id="googlePickerModal" class="builder-modal">
+        <div class="builder-modal-content" style="max-width: 720px;">
+            <div class="builder-modal-header">
                 <h3>Select from Google Drive</h3>
-                <span class="close-modal" data-close="googlePickerModal">&times;</span>
+                <span class="builder-close-modal" data-close="googlePickerModal">&times;</span>
             </div>
-            <div class="modal-body">
+            <div class="builder-modal-body">
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <input type="text" id="googlePickerSearch" class="form-control" placeholder="Search by name...">
                     <select id="googlePickerType" class="form-control" style="max-width: 180px;">
@@ -267,6 +286,109 @@
         </div>
     </div>
 </div>
+
+<!-- Tutorial Modal -->
+<div class="modal fade" id="tutorialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Welcome to Workflow Automation!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted mb-4">It looks like you're new here. Would you like a quick tour on how to set up
+                    your first automation?</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 bg-light tutorial-card">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3 text-primary">
+                                    <i class="fab fa-slack fa-3x"></i>
+                                </div>
+                                <h5>Slack Integration</h5>
+                                <p class="small text-muted">Learn how to create a webhook to send notifications to Slack
+                                    channels.</p>
+                                <a href="https://api.slack.com/messaging/webhooks" target="_blank"
+                                    class="btn btn-outline-primary btn-sm stretched-link">View Guide</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 bg-light tutorial-card">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3 text-danger">
+                                    <i class="fab fa-google fa-3x"></i>
+                                </div>
+                                <h5>Gmail Automation</h5>
+                                <p class="small text-muted">Set up triggers for new emails and automate responses.</p>
+                                <a href="https://developers.google.com/gmail/api/guides" target="_blank"
+                                    class="btn btn-outline-danger btn-sm stretched-link">View Guide</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 bg-light tutorial-card">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3 text-success">
+                                    <i class="fas fa-file-excel fa-3x"></i>
+                                </div>
+                                <h5>Excel/Sheets Sync</h5>
+                                <p class="small text-muted">Automatically sync data between your database and
+                                    spreadsheets.</p>
+                                <a href="#" class="btn btn-outline-success btn-sm stretched-link">View Guide</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 bg-light tutorial-card">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3 text-info">
+                                    <i class="fas fa-project-diagram fa-3x"></i>
+                                </div>
+                                <h5>Building Workflows</h5>
+                                <p class="small text-muted">Master the drag-and-drop builder to create complex logic.
+                                </p>
+                                <a href="#" class="btn btn-outline-info btn-sm stretched-link">Start Tutorial</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <div class="form-check me-auto">
+                    <input class="form-check-input" type="checkbox" id="dontShowAgain">
+                    <label class="form-check-label text-muted small" for="dontShowAgain">
+                        Don't show this automatically again
+                    </label>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Maybe Later</button>
+                <button type="button" class="btn btn-primary" onclick="startInteractiveTutorial()">Start Tour</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Dark mode support for modal */
+    [data-theme="dark"] .modal-content {
+        background-color: var(--surface-100);
+        color: var(--gray-100);
+    }
+
+    [data-theme="dark"] .tutorial-card {
+        background-color: var(--surface-200) !important;
+    }
+
+    [data-theme="dark"] .text-muted {
+        color: var(--gray-400) !important;
+    }
+
+    [data-theme="dark"] .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+
 {% endblock %}
 
 {% block scripts %}

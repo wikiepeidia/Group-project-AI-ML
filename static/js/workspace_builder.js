@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal Elements
     const loadModal = document.getElementById('loadWorkflowModal');
-    const closeModalBtn = loadModal?.querySelector('.close-modal');
+    const closeModalBtn = loadModal?.querySelector('.builder-close-modal');
     const workflowListContainer = document.getElementById('workflowList');
 
     if (closeModalBtn) {
@@ -1498,6 +1498,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label>Contains Keyword</label>
                     <input type="text" id="cfg-keyword" value="${config.keyword || ''}">
                 `;
+            } else if (type === 'invoice_ocr') {
+                html = `
+                    <label>File URL / Path</label>
+                    <input type="text" id="cfg-file-url" value="${config.fileUrl || ''}" placeholder="{{parent.file_url}}">
+                    <small>Leave empty to use parent output automatically</small>
+                `;
+            } else if (type === 'invoice_forecast') {
+                html = `
+                    <label>Sales Data (JSON)</label>
+                    <textarea id="cfg-data" style="height: 80px;" placeholder="{{parent.data}}">${config.data || ''}</textarea>
+                    <small>JSON object with "series" array</small>
+                `;
             }
 
             settingsContainer.innerHTML = html;
@@ -1576,6 +1588,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 config.message = document.getElementById('cfg-message')?.value;
             } else if (type === 'filter') {
                 config.keyword = document.getElementById('cfg-keyword')?.value;
+            } else if (type === 'invoice_ocr') {
+                config.fileUrl = document.getElementById('cfg-file-url')?.value;
+            } else if (type === 'invoice_forecast') {
+                config.data = document.getElementById('cfg-data')?.value;
             }
 
             node.dataset.config = JSON.stringify(config);
@@ -1771,4 +1787,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Make it available globally for runWorkflow
     window.ConsoleManager = ConsoleManager;
+
+    // --- Tutorial Logic ---
+    window.showTutorialModal = function() {
+        const modalEl = document.getElementById('tutorialModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            // Handle "Don't show again" checkbox
+            const checkbox = document.getElementById('dontShowAgain');
+            if (checkbox) {
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        localStorage.setItem('hasSeenBuilderTutorial', 'true');
+                    } else {
+                        localStorage.removeItem('hasSeenBuilderTutorial');
+                    }
+                });
+            }
+            
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                if (document.getElementById('dontShowAgain')?.checked) {
+                    localStorage.setItem('hasSeenBuilderTutorial', 'true');
+                }
+            });
+        }
+    };
+
+    window.startInteractiveTutorial = function() {
+        const modalEl = document.getElementById('tutorialModal');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+        localStorage.setItem('hasSeenBuilderTutorial', 'true');
+        
+        // Simple interactive tour
+        alert('Welcome to the Builder! \n\n1. Drag tools from the left sidebar.\n2. Connect them by dragging from the right handle.\n3. Click a node to edit properties.\n4. Click "Run" to execute.');
+    };
+
+    // Auto-show tutorial
+    const hasSeenTutorial = localStorage.getItem('hasSeenBuilderTutorial');
+    if (!hasSeenTutorial) {
+        setTimeout(() => {
+            if (window.showTutorialModal) window.showTutorialModal();
+        }, 1000);
+    }
 });

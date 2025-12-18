@@ -1,4 +1,9 @@
-<nav class="modern-sidebar">
+<button id="mobile-sidebar-toggle" class="mobile-sidebar-toggle" aria-label="Toggle Menu">
+    <i class="fas fa-bars"></i>
+</button>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<nav class="modern-sidebar" id="main-sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon">
             <i class="fas fa-rocket"></i>
@@ -122,6 +127,12 @@
                 <div class="menu-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"><i
                         class="fas fa-paint-brush"></i></div>
                 <div class="menu-label">Workspace Hub</div>
+                <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
+            </a>
+            <a class="menu-item" href="{{ url_for('scenarios') }}">
+                <div class="menu-icon" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);"><i
+                        class="fas fa-project-diagram"></i></div>
+                <div class="menu-label">Automation Scenarios</div>
                 <div class="menu-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
         </div>

@@ -929,3 +929,14 @@ body.dark-mode .tier-actions .btn-outline-light {
         border-top: 1px solid var(--border-soft);
     }
 }
+
+@media (max-width: 768px) {
+    .scenario-main {
+        margin-left: 0;
+        padding: 0 20px 20px;
+    }
+    
+    .scenario-topbar {
+        padding-left: 60px; /* Make space for the toggle button */
+    }
+}

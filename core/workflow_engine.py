@@ -1,7 +1,9 @@
 import json
 import re
+import os
 from .google_integration import read_sheet, read_doc, write_sheet, send_email
 from .make_integration import trigger_webhook
+from .services.dl_client import DLClient
 
 def resolve_template(template_str, context):
     """
@@ -324,6 +326,45 @@ def execute_workflow(workflow_data, token_info=None):
                     # Let's return a 'stopped' status so children are skipped
                     node_results[node_id] = {"status": "stopped", "reason": "Filter condition failed"}
                     continue
+
+            elif node_type == 'invoice_ocr':
+                # Deep Learning OCR Node
+                # Config: { "fileUrl": "..." } or use parent output
+                file_url = config.get('fileUrl', '')
+                
+                # If no URL provided, try to find one in parent output
+                if not file_url and parents:
+                    p_id = parents[0]
+                    p_data = context.get(p_id)
+                    # Heuristic: check if parent output looks like a URL or file path
+                    if isinstance(p_data, str) and (p_data.startswith('http') or p_data.startswith('/')):
+                        file_url = p_data
+                
+                resolved_url = resolve_template(file_url, context)
+                
+                client = DLClient()
+                # For now, we assume resolved_url is a local path or we need to fetch it
+                # If it's a local path (e.g. from upload), pass it directly
+                if os.path.exists(resolved_url):
+                    result = client.detect_invoice(file_path=resolved_url)
+                else:
+                    # TODO: Handle remote URLs by downloading them first
+                    result = {"error": "Remote URL support not implemented yet", "url": resolved_url}
+
+            elif node_type == 'invoice_forecast':
+                # Deep Learning Forecast Node
+                # Config: { "data": ... }
+                data_template = config.get('data', '')
+                
+                # Auto-pass parent output if it looks like invoice data
+                if not data_template and parents:
+                    p_id = parents[0]
+                    resolved_data = context.get(p_id)
+                else:
+                    resolved_data = resolve_template(data_template, context)
+                
+                client = DLClient()
+                result = client.forecast_quantity(resolved_data)
                 
             else:
                 result = {"status": "skipped", "reason": "Unknown node type"}
