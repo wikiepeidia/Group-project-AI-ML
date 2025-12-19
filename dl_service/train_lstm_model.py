@@ -20,13 +20,32 @@ from models.lstm_model import ImportForecastLSTM
 
 # Constants
 SEQUENCE_LENGTH = 7  # Use 7 days of history to predict next import
-IMPORT_CSV_PATH = os.path.join('data', 'import_in_a_timescale.csv')
-SALE_CSV_PATH = os.path.join('data', 'sale_in_a_timescale.csv')
-PRODUCT_CSV_PATH = os.path.join('data', 'dataset_product.csv')
+# Resolve data paths relative to the project root (parent of this file)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Prefer top-level `data/` but fall back to `dl_service/data/` if present
+CANDIDATE_DATA_DIRS = [
+    os.path.join(PROJECT_ROOT, 'data'),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+]
+DATA_DIR = next((p for p in CANDIDATE_DATA_DIRS if os.path.exists(p)), CANDIDATE_DATA_DIRS[0])
+if not os.path.exists(DATA_DIR):
+    # This should rarely happen and will be caught later, but log for clarity
+    print(f"[WARN] No data directory found among candidates: {CANDIDATE_DATA_DIRS}")
+else:
+    print(f"[INFO] Using data directory: {DATA_DIR}")
+IMPORT_CSV_PATH = os.path.join(DATA_DIR, 'import_in_a_timescale.csv')
+SALE_CSV_PATH = os.path.join(DATA_DIR, 'sale_in_a_timescale.csv')
+PRODUCT_CSV_PATH = os.path.join(DATA_DIR, 'dataset_product.csv')
 
 def load_timeseries_data():
     
     print("[INFO] Loading time-series data...")
+    print(f"[INFO] Looking for data files in: {os.path.abspath(DATA_DIR)}")
+
+    # Ensure data files exist
+    for path in [IMPORT_CSV_PATH, SALE_CSV_PATH, PRODUCT_CSV_PATH]:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Required data file not found: {os.path.abspath(path)}")
     
     # Load imports with dates
     df_imports = pd.read_csv(IMPORT_CSV_PATH, sep=';', encoding='utf-8')

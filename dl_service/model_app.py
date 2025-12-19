@@ -23,7 +23,7 @@ warnings.filterwarnings('ignore', category=UserWarning, module='keras')
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.getLogger('keras').setLevel(logging.ERROR)
 
-from flask import Flask, render_template
+from flask import Flask, jsonify
 from config import (
     TEMPLATE_DIR, STATIC_DIR, FLASK_DEBUG, FLASK_HOST, FLASK_PORT
 )
@@ -39,19 +39,25 @@ from api.history_routes import history_bp
 from api.ocr_routes import ocr_bp
 
 # Create Flask app
-app = Flask(
-    __name__,
-    template_folder=str(TEMPLATE_DIR),
-    static_folder=str(STATIC_DIR)
-)
+app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 app.config['ENCODING'] = 'utf-8'
 
-# Homepage route
+# Homepage route - API status endpoint
 @app.route('/')
 def index():
-	"""Main page"""
-	return render_template('index.html')
+	"""API status endpoint"""
+	return jsonify({
+		'service': 'Deep Learning Service',
+		'status': 'running',
+		'version': '1.0',
+		'endpoints': {
+			'model1_detect': 'POST /api/model1/detect',
+			'model2_forecast': 'POST /api/model2/forecast',
+			'ocr': 'POST /api/ocr/',
+			'history': 'GET /api/history'
+		}
+	})
 
 # Register blueprints
 app.register_blueprint(model1_bp)

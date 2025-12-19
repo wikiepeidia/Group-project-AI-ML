@@ -210,22 +210,24 @@
                         <p class="mt-2">Analyzing invoice with AI...</p>
                     </div>
                     <div id="ocrResult" style="display:none;">
-                        <h6>Extracted Data:</h6>
+                        <h6>Extracted Data <small class="text-muted">(editable)</small>:</h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>Total</th>
+                                        <th width="80">Qty</th>
+                                        <th width="100">Price</th>
+                                        <th width="100">Total</th>
+                                        <th width="40"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="ocrItemsBody"></tbody>
                             </table>
                         </div>
                         <div class="alert alert-warning small">
-                            Please verify the extracted data before saving.
+                            <i class="fas fa-info-circle"></i> Please verify and edit the extracted data before saving.
+                            Select existing products from dropdown or create new ones.
                         </div>
                     </div>
                 </form>

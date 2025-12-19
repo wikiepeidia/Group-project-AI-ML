@@ -301,17 +301,40 @@ def train_layout_detector(
         print(f"    - {split}: {count} samples")
 
     model = YOLO(base_model)
-    model.train(
-        data=str(dataset_info.yaml_path),
-        epochs=epochs,
-        imgsz=image_size,
-        batch=batch_size,
-        device=device,
-        project=str(ROOT_DIR / 'saved_models'),
-        name='layout_detector',
-        exist_ok=True,
-        verbose=True,
-    )
+    try:
+        model.train(
+            data=str(dataset_info.yaml_path),
+            epochs=epochs,
+            imgsz=image_size,
+            batch=batch_size,
+            device=device,
+            project=str(ROOT_DIR / 'saved_models'),
+            name='layout_detector',
+            exist_ok=True,
+            verbose=True,
+        )
+    except OSError as exc:  # pragma: no cover - handle Windows paging file issues
+        err_str = str(exc).lower()
+        # WinError 1455 "The paging file is too small" frequently occurs when child
+        # processes (num_workers > 0) attempt to load CUDA DLLs on Windows.
+        if 'winerror 1455' in err_str or 'paging file' in err_str:
+            print("[LAYOUT] OSError: paging file too small while loading CUDA libraries in worker processes.")
+            print("[LAYOUT] Retrying training with 'workers=0' (no subprocesses). For a permanent fix, increase Windows virtual memory (pagefile) size and/or free disk space.)")
+            # Retry without worker subprocesses to avoid additional process memory requirement
+            model.train(
+                data=str(dataset_info.yaml_path),
+                epochs=epochs,
+                imgsz=image_size,
+                batch=batch_size,
+                device=device,
+                project=str(ROOT_DIR / 'saved_models'),
+                name='layout_detector',
+                exist_ok=True,
+                verbose=True,
+                workers=0,
+            )
+        else:
+            raise
 
     trainer = getattr(model, 'trainer', None)
     if trainer and getattr(trainer, 'save_dir', None):

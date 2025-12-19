@@ -376,9 +376,13 @@ async function toggleAutoRenew(userId, enabled) {
 
         if (response.status === 401 || response.status === 403) {
             showAlert('error', 'Session expired. Please log in again.');
-        // 401/403 handled globally
+            return;
+        }
+        
         if (!response.ok) {
-            document.getElementById(`autoRenew${userId}`).checked = !enabled
+            document.getElementById(`autoRenew${userId}`).checked = !enabled;
+            return;
+        }
 
         const data = await response.json();
         if (data.success) {
