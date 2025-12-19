@@ -17,10 +17,15 @@ import pickle
 class ImportForecastLSTM:
     """LSTM Model for Import Quantity Forecasting"""
     
-    def __init__(self, lookback=30, features=5, model_path=None):
+    def __init__(self, lookback=7, features=7, model_path=None):
         """
         Initialize LSTM model
-    
+        
+        Args:
+            lookback: Number of time steps (days) to look back (default: 7)
+            features: Number of features per time step (default: 7)
+                     [sale_qty, day_of_week, is_weekend, cumulative_sales, 
+                      days_since_import, initial_stock, retail_price]
         """
         self.lookback = lookback
         self.features = features
@@ -86,45 +91,53 @@ class ImportForecastLSTM:
     
     def preprocess_data(self, df, fit_scaler=True):
         """
-        Preprocess dataframe for LSTM
+        Preprocess dataframe for LSTM.
         
+        The training script uses these 7 features per time step:
+        [sale_qty, day_of_week, is_weekend, cumulative_sales, 
+         days_since_import, initial_stock, retail_price]
+        
+        For inference with invoice data, we map available fields to these features.
         """
         
         if isinstance(df, pd.DataFrame):
             # Get only numeric columns
             numeric_df = df.select_dtypes(include=[np.number])
             
+            # Expected features matching the training script (7 features)
+            expected_features = [
+                'sale_qty', 'day_of_week', 'is_weekend', 'cumulative_sales',
+                'days_since_import', 'initial_stock', 'retail_price'
+            ]
             
-            expected_features = ['quantity', 'price', 'total_amount', 'num_products', 'max_product_qty']
-            
-            # Create a new DataFrame with exactly 5 columns
+            # Create a new DataFrame with exactly 7 columns
             result_df = pd.DataFrame()
             
             for feature in expected_features:
                 if feature in numeric_df.columns:
                     result_df[feature] = numeric_df[feature]
                 else:
-                    # Fill missing features with calculated or default values
-                    if feature == 'total_amount' and 'quantity' in numeric_df.columns and 'price' in numeric_df.columns:
-                        result_df[feature] = numeric_df['quantity'] * numeric_df['price']
-                    elif feature == 'num_products':
-                        result_df[feature] = 1  # Default to 1 product
-                    elif feature == 'max_product_qty' and 'quantity' in numeric_df.columns:
-                        result_df[feature] = numeric_df['quantity']  # Use quantity as proxy
-                    elif feature == 'quantity':
-                        result_df[feature] = 100  # Default quantity
-                    elif feature == 'price':
+                    # Map legacy feature names or fill with defaults
+                    if feature == 'sale_qty' and 'quantity' in numeric_df.columns:
+                        result_df[feature] = numeric_df['quantity']
+                    elif feature == 'day_of_week':
+                        result_df[feature] = 3  # Mid-week default (Wednesday)
+                    elif feature == 'is_weekend':
+                        result_df[feature] = 0  # Weekday default
+                    elif feature == 'cumulative_sales' and 'quantity' in numeric_df.columns:
+                        result_df[feature] = numeric_df['quantity'].cumsum()
+                    elif feature == 'days_since_import':
+                        result_df[feature] = 1  # Assume recent import
+                    elif feature == 'initial_stock':
+                        result_df[feature] = 100  # Default stock
+                    elif feature == 'retail_price' and 'price' in numeric_df.columns:
+                        result_df[feature] = numeric_df['price']
+                    elif feature == 'retail_price':
                         result_df[feature] = 50000  # Default price
                     else:
                         result_df[feature] = 0  # Last resort default
             
-            # Apply log transformation to handle wide ranges and prevent MAPE explosion
-            
-            epsilon = 1e-8
             data = result_df.values
-            
-            # Log transform all features to handle different scales (prices: 5,000-150,000)
-            data = np.log1p(data + epsilon)  # log1p = log(1 + x), safer than log(x)
             
         else:
             data = df
@@ -139,30 +152,43 @@ class ImportForecastLSTM:
     
     def predict_from_timescale_data(self, product_name, product_info, imports_dict, sales_dict):
         """
-        Predict import quantity using timescale data (NEW METHOD for timescale training)
+        Predict import quantity using timescale data.
         
+        Creates a sequence matching the 7 features used in training:
+        [sale_qty, day_of_week, is_weekend, cumulative_sales, 
+         days_since_import, initial_stock, retail_price]
         """
         try:
             import numpy as np
+            from datetime import datetime
             
-            # Extract features (same as training)
+            # Extract base data
             initial_stock = product_info.get('initial_stock', 0)
             retail_price = product_info.get('retail_price', 0)
             import_qty = imports_dict.get(product_name, 0)
             sale_qty = sales_dict.get(product_name, 0)
             
-            # Calculate turnover rate
-            denominator = initial_stock + import_qty + 1
-            turnover_rate = sale_qty / denominator
-            turnover_rate = min(max(turnover_rate, 0), 10)  # Clip to [0, 10]
+            # Get current day info
+            today = datetime.now()
+            day_of_week = today.weekday() / 6.0  # Normalized to [0, 1]
+            is_weekend = 1 if today.weekday() >= 5 else 0
             
-            # Create feature array [import_qty, sale_qty, initial_stock, retail_price, turnover_rate]
-            features = np.array([[import_qty, sale_qty, initial_stock, retail_price, turnover_rate]])
+            # Create 7-feature array matching training script:
+            # [sale_qty, day_of_week, is_weekend, cumulative_sales, days_since_import, initial_stock, retail_price]
+            features = np.array([[
+                sale_qty,                      # sale_qty
+                day_of_week,                   # day_of_week (normalized)
+                is_weekend,                    # is_weekend
+                sale_qty,                      # cumulative_sales (use same as sale_qty for single point)
+                min(1, 30) / 30.0,             # days_since_import (normalized, assume 1 day)
+                initial_stock,                 # initial_stock
+                retail_price                   # retail_price
+            ]])
             
             # Normalize using saved scaler
             normalized_features = self.scaler.transform(features)
             
-            # Create sequence by repeating features (padding)
+            # Create sequence by repeating features (padding for lookback)
             sequence = np.repeat(normalized_features, self.lookback, axis=0).reshape(1, self.lookback, -1)
             
             # Predict
@@ -174,8 +200,8 @@ class ImportForecastLSTM:
                 print(f"[DEBUG]   Normalized features: {normalized_features[0]}")
                 print(f"[DEBUG]   Raw prediction (normalized): {prediction_normalized}")
             
-            # Denormalize (inverse transform for first feature - import_qty)
-            temp = np.zeros((1, 5))
+            # Denormalize (inverse transform for first feature - sale_qty/import prediction)
+            temp = np.zeros((1, 7))  # Changed from 5 to 7 to match features
             temp[0, 0] = prediction_normalized
             prediction_denormalized = self.scaler.inverse_transform(temp)[0, 0]
             
@@ -223,9 +249,11 @@ class ImportForecastLSTM:
     
     def predict_next_quantity(self, historical_data):
         """
-        Predict next import quantity based on historical data
+        Predict next import quantity based on historical data.
         
-        
+        Uses 7 features matching training:
+        [sale_qty, day_of_week, is_weekend, cumulative_sales, 
+         days_since_import, initial_stock, retail_price]
         """
         try:
             # Convert to DataFrame based on input type
@@ -241,19 +269,28 @@ class ImportForecastLSTM:
                 # Already a DataFrame
                 df = historical_data.copy()
             
-            
-            required_features = ['quantity', 'price', 'total_amount', 'num_products', 'max_product_qty']
+            # Map to 7 features matching training script
+            required_features = [
+                'sale_qty', 'day_of_week', 'is_weekend', 'cumulative_sales',
+                'days_since_import', 'initial_stock', 'retail_price'
+            ]
             for feature in required_features:
                 if feature not in df.columns:
-                    if feature == 'total_amount' and 'quantity' in df.columns and 'price' in df.columns:
-                        df[feature] = df['quantity'] * df['price']
-                    elif feature == 'num_products':
-                        df[feature] = 1
-                    elif feature == 'max_product_qty' and 'quantity' in df.columns:
+                    if feature == 'sale_qty' and 'quantity' in df.columns:
                         df[feature] = df['quantity']
-                    elif feature == 'quantity':
+                    elif feature == 'day_of_week':
+                        df[feature] = 3 / 6.0  # Mid-week normalized
+                    elif feature == 'is_weekend':
+                        df[feature] = 0
+                    elif feature == 'cumulative_sales' and 'quantity' in df.columns:
+                        df[feature] = df['quantity'].cumsum()
+                    elif feature == 'days_since_import':
+                        df[feature] = 1 / 30.0  # Assume recent import, normalized
+                    elif feature == 'initial_stock':
                         df[feature] = 100
-                    elif feature == 'price':
+                    elif feature == 'retail_price' and 'price' in df.columns:
+                        df[feature] = df['price']
+                    elif feature == 'retail_price':
                         df[feature] = 50000
                     else:
                         df[feature] = 0
@@ -455,6 +492,6 @@ def generate_invoice_based_data(invoice_json_path='data/invoices/train.json'):
 if __name__ == "__main__":
     # Example usage
     print("LSTM Import Forecast Model initialized")
-    model = ImportForecastLSTM(lookback=30, features=5)
+    model = ImportForecastLSTM(lookback=7, features=7)  # Matches training script
     print(f"Model summary:")
     model.model.summary()

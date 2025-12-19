@@ -333,8 +333,8 @@ html[data-theme='dark'] .landing-page .btn-secondary:hover {
 }
 
 .landing-page .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     padding: 0 2rem;
     display: flex;
     align-items: center;

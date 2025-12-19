@@ -138,21 +138,82 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Automation type</label>
-                        <select class="form-select" name="type" id="automationTypeSelect"
-                            onchange="updateConfigPlaceholder()">
+                        <select class="form-select" name="type" id="automationTypeSelect" onchange="updateConfigUI()">
                             <option value="low_stock">Low Stock Trigger</option>
                             <option value="scheduled">Scheduled Import</option>
                             <option value="smart_forecast">Smart Forecast (AI)</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Configuration (JSON)</label>
-                        <textarea class="form-control font-monospace" name="config" id="automationConfig" rows="5"
-                            required></textarea>
-                        <div class="form-text" id="configHelp">
-                            Define parameters like threshold, product_ids, or schedule frequency.
+
+                    <!-- Dynamic Config UI based on type -->
+                    <div id="configLowStock" class="config-section">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Stock Threshold</label>
+                                <input type="number" class="form-control" id="cfgThreshold" value="10" min="1">
+                                <div class="form-text">Trigger when stock falls below this number</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Reorder Quantity</label>
+                                <input type="number" class="form-control" id="cfgReorderQty" value="50" min="1">
+                                <div class="form-text">How many units to order</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Apply to Products</label>
+                            <select class="form-select" id="cfgProductScope">
+                                <option value="all">All Products</option>
+                                <option value="category">By Category</option>
+                            </select>
                         </div>
                     </div>
+
+                    <div id="configScheduled" class="config-section" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Frequency</label>
+                                <select class="form-select" id="cfgFrequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Day</label>
+                                <select class="form-select" id="cfgDay">
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="sunday">Sunday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Time</label>
+                                <input type="time" class="form-control" id="cfgTime" value="09:00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="configForecast" class="config-section" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Forecast Days Ahead</label>
+                                <input type="number" class="form-control" id="cfgLookAhead" value="30" min="7" max="90">
+                                <div class="form-text">How many days ahead to forecast</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Auto Approve Orders</label>
+                                <select class="form-select" id="cfgAutoApprove">
+                                    <option value="false">No - Review First</option>
+                                    <option value="true">Yes - Auto Create</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" name="active" id="automationActive" checked>
                         <label class="form-check-label" for="automationActive">Activate immediately</label>

@@ -18,6 +18,7 @@ import os
 import json
 import sqlite3
 import sys
+import threading
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Allow OAuth over HTTP for local development
@@ -68,7 +69,7 @@ google = oauth.register(
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
-        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send'
+        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/analytics.readonly'
     }
 )
 
@@ -76,7 +77,9 @@ google = oauth.register(
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
-limiter = Limiter(get_remote_address, app=app, default_limits=["100 per day", "66 per hour"])
+# Disable Rate Limiter for Development
+app.config['RATELIMIT_ENABLED'] = False
+limiter = Limiter(get_remote_address, app=app, default_limits=["20000 per day", "5000 per hour"])
 csrf = CSRFProtect(app)
 
 # Store database manager in app extensions for decorator access
@@ -2461,23 +2464,6 @@ def api_dl_detect():
         print(f"DL Proxy Error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-if __name__ == '__main__':
-    import subprocess
-    import sys
-    import os
-    
-    # Only start DL service from the main process, not the reloader child
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        print("Starting Deep Learning Service (Sidecar)...")
-        try:
-            # Use Popen to run in background
-            subprocess.Popen([sys.executable, 'run_dl_service.py'])
-        except Exception as e:
-            print(f"Failed to start DL Service: {e}")
-
-    db_manager.init_database()
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
 @app.route('/api/dl/forecast', methods=['POST'])
 @login_required
 def api_dl_forecast():
@@ -2529,3 +2515,45 @@ def api_get_product_sales_history(product_id):
     finally:
         if 'conn' in locals():
             conn.close()
+
+def run_dl_service():
+    import sys
+    import os
+    
+    # Add dl_service to system path
+    current_dir = os.getcwd()
+    dl_service_path = os.path.join(current_dir, 'dl_service')
+    if dl_service_path not in sys.path:
+        sys.path.append(dl_service_path)
+        
+    try:
+        print("[DL Thread] Importing dl_service.model_app...", flush=True)
+        from dl_service.model_app import app as dl_app
+        print("[DL Thread] Starting Deep Learning Service on port 5001...", flush=True)
+        # Run without reloader to avoid issues in thread
+        dl_app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+    except Exception as e:
+        print(f"[DL Thread] Error starting DL Service: {e}", flush=True)
+
+if __name__ == '__main__':
+    import sys
+    import os
+    
+    print("[Main] Starting application...", flush=True)
+    
+    # Only start DL service from the main process, not the reloader child
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        print("[Main] Main process - Starting Deep Learning Service (Threaded)...", flush=True)
+        try:
+            # Start DL service in a separate thread
+            dl_thread = threading.Thread(target=run_dl_service, daemon=True)
+            dl_thread.start()
+            print("[Main] DL thread started successfully", flush=True)
+        except Exception as e:
+            print(f"[Main] Failed to start DL Service: {e}", flush=True)
+    else:
+        print("[Main] Reloader child process - skipping DL service start", flush=True)
+
+    db_manager.init_database()
+    print("[Main] Starting Flask on port 5000...", flush=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)

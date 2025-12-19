@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project_name }} - Intelligent Workspace</title>
+    <!-- Favicons -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    <meta name="theme-color" content="#00a688">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -255,8 +260,8 @@
         }
 
         .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             padding: 0 2rem;
             display: flex;
             align-items: center;
@@ -504,8 +509,8 @@
             <div
                 style="border-top: 1px solid #404040; padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div style="color: #888;">
-                    &copy; 2025 {{ project_name }}. Licensed under <a href="#"
-                        style="color: #00d4aa; text-decoration: none;">MIT License</a>.
+                    &copy; 2025 {{ project_name }}. Licensed under <a href="https://opensource.org/licenses/MIT"
+                        target="_blank" style="color: #00d4aa; text-decoration: none;">MIT License</a>.
                 </div>
                 <div>
                     <a href="https://github.com/wikiepeidia/Group-project-AI-ML" target="_blank"

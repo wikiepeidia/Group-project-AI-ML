@@ -218,12 +218,13 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-
+*.rar
+*.zip
 # Marimo
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-
+*.pt
 # Project-specific ignores for Invoice Forecast Flask App
 # ======================================================
 
@@ -339,17 +340,21 @@ coverage/
 .idea/
 *.sublime-project
 *.sublime-workspace
-
+dl_service/data/generated_invoices
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
+dl_service/data/layout_dataset
 # Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-
+# Ignore stray terminal capture files
+_ul
+nul
+*.log
+*.tmp
 # AI Model artifacts (for workflow recommendation)
 models/checkpoints/
 models/weights/

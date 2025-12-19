@@ -258,16 +258,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = data.invoice?.items || [];
         
         if (items.length === 0) {
-            ocrItemsBody.innerHTML = '<tr><td colspan="4" class="text-center">No items detected</td></tr>';
+            ocrItemsBody.innerHTML = '<tr><td colspan="5" class="text-center">No items detected</td></tr>';
             return;
         }
 
-        ocrItemsBody.innerHTML = items.map(item => `
-            <tr>
-                <td>${item.name || 'Unknown'}</td>
-                <td>${item.quantity || 1}</td>
-                <td>${item.unit_price || 0}</td>
-                <td>${item.total || 0}</td>
+        // Make products dropdown for matching
+        const productOptions = products.map(p => 
+            `<option value="${p.id}" data-name="${p.name}">${p.code} - ${p.name}</option>`
+        ).join('');
+
+        ocrItemsBody.innerHTML = items.map((item, idx) => `
+            <tr data-index="${idx}">
+                <td>
+                    <select class="form-select form-select-sm ocr-product-select" data-detected="${item.name || ''}">
+                        <option value="">-- Select or keep detected --</option>
+                        <option value="new" selected>${item.name || 'Unknown'} (new)</option>
+                        ${productOptions}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" value="${item.quantity || 1}" min="1">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" value="${item.unit_price || 0}" min="0">
+                </td>
+                <td>
+                    <span class="item-total">${item.total || 0}</span>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
             </tr>
         `).join('');
     }

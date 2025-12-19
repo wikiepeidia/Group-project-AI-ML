@@ -9,7 +9,8 @@ class Database:
         self.init_database()
     
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        # Increase timeout to 30 seconds to avoid "database is locked" errors
+        return sqlite3.connect(self.db_path, timeout=30.0)
     
     def init_database(self):
         conn = self.get_connection()

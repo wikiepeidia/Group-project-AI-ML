@@ -84,14 +84,69 @@ function truncateConfig(configStr) {
 
 window.openAddAutomationModal = function() {
     const modal = new bootstrap.Modal(document.getElementById('automationModal'));
-    updateConfigPlaceholder();
+    updateConfigUI();
     modal.show();
 };
 
+// New form-based UI switcher (replaces JSON template system)
+window.updateConfigUI = function() {
+    const type = document.getElementById('automationTypeSelect').value;
+    
+    // Hide all config sections
+    document.querySelectorAll('.config-section').forEach(el => el.style.display = 'none');
+    
+    // Show relevant section
+    if (type === 'low_stock') {
+        document.getElementById('configLowStock').style.display = 'block';
+    } else if (type === 'scheduled') {
+        document.getElementById('configScheduled').style.display = 'block';
+    } else if (type === 'smart_forecast') {
+        document.getElementById('configForecast').style.display = 'block';
+    }
+};
+
+// Build config JSON from form fields
+function buildConfigFromForm() {
+    const type = document.getElementById('automationTypeSelect').value;
+    let config = {};
+    
+    if (type === 'low_stock') {
+        config = {
+            product_id: document.getElementById('cfgProductScope').value,
+            threshold: parseInt(document.getElementById('cfgThreshold').value) || 10,
+            reorder_quantity: parseInt(document.getElementById('cfgReorderQty').value) || 50
+        };
+    } else if (type === 'scheduled') {
+        config = {
+            frequency: document.getElementById('cfgFrequency').value,
+            day: document.getElementById('cfgDay').value,
+            time: document.getElementById('cfgTime').value
+        };
+    } else if (type === 'smart_forecast') {
+        config = {
+            model: "lstm",
+            look_ahead_days: parseInt(document.getElementById('cfgLookAhead').value) || 30,
+            auto_approve: document.getElementById('cfgAutoApprove').value === 'true'
+        };
+    }
+    
+    return JSON.stringify(config);
+}
+
+// Legacy support for old JSON-based modal (kept for backwards compatibility)
 window.updateConfigPlaceholder = function() {
+    // Redirect to new UI function if new form exists
+    if (document.getElementById('configLowStock')) {
+        updateConfigUI();
+        return;
+    }
+    
+    // Fallback for old JSON textarea approach
     const type = document.getElementById('automationTypeSelect').value;
     const configArea = document.getElementById('automationConfig');
     const helpText = document.getElementById('configHelp');
+    
+    if (!configArea) return;
     
     const templates = {
         'low_stock': '{\n  "product_id": "all",\n  "threshold": 10,\n  "reorder_quantity": 50\n}',
@@ -119,12 +174,17 @@ window.submitAutomation = async function() {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     
-    // Validate JSON
-    try {
-        JSON.parse(data.config);
-    } catch (e) {
-        alert('Invalid JSON configuration');
-        return;
+    // Use new form-based config builder if available
+    if (document.getElementById('configLowStock')) {
+        data.config = buildConfigFromForm();
+    } else {
+        // Legacy: Validate JSON from textarea
+        try {
+            JSON.parse(data.config);
+        } catch (e) {
+            alert('Invalid JSON configuration');
+            return;
+        }
     }
 
     try {

@@ -19,10 +19,15 @@ from PIL import Image, ImageDraw, ImageFont
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def load_products_from_csv(csv_path='data/dataset_product.csv'):
-    """Load product data from CSV"""
+# Resolve module / package roots (use Path for robust path handling)
+MODULE_DIR = Path(__file__).resolve().parent      # dl_service/data
+DL_SERVICE_ROOT = MODULE_DIR.parent               # dl_service
+
+def load_products_from_csv(csv_path=None):
+    """Load product data from CSV (path resolved relative to dl_service/data by default)"""
     import pandas as pd
     
+    csv_path = Path(csv_path) if csv_path else MODULE_DIR / 'dataset_product.csv'
     df = pd.read_csv(csv_path, sep=';')
     
     # Clean price columns
@@ -159,8 +164,8 @@ def generate_balanced_dataset(total_images=400):
     print(f"  Test:  {splits['test']} ({splits['test']/total_images*100:.0f}%)")
     print()
     
-    # Create output directories
-    base_dir = Path('data/generated_invoices')
+    # Create output directories (under dl_service/data/generated_invoices)
+    base_dir = MODULE_DIR / 'generated_invoices'
     for split in ['train', 'valid', 'test']:
         (base_dir / split).mkdir(parents=True, exist_ok=True)
     
@@ -168,7 +173,7 @@ def generate_balanced_dataset(total_images=400):
     print("\n" + "="*70)
     print("LOADING PRODUCTS FROM dataset_product.csv")
     print("="*70)
-    products = load_products_from_csv('data/dataset_product.csv')
+    products = load_products_from_csv()  # resolved relative to dl_service/data by default
     
     if len(products) == 0:
         raise ValueError("No valid products loaded from dataset_product.csv")
@@ -244,8 +249,8 @@ def generate_balanced_dataset(total_images=400):
             img_path = base_dir / split / img_filename
             img.save(img_path)
             
-            # Update metadata
-            invoice_data['image_path'] = str(img_path)
+            # Update metadata (store path relative to dl_service root so training scripts can resolve it)
+            invoice_data['image_path'] = str(img_path.relative_to(DL_SERVICE_ROOT).as_posix())
             all_metadata[split].append(invoice_data)
             
             image_counter += 1
