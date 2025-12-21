@@ -330,13 +330,22 @@ class Database:
                          (email, hashed_pw, name, avatar, role))
     
     # User methods
-    def create_user(self, email, password, name, role="user"):
+    def create_user(self, email, password, name, role="user", first_name=None, last_name=None):
         conn = self.get_connection()
         c = conn.cursor()
         hashed_pw = hashlib.sha256(password.encode()).hexdigest()
         try:
-            c.execute('INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)', 
-                     (email, hashed_pw, name, role))
+            # Check if first_name column exists
+            c.execute("PRAGMA table_info(users)")
+            columns = [col[1] for col in c.fetchall()]
+            
+            if 'first_name' in columns:
+                c.execute('INSERT INTO users (email, password, name, role, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)', 
+                         (email, hashed_pw, name, role, first_name, last_name))
+            else:
+                c.execute('INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)', 
+                         (email, hashed_pw, name, role))
+            
             user_id = c.lastrowid
             conn.commit()
             conn.close()
@@ -825,22 +834,43 @@ class Database:
         """Get recent system activities"""
         conn = self.get_connection()
         c = conn.cursor()
-        c.execute('''
-            SELECT a.id, a.action, a.details, a.created_at, u.name, u.email 
-            FROM activity_logs a
-            LEFT JOIN users u ON a.user_id = u.id
-            ORDER BY a.created_at DESC
-            LIMIT ?
-        ''', (limit,))
+        
+        # Check if google_token column exists
+        c.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in c.fetchall()]
+        has_google_token = 'google_token' in columns
+        
+        if has_google_token:
+            c.execute('''
+                SELECT a.id, a.action, a.details, a.created_at, u.name, u.email, u.google_token 
+                FROM activity_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                ORDER BY a.created_at DESC
+                LIMIT ?
+            ''', (limit,))
+        else:
+            c.execute('''
+                SELECT a.id, a.action, a.details, a.created_at, u.name, u.email 
+                FROM activity_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                ORDER BY a.created_at DESC
+                LIMIT ?
+            ''', (limit,))
+            
         activities = []
         for row in c.fetchall():
+            is_google = False
+            if has_google_token and len(row) > 6:
+                is_google = bool(row[6])
+                
             activities.append({
                 'id': row[0],
                 'action': row[1],
                 'details': row[2],
                 'created_at': row[3],
                 'user_name': row[4] or 'System',
-                'user_email': row[5]
+                'user_email': row[5],
+                'is_google_user': is_google
             })
         conn.close()
         return activities

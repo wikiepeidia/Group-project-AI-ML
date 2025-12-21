@@ -914,7 +914,14 @@ def create_user():
         full_name = f"{first_name} {last_name}".strip() or data['email'].split('@')[0]
         
         # Create user with 'user' role only
-        user_id = db_manager.create_user(data['email'], data['password'], full_name, role='user')
+        user_id = db_manager.create_user(
+            data['email'], 
+            data['password'], 
+            full_name, 
+            role='user',
+            first_name=first_name,
+            last_name=last_name
+        )
         return jsonify({'success': True, 'message': 'User created successfully', 'user_id': user_id})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -1866,14 +1873,30 @@ def api_get_subscription_history():
     conn = db_manager.get_connection()
     c = conn.cursor()
     
-    c.execute('''SELECT 
-                    h.id, h.user_id, h.subscription_type, h.amount,
-                    h.payment_date, h.payment_method, h.transaction_id, h.status,
-                    u.name as user_name
-                FROM subscription_history h
-                JOIN users u ON h.user_id = u.id
-                ORDER BY h.payment_date DESC
-                LIMIT 50''')
+    c.execute('''
+        SELECT * FROM (
+            SELECT 
+                h.id, h.user_id, h.subscription_type as type, h.amount,
+                h.payment_date as date, h.payment_method as method, 
+                h.transaction_id as ref, h.status,
+                u.name as user_name
+            FROM subscription_history h
+            JOIN users u ON h.user_id = u.id
+            
+            UNION ALL
+            
+            SELECT 
+                t.id, t.user_id, t.type, t.amount,
+                t.created_at as date, t.method, 
+                t.reference as ref, t.status,
+                u.name as user_name
+            FROM wallet_transactions t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.status = 'completed'
+        )
+        ORDER BY date DESC
+        LIMIT 50
+    ''')
     
     history = []
     for row in c.fetchall():

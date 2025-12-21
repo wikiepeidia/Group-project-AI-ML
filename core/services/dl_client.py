@@ -26,8 +26,10 @@ class DLClient:
         if self.use_local:
             try:
                 from services.invoice_service import process_invoice_image
+                import numpy as np
+                import cv2
                 
-                # process_invoice_image expects file_path or bytes
+                # process_invoice_image expects a cv2 image (numpy array)
                 # It returns a dict with 'invoice_data' etc.
                 if file_path:
                     with open(file_path, 'rb') as f:
@@ -37,10 +39,19 @@ class DLClient:
                 else:
                     raise ValueError("Either file_path or file_bytes must be provided")
                 
-                result = process_invoice_image(image_bytes)
+                # Convert bytes to cv2 image
+                nparr = np.frombuffer(image_bytes, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                
+                if image is None:
+                     raise ValueError("Could not decode image bytes")
+
+                result = process_invoice_image(image)
                 return result
             except Exception as e:
                 print(f"Local DL Error (Detect): {e}")
+                import traceback
+                traceback.print_exc()
                 return {"error": str(e), "status": "failed"}
         
         url = f"{self.base_url}/api/model1/detect"

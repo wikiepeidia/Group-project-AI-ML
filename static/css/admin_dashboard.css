@@ -232,3 +232,22 @@
 .info-value {
     color: var(--gray-900);
 }
+
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.activity-list::-webkit-scrollbar {
+    width: 6px;
+}
+.activity-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.activity-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+.activity-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

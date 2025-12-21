@@ -76,7 +76,9 @@
                     </div>
                     <div class="activity-content">
                         <div class="activity-title">
-                            <strong>${activity.user_name}</strong> ${activity.action}
+                            <strong>${activity.user_name}</strong> 
+                            ${activity.is_google_user ? '<i class="fab fa-google text-danger ms-1" title="Google User" style="font-size: 0.8em;"></i>' : ''}
+                            ${activity.action}
                         </div>
                         <div class="activity-details text-muted small">
                             ${activity.details || ''}

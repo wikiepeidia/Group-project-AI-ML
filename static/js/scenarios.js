@@ -290,11 +290,23 @@ function createFolder() {
 }
 
 function createScenario() {
-    document.getElementById('scenarioForm').reset();
-    document.getElementById('scenarioId').value = '';
-    document.getElementById('scenarioModalLabel').textContent = 'Create New Scenario';
-    const modal = new bootstrap.Modal(document.getElementById('scenarioModal'));
-    modal.show();
+    const form = document.getElementById('scenarioForm');
+    if (form) {
+        form.reset();
+    }
+    const idInput = document.getElementById('scenarioId');
+    if (idInput) idInput.value = '';
+    
+    const label = document.getElementById('scenarioModalLabel');
+    if (label) label.textContent = 'Create New Scenario';
+    
+    const modalEl = document.getElementById('scenarioModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    } else {
+        console.error('Scenario modal not found');
+    }
 }
 
 function editScenario(id) {
