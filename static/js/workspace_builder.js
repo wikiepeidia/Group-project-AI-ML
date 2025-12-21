@@ -531,9 +531,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function bindPropertyInputs() {
+        let isComposing = false;
+
         if (nodeNameInput) {
+            nodeNameInput.addEventListener('compositionstart', () => { isComposing = true; });
+            nodeNameInput.addEventListener('compositionend', (event) => {
+                isComposing = false;
+                // Trigger input event manually to update model
+                nodeNameInput.dispatchEvent(new Event('input'));
+            });
+
             nodeNameInput.addEventListener('input', (event) => {
-                if (!builderState.selectedNode) {
+                if (isComposing || !builderState.selectedNode) {
                     return;
                 }
                 const value = event.target.value || 'Untitled block';
@@ -549,8 +558,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (nodeDescriptionInput) {
+            nodeDescriptionInput.addEventListener('compositionstart', () => { isComposing = true; });
+            nodeDescriptionInput.addEventListener('compositionend', (event) => {
+                isComposing = false;
+                nodeDescriptionInput.dispatchEvent(new Event('input'));
+            });
+
             nodeDescriptionInput.addEventListener('input', (event) => {
-                if (!builderState.selectedNode) {
+                if (isComposing || !builderState.selectedNode) {
                     return;
                 }
                 const value = event.target.value || 'Describe this step...';
@@ -1227,6 +1242,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentNameInput = document.querySelector('.workflow-name-input');
         let defaultName = currentNameInput ? currentNameInput.value : 'Untitled Workflow';
         
+        // If we are in Scenario Mode (builderState.scenarioId is set), we save to Scenario
+        if (builderState.scenarioId) {
+             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+             
+             fetch(`/api/scenarios/${builderState.scenarioId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    name: defaultName,
+                    steps: JSON.stringify(payload)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Scenario saved successfully', 'success');
+                } else {
+                    showNotification('Error saving scenario: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Network error saving scenario', 'error');
+            });
+            return;
+        }
+
         const name = prompt('Enter workflow name to save:', defaultName);
         if (!name) return; // User cancelled
 
@@ -1373,22 +1418,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load workflow if ID is present
     const urlParams = new URLSearchParams(window.location.search);
     const workflowId = urlParams.get('id');
+    
     if (workflowId) {
-        // We need to implement a way to load the specific workflow data
-        // For now, we can fetch all and filter, or add a specific endpoint
-        // Since we added /api/workflows (GET all), let's use that for now or assume the page might inject it
-        // Better: Let's fetch the list and find it, or update the API to get one.
-        // I'll assume the user will implement GET /api/workflows/<id> later or we use the list.
-        // Actually, let's just fetch the list and find it for simplicity as per current API.
-        
+        // Try to load as Scenario first
+        fetch(`/api/scenarios/${workflowId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.scenario) {
+                    // It is a scenario
+                    const scenario = data.scenario;
+                    showNotification(`Loaded Scenario: ${scenario.name}`, 'success');
+                    
+                    // Update name input
+                    const nameInput = document.querySelector('.workflow-name-input');
+                    if (nameInput) nameInput.value = scenario.name;
+                    
+                    // Load data if exists
+                    if (scenario.steps) {
+                        try {
+                            const workflowData = JSON.parse(scenario.steps);
+                            loadWorkflowData(workflowData);
+                        } catch (e) {
+                            console.error('Error parsing scenario steps:', e);
+                        }
+                    }
+                    
+                    // Store scenario ID for saving
+                    builderState.scenarioId = scenario.id;
+                } else {
+                    // Fallback to Workflow loading
+                    loadWorkflowById(workflowId);
+                }
+            })
+            .catch(() => {
+                // Fallback to Workflow loading
+                loadWorkflowById(workflowId);
+            });
+    }
+
+    function loadWorkflowById(id) {
         fetch('/api/workflows')
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                const workflow = data.workflows.find(w => w.id == workflowId);
+                const workflow = data.workflows.find(w => w.id == id);
                 if (workflow && workflow.data) {
                     loadWorkflowData(workflow.data);
                     showNotification(`Loaded workflow: ${workflow.name}`, 'success');
+                    const nameInput = document.querySelector('.workflow-name-input');
+                    if (nameInput) nameInput.value = workflow.name;
                 }
             }
         });

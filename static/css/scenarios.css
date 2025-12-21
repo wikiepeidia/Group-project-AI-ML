@@ -57,9 +57,9 @@ body.scenarios-page {
 
 .sidebar-header {
     padding: 28px 24px 24px;
-    background: var(--scenario-gradient);
-    color: #ffffff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    background: var(--scenario-panel);
+    color: var(--scenario-text);
+    border-bottom: 1px solid var(--scenario-border);
     position: relative;
 }
 
@@ -68,6 +68,7 @@ body.scenarios-page {
     font-weight: 600;
     letter-spacing: -0.25px;
     margin-bottom: 0.35rem;
+    color: var(--scenario-text);
 }
 
 .user-menu {
@@ -83,8 +84,7 @@ body.scenarios-page {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
+    background: var(--scenario-accent);
     color: #ffffff;
     font-weight: 600;
     display: flex;
@@ -98,15 +98,15 @@ body.scenarios-page {
     gap: 6px;
     padding: 8px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    color: #ffffff;
+    border: 1px solid var(--scenario-border);
+    color: var(--scenario-text);
     text-decoration: none;
     font-size: 0.85rem;
     transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.05);
     text-decoration: none;
 }
 
@@ -119,19 +119,20 @@ body.scenarios-page {
     width: 100%;
     padding: 12px 42px 12px 14px;
     border-radius: 10px;
-    border: none;
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
+    border: 1px solid var(--scenario-border);
+    background: var(--scenario-surface);
+    color: var(--scenario-text);
     font-size: 0.95rem;
 }
 
 .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--scenario-muted);
 }
 
 .search-input:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.28);
+    border-color: var(--scenario-accent);
+    background: var(--scenario-panel);
 }
 
 .search-icon {
@@ -139,7 +140,7 @@ body.scenarios-page {
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--scenario-muted);
 }
 
 .folders-section {

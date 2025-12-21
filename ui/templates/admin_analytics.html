@@ -46,158 +46,195 @@
             </div>
         </div>
 
-        <!-- Revenue & Access Stats -->
+        <!-- Realtime & Overview -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="metric-card bg-gradient-success">
-                    <div class="metric-icon">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-label">TOTAL REVENUE</div>
-                        <div class="metric-value" id="totalRevenue">0 VND</div>
-                        <div class="metric-change positive" id="revenueChange">
-                            <i class="fas fa-arrow-up"></i> +0%
+            <!-- Realtime Card -->
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body bg-primary text-white rounded">
+                        <h5 class="card-title mb-4">Realtime Overview</h5>
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div>
+                                <h2 class="display-4 fw-bold mb-0" id="realtimeUsers">0</h2>
+                                <p class="mb-0 opacity-75">Users in last 30 min</p>
+                            </div>
+                            <div class="realtime-pulse">
+                                <span class="pulse-ring"></span>
+                                <i class="fas fa-user-clock fa-2x"></i>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card bg-gradient-primary">
-                    <div class="metric-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-label">VISITS</div>
-                        <div class="metric-value" id="totalVisits">0</div>
-                        <div class="metric-change positive" id="visitsChange">
-                            <i class="fas fa-arrow-up"></i> +0%
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card bg-gradient-warning">
-                    <div class="metric-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-label">ORDERS</div>
-                        <div class="metric-value" id="totalOrders">0</div>
-                        <div class="metric-change positive" id="ordersChange">
-                            <i class="fas fa-arrow-up"></i> +0%
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card bg-gradient-danger">
-                    <div class="metric-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-label">PROFIT</div>
-                        <div class="metric-value" id="totalProfit">0 VND</div>
-                        <div class="metric-change positive" id="profitChange">
-                            <i class="fas fa-arrow-up"></i> +0%
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="chart-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-chart-area"></i> Revenue & Profit Chart
-                    </h5>
-                    <canvas id="revenueChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="chart-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-chart-pie"></i> Revenue Distribution
-                    </h5>
-                    <canvas id="categoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Access Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-eye"></i> Hourly Visits
-                    </h5>
-                    <canvas id="accessChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-user-friends"></i> Active Users
-                    </h5>
-                    <canvas id="usersChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manager Performance Table -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-user-tie"></i> Manager Performance
-                        </h5>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Manager</th>
-                                        <th>Email</th>
-                                        <th>Managed Users</th>
-                                        <th>Assigned Roles</th>
-                                        <th>Revenue (managed)</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="managerPerformanceTable">
-                                    <tr>
-                                        <td colspan="6" class="text-center">
-                                            <div class="spinner-border" role="status"></div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Customers -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-crown"></i> Top 5 VIP Customers
-                        </h5>
-                        <div id="topCustomers">
-                            <div class="text-center py-3">
-                                <div class="spinner-border" role="status"></div>
+                        <hr class="bg-white opacity-25">
+                        <div class="small opacity-75">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Desktop</span>
+                                <span id="deviceDesktop">0%</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Mobile</span>
+                                <span id="deviceMobile">0%</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Main Chart -->
+            <div class="col-lg-8">
+                <div class="card h-100 shadow-sm">
+                    <div
+                        class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">Traffic & Revenue</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary active">Users</button>
+                            <button type="button" class="btn btn-outline-secondary">Revenue</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
 
-    </main>
+        <!-- Key Metrics Grid -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="metric-card bg-white shadow-sm p-3 rounded h-100 border-start border-4 border-success">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Total Revenue</div>
+                    <div class="h3 mb-0" id="totalRevenue">0 VND</div>
+                    <div class="small text-success mt-2" id="revenueChange">
+                        <i class="fas fa-arrow-up"></i> +0%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card bg-white shadow-sm p-3 rounded h-100 border-start border-4 border-primary">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Active Users</div>
+                    <div class="h3 mb-0" id="totalVisits">0</div>
+                    <div class="small text-primary mt-2" id="visitsChange">
+                        <i class="fas fa-arrow-up"></i> Live
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card bg-white shadow-sm p-3 rounded h-100 border-start border-4 border-warning">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Orders</div>
+                    <div class="h3 mb-0" id="totalOrders">0</div>
+                    <div class="small text-warning mt-2" id="ordersChange">
+                        <i class="fas fa-arrow-up"></i> +0%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card bg-white shadow-sm p-3 rounded h-100 border-start border-4 border-info">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Avg. Session</div>
+                    <div class="h3 mb-0" id="avgSession">0m 0s</div>
+                    <div class="small text-info mt-2">
+                        <i class="fas fa-clock"></i> Engagement
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="metric-change positive" id="profitChange">
+            <i class="fas fa-arrow-up"></i> +0%
+        </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <h5 class="card-title">
+                <i class="fas fa-chart-area"></i> Revenue & Profit Chart
+            </h5>
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h5 class="card-title">
+                <i class="fas fa-chart-pie"></i> Revenue Distribution
+            </h5>
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Access Statistics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h5 class="card-title">
+                <i class="fas fa-eye"></i> Hourly Visits
+            </h5>
+            <canvas id="accessChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h5 class="card-title">
+                <i class="fas fa-user-friends"></i> Active Users
+            </h5>
+            <canvas id="usersChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Manager Performance Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-user-tie"></i> Manager Performance
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Manager</th>
+                                <th>Email</th>
+                                <th>Managed Users</th>
+                                <th>Assigned Roles</th>
+                                <th>Revenue (managed)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managerPerformanceTable">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Customers -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-crown"></i> Top 5 VIP Customers
+                </h5>
+                <div id="topCustomers">
+                    <div class="text-center py-3">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
 </div>
 {% endblock %}

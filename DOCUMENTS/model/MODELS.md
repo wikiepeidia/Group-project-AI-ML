@@ -1,21 +1,21 @@
 Models
 
 - Model 1 — Layout-aware OCR
- 	- Purpose: Detect invoice tables/fields and extract text.
- 	- Algorithm: YOLOv8 (layout) + PaddleOCR with fallback to EasyOCR/Tesseract.
- 	- Key files: `models/OCR.py`, `dl_service/train_cnn_models.py`.
- 	- Output: Structured invoice JSON (fields, tables, confidences).
+  - Purpose: Detect invoice tables/fields and extract text.
+  - Algorithm: YOLOv8 (layout) + PaddleOCR with fallback to EasyOCR/Tesseract.
+  - Key files: `models/OCR.py`, `dl_service/train_cnn_models.py`.
+  - Output: Structured invoice JSON (fields, tables, confidences).
 
 - Model 2 — LSTM Quantity Forecaster
- 	- Purpose: Predict future import quantities.
- 	- Architecture: LSTM layers (128→64→32) → Dense(16) → Dense(1).
- 	- Key files: `models/lstm_model.py`, `dl_service/train_lstm_model.py`, `services/forecast_service.py`.
- 	- Output: Forecast values (+ optional uncertainty/OOD score).
+  - Purpose: Predict future import quantities.
+  - Architecture: LSTM layers (128→64→32) → Dense(16) → Dense(1).
+  - Key files: `models/lstm_model.py`, `dl_service/train_lstm_model.py`, `services/forecast_service.py`.
+  - Output: Forecast values (+ optional uncertainty/OOD score).
 
 Datasets & training artifacts
 
 - Training data: historical invoices and derived product-level timeseries (~14,367 products in dataset).
-- Saved artifacts: `saved_models/lstm_text_recognizer.weights.h5`, scalers `*_scaler.pkl`, YOLO checkpoints from `train_cnn_models.py`.
+- Saved artifacts: `saved_models/import_forecast_lstm.weights.h5`, scalers `*.scaler.pkl`, YOLO checkpoints from `train_cnn_models.py`.
 
 Evaluation
 

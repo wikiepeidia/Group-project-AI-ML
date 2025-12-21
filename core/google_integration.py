@@ -15,6 +15,7 @@ except ImportError:
     RunReportRequest = None
 
 SCOPES = [
+    'https://www.googleapis.com/auth/drive.readonly',
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/documents',
@@ -69,8 +70,12 @@ def get_google_service(service_name, version, token_info=None):
         expiry = None
         try:
             if isinstance(expiry_raw, (int, float)):
-                expiry = datetime.utcfromtimestamp(expiry_raw)
+                # Use timezone-aware UTC then convert to naive if needed
+                expiry = datetime.fromtimestamp(expiry_raw, timezone.utc).replace(tzinfo=None)
             elif isinstance(expiry_raw, str):
+                # Handle 'Z' suffix for ISO format
+                if expiry_raw.endswith('Z'):
+                    expiry_raw = expiry_raw[:-1] + '+00:00'
                 dt = datetime.fromisoformat(expiry_raw)
                 # If aware, move to UTC then drop tzinfo to keep naive UTC
                 if dt.tzinfo is not None:
@@ -81,7 +86,8 @@ def get_google_service(service_name, version, token_info=None):
                 if dt.tzinfo is not None:
                     dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
                 expiry = dt
-        except Exception:
+        except Exception as e:
+            print(f"[Google] Error parsing token expiry: {e}")
             expiry = None
 
         return Credentials(

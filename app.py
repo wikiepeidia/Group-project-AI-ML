@@ -11,6 +11,7 @@ from core.utils import Utils
 from core import google_integration
 from core.workflow_engine import execute_workflow
 from core.services.dl_client import DLClient
+from core.services.analytics_service import analytics_service
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 import secrets
@@ -69,7 +70,7 @@ google = oauth.register(
     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
-        'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/analytics.readonly'
+        'scope': 'openid email profile https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/analytics.readonly'
     }
 )
 
@@ -144,9 +145,13 @@ def inject_project_config():
         project_name = getattr(config, 'PROJECT_NAME', 'Group Project AI-ML')
     except Exception:
         project_name = 'Group Project AI-ML'
+    site_domain = getattr(config, 'SITE_DOMAIN', 'localhost:5000')
+    base_url = getattr(config, 'BASE_URL', f"http://{site_domain}")
     return {
         'project_name': project_name,
-        'project_config': config
+        'project_config': config,
+        'SITE_DOMAIN': site_domain,
+        'BASE_URL': base_url
     }
 
 def parse_db_datetime(value):
@@ -693,6 +698,17 @@ def get_scenarios():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/scenarios/<int:scenario_id>', methods=['GET'])
+@login_required
+def get_scenario(scenario_id):
+    try:
+        scenario = db.get_scenario(scenario_id, current_user.id)
+        if scenario:
+            return jsonify({'success': True, 'scenario': scenario})
+        return jsonify({'success': False, 'message': 'Scenario not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/scenarios', methods=['POST'])
 @login_required
 def create_scenario():
@@ -810,43 +826,58 @@ def admin_get_stats():
         }
     })
 
-@app.route('/api/products')
+@app.route('/api/products', methods=['GET', 'POST'])
 @login_required
-def get_products():
-    """Get all products (Mock)"""
-    # Return empty list to prevent 404 errors in dashboard
-    return jsonify({'success': True, 'products': []})
+def manage_products():
+    if request.method == 'GET':
+        try:
+            products = db_manager.get_products(created_by=current_user.id)
+            return jsonify({'success': True, 'products': products})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
+    elif request.method == 'POST':
+        data = request.get_json()
+        try:
+            product_id = db_manager.create_product(
+                code=data['code'],
+                name=data['name'],
+                category=data.get('category'),
+                unit=data.get('unit', 'cái'),
+                price=data.get('price', 0),
+                stock_quantity=data.get('stock_quantity', 0),
+                description=data.get('description'),
+                created_by=current_user.id
+            )
+            return jsonify({'success': True, 'message': 'Product created', 'id': product_id})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 400
 
-@app.route('/api/customers')
+@app.route('/api/customers', methods=['GET', 'POST'])
 @login_required
-def get_customers():
-    """Get all customers (Mock)"""
-    # Return empty list to prevent 404 errors in dashboard
-    
-    
-    conn = db_manager.get_connection()
-    c = conn.cursor()
-    
-    # Get user count
-    c.execute('SELECT COUNT(*) FROM users')
-    user_count = c.fetchone()[0]
-    
-    # Get workspace count
-    c.execute('SELECT COUNT(*) FROM workspaces')
-    workspace_count = c.fetchone()[0]
-    
-    # Get task count
-    c.execute('SELECT COUNT(*) FROM items')
-    task_count = c.fetchone()[0]
-    
-    conn.close()
-    
-    return jsonify({
-        'users': user_count,
-        'workspaces': workspace_count,
-        'tasks': task_count,
-        'uptime': '99.8%'  # Mock data
-    })
+def manage_customers():
+    if request.method == 'GET':
+        try:
+            customers = db_manager.get_customers(created_by=current_user.id)
+            return jsonify({'success': True, 'customers': customers})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        try:
+            customer_id = db_manager.create_customer(
+                code=data['code'],
+                name=data['name'],
+                phone=data.get('phone'),
+                email=data.get('email'),
+                address=data.get('address'),
+                notes=data.get('notes'),
+                created_by=current_user.id
+            )
+            return jsonify({'success': True, 'message': 'Customer created', 'id': customer_id})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 400
 
 @app.route('/api/admin/create-manager', methods=['POST'])
 @login_required
@@ -1538,6 +1569,73 @@ def api_get_export_details(export_id):
     conn.close()
     return jsonify({'success': True, 'transaction': transaction, 'details': details})
 
+@app.route('/api/admin/analytics/data', methods=['GET'])
+@login_required
+def api_get_analytics_data():
+    """Get Google Analytics Data"""
+    if not hasattr(current_user, 'role') or current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    # Optional: Allow passing property_id via query param if multiple properties
+    property_id = request.args.get('property_id')
+    
+    result = analytics_service.get_report(property_id)
+    return jsonify(result)
+
+@app.route('/api/scenarios', methods=['GET'])
+@login_required
+def api_get_scenarios():
+    """Get all scenarios"""
+    try:
+        scenarios = db_manager.get_scenarios(current_user.id)
+        return jsonify({'success': True, 'scenarios': scenarios})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+@login_required
+def api_get_dashboard_stats():
+    """Get dashboard statistics"""
+    try:
+        conn = db_manager.get_connection()
+        c = conn.cursor()
+        
+        # Revenue (This Month)
+        today = datetime.now()
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("SELECT SUM(total_amount) FROM export_transactions WHERE created_at >= ?", (start_of_month,))
+        revenue = c.fetchone()[0] or 0
+        
+        # New Orders (Today)
+        start_of_day = today.replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("SELECT COUNT(*) FROM export_transactions WHERE created_at >= ?", (start_of_day,))
+        new_orders = c.fetchone()[0] or 0
+        
+        # Pending Returns (Mock - assuming we might have a returns table later, or use status)
+        # For now, let's count 'pending' exports as a proxy or just 0
+        pending_returns = 0 
+        
+        # Subscription Credits (Mock)
+        credits = 100
+        
+        # Active Projects (Workflows)
+        c.execute("SELECT COUNT(*) FROM workflows WHERE user_id = ?", (current_user.id,))
+        active_projects = c.fetchone()[0] or 0
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'revenue': revenue,
+            'new_orders': new_orders,
+            'pending_returns': pending_returns,
+            'credits': credits,
+            'active_projects': active_projects,
+            'subscription_status': 'Active' # TODO: Fetch real status
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # ============= SE REPORTS & AUTOMATION API =============
 
 @app.route('/api/reports/stats', methods=['GET'])
@@ -2001,8 +2099,45 @@ def api_session():
     return jsonify({'authenticated': True, 'user': {
         'id': current_user.id,
         'email': current_user.email,
+        'name': current_user.name,
         'role': getattr(current_user, 'role', 'user')
     }})
+
+
+@app.route('/api/user/profile', methods=['POST'])
+@login_required
+def api_update_profile():
+    data = request.get_json()
+    name = data.get('name')
+    
+    if not name:
+        return jsonify({'success': False, 'message': 'Name is required'}), 400
+        
+    conn = db_manager.get_connection()
+    try:
+        c = conn.cursor()
+        c.execute("UPDATE users SET name = ? WHERE id = ?", (name, current_user.id))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/settings/update', methods=['POST'])
+@login_required
+def api_update_settings():
+    # Mock endpoint for settings
+    # In a real app, we would save this to a user_settings table or a JSON column
+    data = request.get_json()
+    setting = data.get('setting')
+    value = data.get('value')
+    
+    # Log the setting change
+    print(f"User {current_user.id} updated setting {setting} to {value}")
+    
+    return jsonify({'success': True})
 
 
 @app.route('/api/user/wallet/topup', methods=['POST'])
@@ -2327,7 +2462,7 @@ def google_authorize():
             # User already exists -> Get ID
             user_id = user_row[0]
             role = user_row[1]
-            # Update token
+            # Update token - ALWAYS update with new token to ensure freshness
             c.execute("UPDATE users SET google_token = ? WHERE id = ?", (token_json, user_id))
             conn.commit()
         else:
