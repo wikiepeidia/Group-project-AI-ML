@@ -264,8 +264,8 @@ python train_lstm_model.py
 
 **Output:**
 
-- Trained model will be saved to `saved_models/lstm_text_recognizer.weights.h5`
-- Scalers will be saved to `saved_models/lstm_text_recognizer.weights_scaler.pkl`
+- Trained model will be saved to `saved_models/import_forecast_lstm.weights.h5`
+- Scalers will be saved to `saved_models/import_forecast_lstm.scaler.pkl`
 
 ---
 

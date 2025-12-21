@@ -11,25 +11,25 @@
 
 {% block content %}
 <div class="scenario-container">
-    <!-- Mobile Toggle -->
-    <button id="mobile-sidebar-toggle" class="mobile-sidebar-toggle" aria-label="Toggle Menu">
-        <i class="fas fa-bars"></i>
-    </button>
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
-
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">Search</div>
-            <div class="user-menu">
-                {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
-                <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a href="{{ url_for('dashboard') }}" class="text-decoration-none text-reset">
+                    <i class="fas fa-arrow-left me-2"></i> Back
                 </a>
+                <div class="user-menu">
+                    {% set avatar_source = (user.first_name or user.last_name or user.email or 'U') %}
+                    <div class="user-avatar">{{ avatar_source[:1]|upper }}</div>
+                </div>
             </div>
-            <div class="search-box">
+            <div class="mb-3">
+                <div class="fw-bold">{{ user.name }}</div>
+                <div class="small opacity-75 text-truncate">{{ user.email }}</div>
+            </div>
+
+            <div class="sidebar-title">Search</div>
+            <div class="search-box mt-2">
                 <input type="text" class="search-input" placeholder="Search scenarios..." data-scenarios-search>
                 <i class="fas fa-search search-icon"></i>
             </div>
@@ -98,10 +98,6 @@
                 <i class="fas fa-plus"></i>
                 Create scenario
             </button>
-            <button class="btn btn-outline-secondary ms-2" onclick="showTutorialModal()">
-                <i class="fas fa-graduation-cap"></i>
-                Tutorials
-            </button>
         </div>
 
         <div class="content-area">
@@ -139,6 +135,37 @@
 {{ super() }}
 <script src="{{ url_for('static', filename='js/scenarios.js') }}" defer></script>
 {% endblock %}
+
+<!-- Create/Edit Scenario Modal -->
+<div class="modal fade" id="scenarioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="scenarioModalLabel">Create New Scenario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scenarioForm">
+                    <input type="hidden" id="scenarioId">
+                    <div class="mb-3">
+                        <label for="scenarioName" class="form-label">Scenario Name</label>
+                        <input type="text" class="form-control" id="scenarioName" required
+                            placeholder="e.g., Email Automation">
+                    </div>
+                    <div class="mb-3">
+                        <label for="scenarioDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="scenarioDescription" rows="3"
+                            placeholder="Describe what this scenario does..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveScenario()">Save Scenario</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Tutorial Modal -->
 <div class="modal fade" id="tutorialModal" tabindex="-1" aria-hidden="true">

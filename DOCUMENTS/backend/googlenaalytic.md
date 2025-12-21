@@ -18,13 +18,28 @@ This guide details how to integrate Google Analytics 4 (GA4) into the applicatio
 ## Step 2: Set up a Data Stream
 
 1. In the property you just created, choose a platform. Click **Web**.
-2. **Website URL**: Enter your production URL (e.g., `your-app.com`).
+2. **Website URL**: Enter your production URL (e.g., `auto-flowai.com`).
    * Note: Google Analytics expects a publicly reachable URL for accurate collection. Using `localhost` is not recommended and may be blocked or produce skewed results.
    * For local testing, expose your development site using a secure tunneling tool like `ngrok` or `localtunnel` and use the generated HTTPS URL in the Website URL field (see example below).
 
 3. **Stream Name**: e.g., "Web App Stream".
 4. Click **Create stream**.
 5. You will see a **Measurement ID** starting with `G-XXXXXXXXXX`. Copy this ID.
+6. \
+7.
+8.
+
+```html
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LDYH3WL3TN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDYH3WL3TN');
+</script>
+```
 
 Tip: Start `ngrok` for local testing and use the forwarded HTTPS URL as your Website URL:
 

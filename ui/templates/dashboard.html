@@ -7,6 +7,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace_scenario.css') }}">
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="scenario-wrapper">
     {% include 'components/sidebar.html' %}

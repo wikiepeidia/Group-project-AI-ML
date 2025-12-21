@@ -212,9 +212,19 @@ function buildScenarioCard(scenario) {
                     <span><i class="fas fa-sync"></i> Runs: ${scenario.runs ?? 0}</span>
                     <span><i class="fas fa-clock"></i> Updated: ${lastUpdated}</span>
                 </div>
-                <button class="scenario-card__action" type="button" onclick="openBuilder('${scenario.id || ''}')">
-                    Open Builder
-                </button>
+                <div class="d-flex justify-content-between align-items-center mt-3 w-100">
+                     <button class="scenario-card__action me-2" type="button" onclick="openBuilder('${scenario.id || ''}')">
+                        Open Builder
+                    </button>
+                    <div>
+                        <button class="btn btn-sm btn-link text-secondary p-0 me-2" type="button" onclick="editScenario('${scenario.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger p-0" type="button" onclick="deleteScenario('${scenario.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
             </footer>
         </article>
     `;
@@ -280,19 +290,95 @@ function createFolder() {
 }
 
 function createScenario() {
-    if (typeof showNotification === 'function') {
-        showNotification('Scenario creation wizard is under development.', 'info');
-    } else {
-        alert('Scenario creation wizard is under development.');
+    document.getElementById('scenarioForm').reset();
+    document.getElementById('scenarioId').value = '';
+    document.getElementById('scenarioModalLabel').textContent = 'Create New Scenario';
+    const modal = new bootstrap.Modal(document.getElementById('scenarioModal'));
+    modal.show();
+}
+
+function editScenario(id) {
+    const scenario = scenarioState.items.find(s => s.id === id);
+    if (!scenario) return;
+
+    document.getElementById('scenarioId').value = scenario.id;
+    document.getElementById('scenarioName').value = scenario.name;
+    document.getElementById('scenarioDescription').value = scenario.description || '';
+    document.getElementById('scenarioModalLabel').textContent = 'Edit Scenario';
+    
+    const modal = new bootstrap.Modal(document.getElementById('scenarioModal'));
+    modal.show();
+}
+
+async function saveScenario() {
+    const id = document.getElementById('scenarioId').value;
+    const name = document.getElementById('scenarioName').value;
+    const description = document.getElementById('scenarioDescription').value;
+
+    if (!name) {
+        alert('Please enter a scenario name');
+        return;
+    }
+
+    const payload = { name, description };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/scenarios/${id}` : '/api/scenarios';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Failed to save scenario');
+
+        const result = await response.json();
+        
+        // Hide modal
+        const modalEl = document.getElementById('scenarioModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        // Reload scenarios
+        loadScenarios();
+        
+        if (typeof showNotification === 'function') {
+            showNotification('Scenario saved successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error saving scenario:', error);
+        alert('Error saving scenario: ' + error.message);
+    }
+}
+
+async function deleteScenario(id) {
+    if (!confirm('Are you sure you want to delete this scenario?')) return;
+
+    try {
+        const response = await fetch(`/api/scenarios/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Failed to delete scenario');
+
+        loadScenarios();
+        
+        if (typeof showNotification === 'function') {
+            showNotification('Scenario deleted successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting scenario:', error);
+        alert('Error deleting scenario: ' + error.message);
     }
 }
 
 function openBuilder(scenarioId = '') {
     if (scenarioId) {
-        window.location.href = `/workspace_builder?scenario=${encodeURIComponent(scenarioId)}`;
+        window.location.href = `/workspace/builder?id=${encodeURIComponent(scenarioId)}`;
         return;
     }
-    window.location.href = '/workspace_builder';
+    window.location.href = '/workspace/builder';
 }
 
 function browseTemplates() {
@@ -325,5 +411,14 @@ function formatScenarioDate(dateValue) {
 window.createFolder = createFolder;
 window.selectFolder = selectFolder;
 window.createScenario = createScenario;
-window.openBuilder = openBuilder;
+window.editScenario = editScenario;
+window.saveScenario = saveScenario;
+window.deleteScenario = deleteScenario;
+window.openBuilder = function(id = null) {
+    if (id) {
+        window.location.href = `/workspace/builder?id=${id}`;
+    } else {
+        window.location.href = '/workspace/builder';
+    }
+};
 window.browseTemplates = browseTemplates;

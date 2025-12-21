@@ -1,52 +1,52 @@
-# ---------------------------
-# Webapp
-# ---------------------------
+# ==================================================
+# Web Frameworks & Server
+# ==================================================
 Flask>=3.0,<4.0
 Flask-Login>=0.6.3,<0.7
 Flask-WTF>=1.2.1,<1.3
 Flask-Talisman>=1.1.0,<1.2
 Flask-Limiter>=3.5.0,<3.6
-werkzeug
-fastapi
+Werkzeug
+FastAPI
+requests
 
-# ---------------------------
-# Authentication / Config
-# ---------------------------
-config
+
+# ==================================================
+# Authentication & Configuration
+# ==================================================
 oauthlib
+authlib
 google-auth-oauthlib
 google-auth-httplib2
+google-api-python-client
 
-# ---------------------------
+
+# ==================================================
 # OCR & Image Processing
-# ---------------------------
+# ==================================================
 easyocr
 pytesseract
-paddlepaddle
-paddleocr
-opencv-python
-pillow
-timm
-einops
-flash_attn
+opencv-python>=4.5.0
+Pillow
+paddlepaddle>=2.4.0
+paddleocr>=2.6.0
 
-# ---------------------------
-# Data Science & Utilities
-# ---------------------------
-numpy
+
+# ==================================================
+# Core Numerical & Data Science
+# ==================================================
+numpy>=1.21.0
 pandas
 scikit-learn
 pytz
 lunardate
-requests
-ddgs
-addict
-easydict
 
-# ---------------------------
-# Core AI & LLM
-# ---------------------------
+
+# ==================================================
+# AI / Deep Learning Core
+# ==================================================
 torch
+tensorflow
 transformers
 accelerate
 bitsandbytes
@@ -54,30 +54,31 @@ protobuf
 sentencepiece
 sentence-transformers
 
-# ---------------------------
-# Deep Learning Frameworks / Vision Models
-# ---------------------------
-tensorflow
 
-# ---------------------------
-# RAG & Vector Database
-# ---------------------------
+# ==================================================
+# Vision & Model Utilities
+# ==================================================
+timm
+einops
+flash-attn
+
+
+# ==================================================
+# RAG / Vector Database
+# ==================================================
 chromadb
 
-# ---------------------------
-# File Parsers
-# ---------------------------
+
+# ==================================================
+# File & Document Parsers
+# ==================================================
 pypdf
 python-docx
 
-# ---------------------------
-# Google APIs & HTTP
-# ---------------------------
-google-api-python-client
-requests
-authlib
 
-# ---------------------------
-# Misc / Development
-# ---------------------------
-pytz
+# ==================================================
+# Search / Crawling / Utils
+# ==================================================
+ddgs
+addict
+easydict

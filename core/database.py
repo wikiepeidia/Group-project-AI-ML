@@ -531,6 +531,31 @@ class Database:
         conn.close()
         return scenarios
     
+    def get_scenario(self, scenario_id, user_id):
+        conn = self.get_connection()
+        c = conn.cursor()
+        c.execute('''SELECT s.id, s.name, s.description, s.steps, s.conditions, 
+                           s.status, s.created_at, w.name as workspace_name
+                    FROM scenarios s
+                    JOIN workspaces w ON s.workspace_id = w.id
+                    WHERE s.id = ? AND w.user_id = ?''', (scenario_id, user_id))
+        row = c.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'steps': row[3],
+                'conditions': row[4],
+                'active': row[5] == 'active',
+                'created_at': row[6],
+                'workspace_name': row[7],
+                'runs': 0
+            }
+        return None
+    
     def create_scenario(self, user_id, name, description='', active=False):
         conn = self.get_connection()
         c = conn.cursor()
@@ -581,6 +606,14 @@ class Database:
         if 'active' in data:
             update_fields.append('status = ?')
             values.append('active' if data['active'] else 'inactive')
+            
+        if 'steps' in data:
+            update_fields.append('steps = ?')
+            values.append(data['steps'])
+            
+        if 'conditions' in data:
+            update_fields.append('conditions = ?')
+            values.append(data['conditions'])
         
         if update_fields:
             values.append(scenario_id)
@@ -686,6 +719,93 @@ class Database:
             })
         conn.close()
         return users
+
+    # Customer methods
+    def get_customers(self, created_by=None):
+        conn = self.get_connection()
+        c = conn.cursor()
+        query = 'SELECT id, code, name, phone, email, address, notes, created_at FROM customers'
+        params = []
+        if created_by:
+            query += ' WHERE created_by = ?'
+            params.append(created_by)
+        query += ' ORDER BY created_at DESC'
+        
+        c.execute(query, params)
+        customers = []
+        for row in c.fetchall():
+            customers.append({
+                'id': row[0],
+                'code': row[1],
+                'name': row[2],
+                'phone': row[3],
+                'email': row[4],
+                'address': row[5],
+                'notes': row[6],
+                'created_at': row[7]
+            })
+        conn.close()
+        return customers
+
+    def create_customer(self, code, name, phone, email, address, notes, created_by):
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            c.execute('''INSERT INTO customers 
+                        (code, name, phone, email, address, notes, created_by) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)''', 
+                     (code, name, phone, email, address, notes, created_by))
+            customer_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            return customer_id
+        except sqlite3.IntegrityError:
+            conn.close()
+            raise Exception('Customer code already exists')
+
+    # Product methods
+    def get_products(self, created_by=None):
+        conn = self.get_connection()
+        c = conn.cursor()
+        query = 'SELECT id, code, name, category, unit, price, stock_quantity, description, created_at FROM products'
+        params = []
+        if created_by:
+            query += ' WHERE created_by = ?'
+            params.append(created_by)
+        query += ' ORDER BY created_at DESC'
+        
+        c.execute(query, params)
+        products = []
+        for row in c.fetchall():
+            products.append({
+                'id': row[0],
+                'code': row[1],
+                'name': row[2],
+                'category': row[3],
+                'unit': row[4],
+                'price': row[5],
+                'stock_quantity': row[6],
+                'description': row[7],
+                'created_at': row[8]
+            })
+        conn.close()
+        return products
+
+    def create_product(self, code, name, category, unit, price, stock_quantity, description, created_by):
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            c.execute('''INSERT INTO products 
+                        (code, name, category, unit, price, stock_quantity, description, created_by) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
+                     (code, name, category, unit, price, stock_quantity, description, created_by))
+            product_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            return product_id
+        except sqlite3.IntegrityError:
+            conn.close()
+            raise Exception('Product code already exists')
 
     def log_activity(self, user_id, action, details=None, ip_address=None):
         """Log user activity"""

@@ -11,6 +11,10 @@ class Config:
     # Default database filename
     DATABASE_PATH = os.environ.get('DATABASE_PATH', 'group_project_ai_ml.db')
     
+    # Site domain and base URL (override with env vars)
+    SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'auto-flowai.com')
+    BASE_URL = os.environ.get('BASE_URL', f"https://{SITE_DOMAIN}")
+    
     # UI Themes
     THEMES = {
         'auth': {

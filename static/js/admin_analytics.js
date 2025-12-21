@@ -45,18 +45,62 @@
         return colors;
     };
 
-    const updateMetrics = () => {
-        document.getElementById(SELECTORS.totalRevenue).textContent = '245,500,000 VND';
-        document.getElementById(SELECTORS.revenueChange).innerHTML = '<i class="fas fa-arrow-up"></i> +15.3%';
+    const updateMetrics = async () => {
+        try {
+            // Fetch internal stats
+            const response = await fetch('/api/reports/stats');
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById(SELECTORS.totalRevenue).textContent = formatCurrency(data.revenue);
+                // document.getElementById(SELECTORS.totalProfit).textContent = formatCurrency(data.profit); // Removed from UI
+                document.getElementById(SELECTORS.revenueChange).innerHTML = '<i class="fas fa-arrow-up"></i> +15.3%';
+            }
 
-        document.getElementById(SELECTORS.totalVisits).textContent = '12,458';
-        document.getElementById(SELECTORS.visitsChange).innerHTML = '<i class="fas fa-arrow-up"></i> +8.7%';
+            // Fetch Google Analytics Data
+            const gaResponse = await fetch('/api/admin/analytics/data');
+            const gaData = await gaResponse.json();
+            
+            if (gaData.success && gaData.data && gaData.data.length > 0) {
+                // Aggregate last 7 days
+                const totalVisits = gaData.data.reduce((acc, row) => acc + row.active_users, 0);
+                const totalSessions = gaData.data.reduce((acc, row) => acc + row.sessions, 0);
+                
+                // Update Realtime Card
+                const realtimeUsers = gaData.data[gaData.data.length - 1].active_users; // Use today's active users as proxy for realtime
+                document.getElementById('realtimeUsers').textContent = realtimeUsers;
+                
+                // Update Metrics
+                document.getElementById(SELECTORS.totalVisits).textContent = totalVisits.toLocaleString();
+                document.getElementById(SELECTORS.visitsChange).innerHTML = '<i class="fas fa-arrow-up"></i> Live';
+                
+                // Update Chart
+                updateChart(gaData.data);
+            } else {
+                console.warn('GA Data not available:', gaData.error);
+            }
 
-        document.getElementById(SELECTORS.totalOrders).textContent = '1,234';
-        document.getElementById(SELECTORS.ordersChange).innerHTML = '<i class="fas fa-arrow-up"></i> +12.5%';
+        } catch (error) {
+            console.error('Failed to fetch metrics', error);
+        }
+    };
 
-        document.getElementById(SELECTORS.totalProfit).textContent = '98,200,000 VND';
-        document.getElementById(SELECTORS.profitChange).innerHTML = '<i class="fas fa-arrow-up"></i> +18.2%';
+    const updateChart = (data) => {
+        if (!revenueChart) return;
+        
+        const labels = data.map(row => {
+            const date = row.date; // YYYYMMDD
+            return `${date.substring(6, 8)}/${date.substring(4, 6)}`;
+        });
+        const users = data.map(row => row.active_users);
+        const sessions = data.map(row => row.sessions);
+        
+        revenueChart.data.labels = labels;
+        revenueChart.data.datasets[0].data = users;
+        revenueChart.data.datasets[0].label = 'Active Users';
+        revenueChart.data.datasets[1].data = sessions;
+        revenueChart.data.datasets[1].label = 'Sessions';
+        revenueChart.update();
     };
 
     const teardownChart = (chartInstance) => {
@@ -82,23 +126,51 @@
         revenueChart = new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: DAYS,
+                labels: [], // Will be populated by updateChart
                 datasets: [
                     {
-                        label: 'Revenue (×1000 VND)',
-                        data: REVENUE_SERIES,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        label: 'Active Users',
+                        data: [],
+                        borderColor: '#4285F4', // Google Blue
+                        backgroundColor: 'rgba(66, 133, 244, 0.1)',
                         tension: 0.4,
                         fill: true,
                     },
                     {
-                        label: 'Profit (×1000 VND)',
-                        data: PROFIT_SERIES,
-                        borderColor: '#43e97b',
-                        backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                        label: 'Sessions',
+                        data: [],
+                        borderColor: '#34A853', // Google Green
+                        backgroundColor: 'rgba(52, 168, 83, 0.1)',
                         tension: 0.4,
                         fill: true,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: { usePointStyle: true, boxWidth: 8 },
+                    },
+                    tooltip: tooltipConfig,
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: { color: axisColor },
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: axisColor },
+                    },
+                },
+            },
+        });
+    };                        fill: true,
                     },
                 ],
             },

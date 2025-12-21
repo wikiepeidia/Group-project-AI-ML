@@ -28,6 +28,7 @@ def _get_paddle_engine():
         from paddleocr import PaddleOCR
         resolved_device = _PADDLE_DEVICE or ('gpu:0' if _PADDLE_USE_GPU else 'cpu')
         try:
+            # Try new API first (device argument)
             _paddle_engine = PaddleOCR(
                 use_angle_cls=True,
                 lang=_PADDLE_LANG,
@@ -41,23 +42,24 @@ def _get_paddle_engine():
                 _PADDLE_LANG,
                 resolved_device
             )
-        except TypeError as type_exc:
-            if 'device' not in str(type_exc).lower():
-                raise
-            logger.info("PaddleOCR build lacks `device` arg, retrying with legacy `use_gpu` flag")
-            _paddle_engine = PaddleOCR(
-                use_angle_cls=True,
-                lang=_PADDLE_LANG,
-                use_gpu=_PADDLE_USE_GPU,
-                det_db_thresh=0.2,
-                det_db_box_thresh=0.4,
-                rec_batch_num=6
-            )
-            logger.info(
-                "PaddleOCR initialized (lang=%s, legacy-gpu=%s, enhanced detection)",
-                _PADDLE_LANG,
-                'on' if _PADDLE_USE_GPU else 'off'
-            )
+        except (TypeError, ValueError) as exc:
+            # Fallback for older versions or different API signatures
+            # It seems newer paddleocr might not accept use_gpu or device in some contexts, 
+            # or raises ValueError for unknown args.
+            # Let's try a minimal init if the above fails.
+            logger.info("PaddleOCR init failed with device arg (%s), retrying minimal init", exc)
+            try:
+                 _paddle_engine = PaddleOCR(
+                    use_angle_cls=True,
+                    lang=_PADDLE_LANG,
+                    det_db_thresh=0.2,
+                    det_db_box_thresh=0.4,
+                    rec_batch_num=6
+                )
+                 logger.info("PaddleOCR initialized (minimal args)")
+            except Exception as e2:
+                 logger.error("PaddleOCR minimal init failed: %s", e2)
+                 raise e2
     except Exception as exc:  # pragma: no cover - environment specific
         _paddle_disabled = True
         logger.warning("PaddleOCR unavailable: %s", exc)
@@ -70,19 +72,52 @@ def _paddle_ocr(image: Image.Image) -> Optional[dict]:
     if engine is None:
         return None
     try:
-        result = engine.ocr(np.array(image), cls=True)
-        if not result or not result[0]:
+        # PaddleOCR v3+ uses 'predict' internally but 'ocr' is the public API.
+        # However, some versions might have issues with kwargs.
+        # Let's try calling it without 'cls' if it fails, or check version.
+        # Based on debug, 'cls' kwarg might be the issue in newer versions if passed to predict?
+        # Actually, the error was TypeError: PaddleOCR.predict() got an unexpected keyword argument 'cls'
+        # This suggests we should pass cls=True to __init__ (use_angle_cls=True) and not to ocr() or check docs.
+        # But standard usage is ocr(img, cls=True).
+        # If that fails, we try without cls.
+        try:
+            result = engine.ocr(np.array(image), cls=True)
+        except TypeError:
+             # Fallback for versions where cls arg is not accepted in ocr/predict
+             result = engine.ocr(np.array(image))
+             
+        if not result:
             logger.info("PaddleOCR returned no text; falling back")
             return None
         texts = []
         confidences = []
-        for line in result[0]:
-            text = (line[1][0] or '').strip()
-            score = float(line[1][1]) if line[1][1] is not None else 0.0
-            if not text:
-                continue
-            texts.append(text)
-            confidences.append(score)
+
+        # Handle new PaddleOCR output format (list of dicts)
+        if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict) and 'rec_texts' in result[0]:
+            data = result[0]
+            rec_texts = data.get('rec_texts', [])
+            rec_scores = data.get('rec_scores', [])
+            for i, text in enumerate(rec_texts):
+                text = (text or '').strip()
+                if not text:
+                    continue
+                texts.append(text)
+                score = rec_scores[i] if i < len(rec_scores) else 0.0
+                confidences.append(float(score))
+        # Handle classic PaddleOCR output format (list of lists)
+        elif isinstance(result, list) and len(result) > 0 and isinstance(result[0], list):
+            for line in result[0]:
+                if not line or len(line) < 2: continue
+                text_info = line[1]
+                if not text_info or len(text_info) < 2: continue
+                
+                text = (text_info[0] or '').strip()
+                score = float(text_info[1]) if text_info[1] is not None else 0.0
+                if not text:
+                    continue
+                texts.append(text)
+                confidences.append(score)
+        
         if not texts:
             return None
         avg_conf = sum(confidences) / len(confidences) if confidences else 0.0

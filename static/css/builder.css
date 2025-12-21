@@ -279,12 +279,24 @@ body.builder-page {
     transform-origin: 0 0;
     /* No background here, grid is on dropZone */
 }
-    padding: 24px 32px;
+
+.canvas-header {
+    padding: 16px 24px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 20px;
     border-bottom: 1px solid var(--builder-border);
     background: var(--builder-panel);
+    z-index: 10;
+    position: relative;
+}
+
+.canvas-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
 }
 
 .canvas-title {
@@ -294,11 +306,25 @@ body.builder-page {
 
 .workflow-name-input {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
     color: var(--builder-text);
     font-size: 1.2em;
-    font-weight: bold;
+    font-weight: 600;
+    padding: 4px 8px;
+    transition: all 0.2s;
     width: 100%;
+}
+
+.workflow-name-input:hover {
+    border-color: var(--builder-border);
+    background: var(--builder-bg);
+}
+
+.workflow-name-input:focus {
+    outline: none;
+    border-color: var(--builder-border-strong);
+    background: var(--builder-bg);
 }
 
 .workflow-name-input:focus {

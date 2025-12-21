@@ -12,7 +12,7 @@
 - Frontend: `ui/templates/index.html`, `static/script.js`, `static/style.css`.
 - APIs: `api/model1_routes.py`, `api/model2_routes.py`, `api/history_routes.py` (+ `api/ocr_routes.py`).
 - Services: `services/invoice_service.py` (layout+OCR orchestration), `services/forecast_service.py` (features + LSTM), `services/model_loader.py`, `services/layout_service.py`, `services/ocr_service.py`.
-- Models/weights: YOLO weights `saved_models/layout_detector/weights/best.pt` + `training_metrics.json`; LSTM `saved_models/lstm_text_recognizer.weights.h5` + scaler `.pkl`.
+- Models/weights: YOLO weights `saved_models/layout_detector/weights/best.pt` + `training_metrics.json`; LSTM `saved_models/import_forecast_lstm.weights.h5` + scaler `.pkl`.
 - Data: synthetic invoices `data/generated_invoices/*` (+ metadata), catalog `data/product_catalogs.json`, historical CSVs `data/import_in_a_timescale.csv`, `data/sale_in_a_timescale.csv`, `data/dataset_product.csv`.
 - Persistence: `database/invoices.db`, `database/forecasts.db` (SQLite).
 

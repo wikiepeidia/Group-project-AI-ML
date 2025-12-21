@@ -24,8 +24,8 @@ DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR = str(UPLOAD_DIR)
 
 # Model Paths
-LSTM_MODEL_PATH = MODEL_DIR / 'lstm_text_recognizer.weights.h5'
-LSTM_SCALER_PATH = MODEL_DIR / 'lstm_text_recognizer.weights_scaler.pkl'
+LSTM_MODEL_PATH = MODEL_DIR / 'import_forecast_lstm.weights.h5'
+LSTM_SCALER_PATH = MODEL_DIR / 'import_forecast_lstm.scaler.pkl'
 LAYOUT_WEIGHTS_DIR = MODEL_DIR / 'layout_detector' / 'weights'
 LAYOUT_WEIGHTS_PATH = Path(os.getenv('LAYOUT_WEIGHTS_PATH', LAYOUT_WEIGHTS_DIR / 'best.pt'))
 LAYOUT_INFER_DEVICE = os.getenv('LAYOUT_INFER_DEVICE', 'auto')
