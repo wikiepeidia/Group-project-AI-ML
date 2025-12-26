@@ -80,6 +80,115 @@ This allows the AI to query your database without ever knowing your DB credentia
 *   **Logs:** Monitor the cell output here for any AI errors.
 3.  **Bridge:** Update `app.py` to read `AI_SERVICE_URL` and implement the "Tool Execution Loop".
 
+## 🛠️ Detailed Technical Implementation Plan
+
+Based on the analysis of `ai_service` structure:
+
+### Phase A: Colab Side (`ai_service`)
+
+**1. Update `src/server.py`**
+Refactor the `/chat` endpoint to support the "Passive Tool Use" pattern.
+
+```python
+# ai_service/src/server.py
+
+class ChatRequest(BaseModel):
+    user_id: int
+    message: str
+    db_schema: str = None       # Hostinger sends table structure
+    tool_results: list = None   # Hostinger sends back SQL results
+
+@app.post("/chat")
+async def chat_endpoint(req: ChatRequest):
+    # Case 1: We have results from a previous tool call (Round 2)
+    if req.tool_results:
+        # Feed the SQL result back to the model to generate the final answer
+        final_response = manager.generate_answer_from_data(req.message, req.tool_results)
+        return {"type": "message", "content": final_response}
+
+    # Case 2: New User Request (Round 1)
+    # Ask Manager if we need data
+    decision = manager.decide_tool_use(req.message, req.db_schema)
+    
+    if decision['needs_db']:
+        # Ask Coder Agent to write SQL based on the schema
+        sql_query = coder.generate_sql(req.message, req.db_schema)
+        return {
+            "type": "tool_call",
+            "tool": "execute_sql",
+            "sql": sql_query,
+            "reasoning": "I need to query the sales table to answer this."
+        }
+    else:
+        # Just a normal chat
+        response = manager.chat(req.message)
+        return {"type": "message", "content": response}
+```
+
+### Phase B: Hostinger Side (`app.py`)
+
+**1. Create Bridge Service (`core/services/ai_bridge.py`)**
+This service manages the communication loop with Colab.
+
+```python
+# core/services/ai_bridge.py
+import requests
+import json
+from core.database import Database
+
+class AIBridge:
+    def __init__(self, colab_url):
+        self.colab_url = colab_url
+        self.db = Database()
+
+    def ask(self, user_id, user_message):
+        # 1. Get Schema (Simplified for context window)
+        schema = self.get_db_schema() 
+        
+        # 2. Round 1: Send Prompt + Schema
+        payload = {
+            "user_id": user_id,
+            "message": user_message,
+            "db_schema": schema
+        }
+        
+        response = requests.post(f"{self.colab_url}/chat", json=payload).json()
+        
+        # 3. Check if AI wants to run a tool
+        if response.get("type") == "tool_call":
+            sql = response.get("sql")
+            print(f"🤖 AI wants to run SQL: {sql}")
+            
+            # 4. Execute SQL Locally (Securely)
+            try:
+                # SAFETY CHECK: Only allow SELECT
+                if not sql.strip().upper().startswith("SELECT"):
+                    return "Sorry, I can only perform read operations."
+                
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                columns = [description[0] for description in cursor.description]
+                data = cursor.fetchall()
+                conn.close()
+                
+                result_json = [dict(zip(columns, row)) for row in data]
+                
+            except Exception as e:
+                result_json = {"error": str(e)}
+
+            # 5. Round 2: Send Result back to AI
+            payload["tool_results"] = result_json
+            final_response = requests.post(f"{self.colab_url}/chat", json=payload).json()
+            return final_response.get("content")
+            
+        return response.get("content")
+
+    def get_db_schema(self):
+        # Helper to get CREATE TABLE statements for context
+        return "CREATE TABLE products (id, name, price, stock)..." 
+```
+
 connect node : at the connect mode function, if user DOUBLE CLICK on the connection line, the line delete, the connection gone.
 
 Sceanrio: Fix the dark theme, fix the logic (it supposed to be like prebuilt workflow or whatever you can think of or sth???In the workflow page, the save function should be ask either save as "Saved workflow" or "saved scenario", check database), function delete create.... etc failed.

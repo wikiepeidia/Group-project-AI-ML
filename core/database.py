@@ -3,6 +3,13 @@ import hashlib
 from datetime import datetime
 from .config import Config
 
+# Compatibility shim: if `app.db` exists, expose SessionLocal and Base for other modules
+try:
+    from app.db import SessionLocal, Base  # type: ignore
+except Exception:
+    SessionLocal = None
+    Base = None
+
 class Database:
     def __init__(self):
         self.db_path = Config.DATABASE_PATH
