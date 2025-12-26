@@ -19,7 +19,7 @@ authlib
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
-
+google.analytics
 
 # ==================================================
 # OCR & Image Processing
@@ -60,7 +60,7 @@ sentence-transformers
 # ==================================================
 timm
 einops
-flash-attn
+# flash-attn
 
 
 # ==================================================
