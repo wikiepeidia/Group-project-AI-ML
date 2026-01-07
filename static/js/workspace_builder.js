@@ -517,6 +517,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // If user clicks another Output point while active, restart connection from there
+            if (isOutput) {
+                resetConnectionState();
+                connectionState.active = true;
+                connectionState.sourceNode = node;
+                connectionState.sourcePoint = point;
+                point.classList.add('connecting');
+                showNotification('New connection started', 'info');
+                return;
+            }
+
             if (isInput) {
                 // Valid connection: Output -> Input
                 drawConnection(connectionState.sourceNode, node);
@@ -531,15 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('Connect to an Input point (Left side)', 'warning');
             }
         }
-    }
-
-    function resetConnectionState() {
-        if (connectionState.sourcePoint) {
-            connectionState.sourcePoint.classList.remove('connecting');
-        }
-        connectionState.active = false;
-        connectionState.sourceNode = null;
-        connectionState.sourcePoint = null;
     }
 
     function showNodeMenu(node) {
@@ -995,74 +997,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function handleConnectionMode(node, cp) {
-        // Mode check removed to allow direct connection interaction
-        // if (builderMode.current !== 'connect') { return; }
-
-        if (!builderMode.connectionStart) {
-            // Start connection
-            builderMode.connectionStart = { node, cp };
-            node.classList.add('connection-source');
-            if (cp) cp.classList.add('connecting'); // Track point state
-            
-            // Highlight valid targets (all other nodes)
-            document.querySelectorAll('.workflow-node').forEach(n => {
-                if (n !== node) {
-                    n.classList.add('valid-target');
-                }
-            });
-
-            showNotification('Select target node to connect', 'info');
-        } else {
-            // Complete connection
-            if (builderMode.connectionStart.node === node) {
-                showNotification('Cannot connect node to itself', 'warning');
-                resetConnectionState();
-                return;
-            }
-
-            // Check if connection already exists
-            const exists = builderState.connections.some(c => 
-                (c.source === builderMode.connectionStart.node.dataset.nodeId && c.target === node.dataset.nodeId)
-            );
-            
-            if (exists) {
-                showNotification('Connection already exists', 'warning');
-            } else {
-                drawConnection(builderMode.connectionStart.node, node);
-                showNotification('Connection created!', 'success');
-            }
-
-            resetConnectionState();
-        }
-    }
-
     function resetConnectionState() {
-        // Reset old builderMode state
-        if (builderMode.connectionStart) {
-            if (builderMode.connectionStart.node) {
-                builderMode.connectionStart.node.classList.remove('connection-source');
-            }
-            if (builderMode.connectionStart.cp) {
-                builderMode.connectionStart.cp.classList.remove('connecting');
-            }
+        if (connectionState.sourcePoint) {
+            connectionState.sourcePoint.classList.remove('connecting');
         }
-        builderMode.connectionStart = null;
-        
-        // Remove valid-target class from all nodes
-        document.querySelectorAll('.workflow-node').forEach(n => {
-            n.classList.remove('valid-target');
-        });
-
-        // Reset new connectionState (Fix for Ghost State)
-        if (typeof connectionState !== 'undefined') {
-            if (connectionState.sourcePoint) {
-                connectionState.sourcePoint.classList.remove('connecting');
-            }
-            connectionState.active = false;
-            connectionState.sourceNode = null;
-            connectionState.sourcePoint = null;
-        }
+        connectionState.active = false;
+        connectionState.sourceNode = null;
+        connectionState.sourcePoint = null;
     }
 
     function getConnectionPath(sourceNode, targetNode) {
