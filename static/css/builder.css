@@ -184,8 +184,12 @@ body.builder-page {
 }
 
 .tools-list::-webkit-scrollbar-thumb {
-    background-color: var(--builder-border-strong);
+    background-color: var(--sidebar-scroll-thumb, rgba(15, 23, 42, 0.15));
     border-radius: 3px;
+}
+
+html[data-theme='dark'] .tools-list::-webkit-scrollbar-thumb {
+    background-color: var(--sidebar-scroll-thumb, rgba(255, 255, 255, 0.2));
 }
 
 

@@ -733,43 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.toolbar-btn').forEach((btn) => {
         btn.setAttribute('role', 'button');
         btn.setAttribute('aria-pressed', 'false');
-        btn.addEventListener('click', function () {
-            const action = this.dataset.action;
-            document.querySelectorAll('.toolbar-btn').forEach((item) => {
-                item.classList.remove('active');
-                item.setAttribute('aria-pressed', 'false');
-            });
-            this.classList.add('active');
-            this.setAttribute('aria-pressed', 'true');
-            builderMode.current = action;
-
-            if (action === 'cursor') {
-                if (canvas) {
-                    canvas.classList.remove('connect-mode', 'zoom-mode');
-                    canvas.classList.add('cursor-mode');
-                }
-                builderMode.isConnecting = false;
-                resetConnectionState();
-                showNotification('Select mode activated - Click nodes to select and edit', 'info');
-            } else if (action === 'connect') {
-                if (canvas) {
-                    canvas.classList.remove('cursor-mode', 'zoom-mode');
-                    canvas.classList.add('connect-mode');
-                }
-                builderMode.isConnecting = true;
-                showNotification('Connect mode activated - Click nodes to connect them', 'info');
-            } else if (action === 'zoom') {
-                if (canvas) {
-                    canvas.classList.remove('cursor-mode', 'connect-mode');
-                    canvas.classList.add('zoom-mode');
-                }
-                resetConnectionState();
-                showNotification('Zoom mode activated - Use mouse wheel to zoom in/out', 'info');
-                showZoomControls();
-            } else {
-                hideZoomControls();
-            }
-        });
+        btn.style.display = 'none'; // Hide buttons as modes are removed
     });
 
     // Zoom control panel
@@ -865,17 +829,25 @@ document.addEventListener('DOMContentLoaded', () => {
             isPanning = false;
             canvas.style.cursor = 'default';
         });
+
+        // Add click listener to reset connection state when clicking on empty canvas
+        canvas.addEventListener('click', (event) => {
+            // Check if clicking directly on canvas or dropZone (background)
+            if (event.target === canvas || event.target.id === 'dropZone') {
+                resetConnectionState();
+            }
+        });
     }
 
     function handleConnectionMode(node, cp) {
-        if (builderMode.current !== 'connect') {
-            return;
-        }
+        // Mode check removed to allow direct connection interaction
+        // if (builderMode.current !== 'connect') { return; }
 
         if (!builderMode.connectionStart) {
             // Start connection
             builderMode.connectionStart = { node, cp };
             node.classList.add('connection-source');
+            if (cp) cp.classList.add('connecting'); // Track point state
             
             // Highlight valid targets (all other nodes)
             document.querySelectorAll('.workflow-node').forEach(n => {
@@ -910,8 +882,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetConnectionState() {
-        if (builderMode.connectionStart && builderMode.connectionStart.node) {
-            builderMode.connectionStart.node.classList.remove('connection-source');
+        // Reset old builderMode state
+        if (builderMode.connectionStart) {
+            if (builderMode.connectionStart.node) {
+                builderMode.connectionStart.node.classList.remove('connection-source');
+            }
+            if (builderMode.connectionStart.cp) {
+                builderMode.connectionStart.cp.classList.remove('connecting');
+            }
         }
         builderMode.connectionStart = null;
         
@@ -919,6 +897,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.workflow-node').forEach(n => {
             n.classList.remove('valid-target');
         });
+
+        // Reset new connectionState (Fix for Ghost State)
+        if (typeof connectionState !== 'undefined') {
+            if (connectionState.sourcePoint) {
+                connectionState.sourcePoint.classList.remove('connecting');
+            }
+            connectionState.active = false;
+            connectionState.sourceNode = null;
+            connectionState.sourcePoint = null;
+        }
     }
 
     function getConnectionPath(sourceNode, targetNode) {
