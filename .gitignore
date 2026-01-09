@@ -5,7 +5,6 @@ __pycache__/
 # test folder
 test/
 tests/
-secrets/
 # C extensions
 token.json
 
@@ -200,11 +199,7 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#  you could uncomment the following to ignore the entire vscode folder
-# .vscode/
+# Visual Studio Code settings handled below
 
 # Ruff stuff:
 .ruff_cache/
@@ -232,7 +227,6 @@ __marimo__/
 uploads/
 
 # Log files
-*.log
 logs/
 
 # Flask instance folder (contains sensitive config)
@@ -254,7 +248,7 @@ ehthumbs.db
 Thumbs.db
 
 # IDE files (additional)
-.vscode/settings.json
+.vscode/
 .idea/
 *.swp
 *.swo
@@ -328,7 +322,7 @@ credentials.json
 flask_session/
 .flask_session/
 sessions/
-
+MindGuard-Nen-Tang-Bao-Ve-Cong-DJong-Khoi-Lua-DJao-Truc-Tuyen.pdf
 # Testing and development
 .pytest_cache/
 test_results/
@@ -336,13 +330,11 @@ coverage/
 .coverage.*
 *.puml
 # IDE and editor specific (additional)
-.vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 dl_service/data/generated_invoices
 # macOS
-.DS_Store
 .AppleDouble
 .LSOverride
 dl_service/data/layout_dataset
@@ -353,8 +345,6 @@ Desktop.ini
 # Ignore stray terminal capture files
 _ul
 nul
-*.log
-*.tmp
 # AI Model artifacts (for workflow recommendation)
 models/checkpoints/
 models/weights/
@@ -366,6 +356,5 @@ saved_models/
 test_inventory/
 test_orders/
 sample_retail_data/
-secrets/
 fun_work_hub.db
 group_project_ai_ml.db
