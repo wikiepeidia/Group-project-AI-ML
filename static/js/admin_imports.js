@@ -276,7 +276,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
-                const result = await response.json();
+                const contentType = response.headers.get("content-type");
+                let result;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error("Server returned non-JSON:", text);
+                    // Extract title or body from HTML if possible for cleaner error
+                    const match = text.match(/<title>(.*?)<\/title>/);
+                    const errorTitle = match ? match[1] : "Server Error (Non-JSON response)";
+                    throw new Error(errorTitle + ". Check console for details.");
+                }
 
                 if (result.success) {
                     if (ocrProgressBar) {

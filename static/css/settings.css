@@ -106,3 +106,33 @@
     border-color: var(--input-border);
     color: var(--input-text);
 }
+
+/* Theme Option Active State */
+.theme-option.is-active[data-theme-option='system'] {
+    background-color: #0d6efd !important;
+    color: white !important;
+    border-color: #0d6efd !important;
+}
+
+.theme-option.is-active[data-theme-option='dark'] {
+    background-color: #6610f2 !important;
+    color: white !important;
+    border-color: #6610f2 !important;
+}
+
+.theme-option.is-active[data-theme-option='light'] {
+    background-color: #ffc107 !important;
+    color: black !important;
+    border-color: #ffc107 !important;
+}
+
+/* Theme Option Active State */
+.theme-option.is-active[data-theme-option='system'] {
+}
+
+.theme-option.is-active[data-theme-option='dark'] {
+}
+
+.theme-option.is-active[data-theme-option='light'] {
+}
+

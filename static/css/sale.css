@@ -299,6 +299,68 @@ body.dark-mode .modal-content {
     border-color: var(--border-soft);
 }
 
+/* --- History Modal Deep Fixes (Dark Mode) --- */
+
+/* Fix History Table Header Background and Text */
+[data-theme="dark"] .history-table-head th,
+body.dark-mode .history-table-head th {
+    background-color: var(--surface-300) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--border-soft);
+}
+
+/* Fix History Toolbar Inputs (Search bar) */
+[data-theme="dark"] .history-toolbar .form-control,
+[data-theme="dark"] .history-toolbar .input-group-text,
+body.dark-mode .history-toolbar .form-control,
+body.dark-mode .history-toolbar .input-group-text {
+    background-color: var(--surface-300);
+    border-color: var(--border-soft);
+    color: var(--bs-body-color);
+}
+
+/* Fix Placeholder Color */
+[data-theme="dark"] .history-toolbar .form-control::placeholder,
+body.dark-mode .history-toolbar .form-control::placeholder {
+    color: var(--gray-500); /* Accessible placeholder color */
+}
+
+/* Fix Search Button in Toolbar */
+[data-theme="dark"] .history-toolbar .btn-outline-secondary,
+body.dark-mode .history-toolbar .btn-outline-secondary {
+    color: var(--bs-body-color);
+    border-color: var(--border-soft);
+}
+[data-theme="dark"] .history-toolbar .btn-outline-secondary:hover,
+body.dark-mode .history-toolbar .btn-outline-secondary:hover {
+    background-color: var(--surface-300);
+}
+
+/* Fix Muted Text (Search Icon) */
+[data-theme="dark"] .history-toolbar .text-muted,
+body.dark-mode .history-toolbar .text-muted {
+    color: var(--gray-400) !important;
+}
+
+/* Modal Header/Footer Borders and Title */
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer,
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: var(--border-soft);
+}
+
+[data-theme="dark"] .modal-title,
+body.dark-mode .modal-title {
+    color: var(--bs-body-color);
+}
+
+/* Fix Modal Close Button in Dark Mode */
+[data-theme="dark"] .btn-close,
+body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 .modal-body .table tr,
 .modal-body .table td,
 .modal-body .table th {

@@ -47,8 +47,7 @@ class AuthManager:
             full_name = f"{first_name} {last_name}"
             
             # Check columns
-            c.execute("PRAGMA table_info(users)")
-            columns = [col[1] for col in c.fetchall()]
+            columns = self.db.get_table_columns('users', cursor=c)
             
             if 'manager_id' in columns:
                 c.execute('INSERT INTO users (name, email, password, role, manager_id) VALUES (?, ?, ?, ?, ?)', 

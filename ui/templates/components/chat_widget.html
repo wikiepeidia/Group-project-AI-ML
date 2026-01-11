@@ -10,7 +10,7 @@
         <div class="ai-chat-header">
             <div class="ai-chat-title">
                 <i class="fas fa-robot"></i>
-                <span>AI Assistant</span>
+                <span>Project A Assistant</span>
             </div>
             <div class="ai-chat-controls">
                 <button id="ai-chat-minimize" class="ai-chat-control-btn" aria-label="Minimize">
@@ -24,15 +24,31 @@
                 <div class="ai-message-content">
                     Xin chào! Tôi là trợ lý ảo của bạn. Tôi có thể giúp gì cho bạn hôm nay?
                 </div>
-                <div class="ai-message-time">Just now</div>
             </div>
         </div>
 
-        <div class="ai-chat-input-area">
-            <textarea id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." rows="1"></textarea>
-            <button id="ai-chat-send" class="ai-chat-send-btn" aria-label="Send">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+        <!-- Typing Indicator -->
+        <div id="ai-chat-typing" class="typing-indicator" style="display:none;">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+
+        <div class="ai-chat-input-wrapper">
+             <!-- File Preview -->
+            <div id="ai-chat-file-preview" class="image-preview" style="display:none;">
+                <span id="ai-chat-file-name"><i class="fas fa-file"></i> File</span>
+                <span class="remove-img" id="ai-chat-clear-file">✕</span>
+            </div>
+            
+            <div class="ai-input-bar">
+                <input type="file" id="ai-chat-file-input" accept="image/*,video/*,application/pdf" style="display: none;">
+                <button class="attach-btn" id="ai-chat-attach-btn" title="Gửi ảnh/file">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="text" id="ai-chat-input" placeholder="Nhập tin nhắn..." autocomplete="off">
+                <button id="ai-chat-send" class="send-btn" title="Gửi">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>

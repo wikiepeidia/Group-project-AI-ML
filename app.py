@@ -78,6 +78,7 @@ google = oauth.register(
 # Session configuration - 7 days
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['JSON_AS_ASCII'] = False
 
 # Disable Rate Limiter for Development
 app.config['RATELIMIT_ENABLED'] = False
@@ -333,7 +334,9 @@ def admin_dashboard():
     if not hasattr(current_user, 'role') or current_user.role != 'admin':
         flash('You do not have permission to access this page', 'error')
         return redirect(url_for('workspace'))
-    return render_template('admin_dashboard.html', user=current_user)
+    
+    db_type = 'PostgreSQL' if getattr(Config, 'USE_POSTGRES', False) else 'SQLite'
+    return render_template('admin_dashboard.html', user=current_user, db_type=db_type)
 
 @app.route('/admin/workspace')
 @login_required
@@ -553,6 +556,13 @@ def get_settings_config():
             'description': 'Manage store identity, address, and currency.',
             'icon': 'fa-store',
             'gradient': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+            'links': []
+        },
+        'appearance': {
+            'title': 'Appearance',
+            'description': 'Customize workspace theme and layout.',
+            'icon': 'fa-palette',
+            'gradient': 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
             'links': []
         },
         'system': {
@@ -1140,8 +1150,7 @@ def get_users():
     c = conn.cursor()
     
     # Check if first_name column exists
-    c.execute("PRAGMA table_info(users)")
-    columns = [col[1] for col in c.fetchall()]
+    columns = db_manager.get_table_columns('users', cursor=c)
     has_first_name = 'first_name' in columns
     
     if has_first_name:
@@ -2163,8 +2172,7 @@ def api_toggle_auto_renew():
         c = conn.cursor()
         
         # Check if auto_renew column exists
-        c.execute("PRAGMA table_info(manager_subscriptions)")
-        columns = [col[1] for col in c.fetchall()]
+        columns = db_manager.get_table_columns('manager_subscriptions', cursor=c)
         
         if 'auto_renew' not in columns:
             # Add column if not exists
@@ -2240,7 +2248,20 @@ def api_extend_subscription():
         new_end_date_str = new_end_date.strftime('%Y-%m-%d')
         
         # Update or Insert subscription
-        c.execute('''INSERT OR REPLACE INTO manager_subscriptions 
+        if Config.USE_POSTGRES:
+             c.execute('''INSERT INTO manager_subscriptions 
+                     (user_id, subscription_type, amount, start_date, end_date, status, auto_renew)
+                     VALUES (?, ?, ?, ?, ?, 'active', 0)
+                     ON CONFLICT (user_id) DO UPDATE SET 
+                     subscription_type=excluded.subscription_type,
+                     amount=excluded.amount,
+                     start_date=excluded.start_date,
+                     end_date=excluded.end_date,
+                     status='active'
+                     ''',
+                  (user_id, plan_type, amount, datetime.now().strftime('%Y-%m-%d'), new_end_date_str))
+        else:
+             c.execute('''INSERT OR REPLACE INTO manager_subscriptions 
                      (user_id, subscription_type, amount, start_date, end_date, status, auto_renew)
                      VALUES (?, ?, ?, ?, ?, 'active', 0)''',
                   (user_id, plan_type, amount, datetime.now().strftime('%Y-%m-%d'), new_end_date_str))
@@ -2467,7 +2488,10 @@ def api_get_wallet():
 
         if not wallet_row:
             # Ensure user has a wallet row
-            c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+            if Config.USE_POSTGRES:
+                 c.execute("INSERT INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND') ON CONFLICT (user_id) DO NOTHING", (current_user.id,))
+            else:
+                 c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
             conn.commit()
             # Fetch again
             c.execute('SELECT balance, currency, updated_at FROM wallets WHERE user_id = ?', (current_user.id,))
@@ -2597,7 +2621,10 @@ def api_topup_wallet():
     conn = db_manager.get_connection()
     c = conn.cursor()
     try:
-        c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+        if Config.USE_POSTGRES:
+             c.execute("INSERT INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND') ON CONFLICT (user_id) DO NOTHING", (current_user.id,))
+        else:
+             c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))        
 
         metadata = json.dumps({'initiated_by': 'user', 'method': method, 'reference': reference})
 
@@ -2643,7 +2670,11 @@ def api_admin_withdraw():
     conn = db_manager.get_connection()
     c = conn.cursor()
     try:
-        c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+        if Config.USE_POSTGRES:
+             c.execute("INSERT INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND') ON CONFLICT (user_id) DO NOTHING", (current_user.id,))
+        else:
+             c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+             
         c.execute('SELECT balance FROM wallets WHERE user_id = ?', (current_user.id,))
         row = c.fetchone()
         balance = float(row[0]) if row else 0
@@ -2692,7 +2723,11 @@ def api_upgrade_subscription():
     conn = db_manager.get_connection()
     c = conn.cursor()
     try:
-        c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+        if Config.USE_POSTGRES:
+             c.execute("INSERT INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND') ON CONFLICT (user_id) DO NOTHING", (current_user.id,))
+        else:
+             c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (current_user.id,))
+             
         c.execute('SELECT balance FROM wallets WHERE user_id = ?', (current_user.id,))
         wallet_row = c.fetchone()
         balance = wallet_row[0] if wallet_row else 0
@@ -2830,7 +2865,10 @@ def api_admin_process_wallet_transaction(transaction_id):
             metadata['admin_note'] = note
 
         if action == 'approve':
-            c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (row[1],))
+            if Config.USE_POSTGRES:
+                 c.execute("INSERT INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND') ON CONFLICT (user_id) DO NOTHING", (row[1],))
+            else:
+                 c.execute("INSERT OR IGNORE INTO wallets (user_id, balance, currency) VALUES (?, 0, 'VND')", (row[1],))
             if row[2] != 0:
                 c.execute('UPDATE wallets SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', (row[2], row[1]))
             c.execute("UPDATE wallet_transactions SET status = 'completed', metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(metadata), transaction_id))
@@ -3279,6 +3317,42 @@ def run_dl_service():
     except Exception as e:
         print(f"[DL Thread] Error starting DL Service: {e}", flush=True)
 
+@app.route('/api/ai/upload', methods=['POST'])
+@login_required
+def ai_upload():
+    """Forward file uploads to AI Service"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    try:
+        # Load Config
+        with open('secrets/ai_config.json') as f:
+            ai_config = json.load(f)
+            hf_base_url = ai_config.get('HF_BASE_URL')
+            
+        if not hf_base_url:
+             return jsonify({'error': 'AI Configuration incomplete'}), 500
+
+        # Forward to AI Service
+        files = {'file': (file.filename, file.read(), file.mimetype)}
+        data = {'user_id': current_user.id, 'store_id': 1}
+        headers = {"ngrok-skip-browser-warning": "true"}
+        
+        import requests
+        response = requests.post(
+            f"{hf_base_url}/upload",
+            files=files,
+            data=data,
+            headers=headers,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # AI Chat Integration
 @app.route('/api/ai/chat', methods=['POST'])
 @login_required
@@ -3298,28 +3372,30 @@ def ai_chat():
         try:
             with open('secrets/ai_config.json') as f:
                 ai_config = json.load(f)
-                hf_token = ai_config.get('HF_TOKEN')
+                hf_token = ai_config.get('HF_TOKEN', '')
                 hf_base_url = ai_config.get('HF_BASE_URL')
         except FileNotFoundError:
             return jsonify({'error': 'AI Configuration not found'}), 500
 
-        if not hf_token or not hf_base_url:
-             return jsonify({'error': 'AI Configuration incomplete'}), 500
+        if not hf_base_url:
+             return jsonify({'error': 'AI Configuration incomplete (Base URL missing)'}), 500
 
         # Prepare payload for AI Service
         # We send the current user's ID to maintain context if needed
         payload = {
             "user_id": current_user.id,
-            "store_id": 1, # Default store ID for now, can be dynamic later
+            "store_id": 1, # Default store ID
             "message": user_message
         }
 
         headers = {
-            "Authorization": f"Bearer {hf_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true"
         }
+        if hf_token:
+            headers["Authorization"] = f"Bearer {hf_token}"
 
-        # Call Hugging Face Space
+        # Call AI Service
         import requests
         response = requests.post(
             f"{hf_base_url}/chat",

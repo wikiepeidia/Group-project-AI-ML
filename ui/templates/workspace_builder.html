@@ -39,7 +39,8 @@
                     <i class="fas fa-check-circle"></i> Google Connected
                 </div>
                 {% else %}
-                <a href="{{ url_for('google_connect') }}" style="font-size: 0.75rem; color: #F4B400; display: flex; align-items: center; gap: 5px; text-decoration: none; cursor: pointer;">
+                <a href="{{ url_for('google_connect') }}"
+                    style="font-size: 0.75rem; color: #F4B400; display: flex; align-items: center; gap: 5px; text-decoration: none; cursor: pointer;">
                     <i class="fas fa-exclamation-circle"></i> Connect Google
                 </a>
                 {% endif %}
@@ -213,6 +214,12 @@
                 <button class="action-btn" data-action="run-workflow" style="color: #4CAF50; border-color: #4CAF50;">
                     <i class="fas fa-play"></i> Run
                 </button>
+                <button class="action-btn" data-action="pause-workflow" style="color: #FFC107; border-color: #FFC107;">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button class="action-btn" data-action="cancel-workflow" style="color: #F44336; border-color: #F44336;">
+                    <i class="fas fa-stop"></i> Cancel
+                </button>
                 <button class="action-btn" data-action="save-workflow" style="color: #2196F3; border-color: #2196F3;">
                     <i class="fas fa-save"></i> Save
                 </button>
@@ -226,14 +233,6 @@
         </div>
 
         <div class="canvas-viewport">
-            <div class="floating-toolbar">
-                <button class="toolbar-btn active" data-action="cursor" title="Select">
-                    <i class="fas fa-mouse-pointer"></i>
-                </button>
-                <button class="toolbar-btn" data-action="connect" title="Connect">
-                    <i class="fas fa-bezier-curve"></i>
-                </button>
-            </div>
 
             <div id="workflowCanvas" class="workflow-canvas">
                 <svg id="connectionLines" class="connections-svg"></svg>
@@ -525,7 +524,8 @@
                 </div>
                 <div class="mb-3">
                     <label for="saveScenarioDescription" class="form-label">Description (Optional)</label>
-                    <textarea class="form-control" id="saveScenarioDescription" rows="3" placeholder="What does this automation do?"></textarea>
+                    <textarea class="form-control" id="saveScenarioDescription" rows="3"
+                        placeholder="What does this automation do?"></textarea>
                 </div>
             </div>
             <div class="modal-footer border-0">

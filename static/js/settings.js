@@ -2,10 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Settings page loaded');
     
     // Handle "Open editor" buttons
-    document.querySelectorAll('.btn-outline-primary').forEach(btn => {
+    document.querySelectorAll('.btn-outline-primary:not(.theme-option)').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const cardBody = e.target.closest('.card-body');
-            const title = cardBody.querySelector('strong').textContent;
+            const titleEl = cardBody.querySelector('strong');
+            if (!titleEl) return;
+            
+            const title = titleEl.textContent;
             const sectionTitle = document.querySelector('h3.mb-0')?.textContent;
 
             if (title === 'Edit Configuration') {

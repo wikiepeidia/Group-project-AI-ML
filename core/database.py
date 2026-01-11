@@ -120,6 +120,33 @@ class Database:
             except Exception as e:
                 print(f"Postgres Init Warning: {e}") 
 
+    def get_table_columns(self, table_name, cursor=None):
+        """Get list of columns for a table, DB-agnostic"""
+        should_close = False
+        if cursor is None:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            should_close = True
+            
+        try:
+            if self.use_postgres:
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table_name,))
+                columns = [row[0] for row in cursor.fetchall()]
+            else:
+                cursor.execute(f"PRAGMA table_info({table_name})")
+                columns = [row[1] for row in cursor.fetchall()]
+            return columns
+        finally:
+            if should_close:
+                # For PGShimConnection, close() closes the real connection
+                # For sqlite3, close() on cursor is good, connection verify
+                try:
+                    cursor.close()
+                    if hasattr(cursor, 'connection') and cursor.connection:
+                         cursor.connection.close()
+                except:
+                    pass
+
     def get_connection(self):
         if self.use_postgres:
             import psycopg2
@@ -171,8 +198,7 @@ class Database:
         )''')
 
         # If the old table doesn't have a 'role' column, add it
-        c.execute("PRAGMA table_info(users)")
-        columns = [col[1] for col in c.fetchall()]
+        columns = self.get_table_columns("users", cursor=c)
         if 'role' not in columns:
             c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
         
@@ -429,26 +455,24 @@ class Database:
         
         self._create_demo_data(c)
         # Add optional subscription expiry column to users for subscription tracking
-        c.execute("PRAGMA table_info(users)")
-        columns = [col[1] for col in c.fetchall()]
+        columns = self.get_table_columns("users", cursor=c)
         if 'subscription_expires_at' not in columns:
             try:
                 c.execute("ALTER TABLE users ADD COLUMN subscription_expires_at TIMESTAMP")
-            except sqlite3.OperationalError:
+            except Exception:
                 pass
 
         # Ensure scenarios table has steps and conditions columns
-        c.execute("PRAGMA table_info(scenarios)")
-        columns = [col[1] for col in c.fetchall()]
+        columns = self.get_table_columns("scenarios", cursor=c)
         if 'steps' not in columns:
             try:
                 c.execute("ALTER TABLE scenarios ADD COLUMN steps TEXT")
-            except sqlite3.OperationalError:
+            except Exception:
                 pass
         if 'conditions' not in columns:
             try:
                 c.execute("ALTER TABLE scenarios ADD COLUMN conditions TEXT")
-            except sqlite3.OperationalError:
+            except Exception:
                 pass
 
         # Manager subscriptions & history
@@ -507,13 +531,23 @@ class Database:
         )''')
 
         # Seed wallets for existing users
-        c.execute('''INSERT OR IGNORE INTO wallets (user_id, balance, currency)
-                     SELECT id, 0, 'VND' FROM users''')
+        if self.use_postgres:
+            c.execute('''INSERT INTO wallets (user_id, balance, currency)
+                         SELECT id, 0, 'VND' FROM users
+                         ON CONFLICT (user_id) DO NOTHING''')
+        else:
+            c.execute('''INSERT OR IGNORE INTO wallets (user_id, balance, currency)
+                         SELECT id, 0, 'VND' FROM users''')
 
         # Ensure managers have expiry date set if missing
-        c.execute('''UPDATE users
-                     SET subscription_expires_at = COALESCE(subscription_expires_at, datetime('now', '+30 day'))
-                     WHERE role = 'manager' AND subscription_expires_at IS NULL''')
+        if self.use_postgres:
+            c.execute('''UPDATE users
+                         SET subscription_expires_at = COALESCE(subscription_expires_at, CURRENT_TIMESTAMP + INTERVAL '30 days')
+                         WHERE role = 'manager' AND subscription_expires_at IS NULL''')
+        else:
+            c.execute('''UPDATE users
+                         SET subscription_expires_at = COALESCE(subscription_expires_at, datetime('now', '+30 day'))
+                         WHERE role = 'manager' AND subscription_expires_at IS NULL''')
         conn.commit()
         conn.close()
     
@@ -527,7 +561,13 @@ class Database:
         
         for email, password, name, avatar, role in demo_users:
             hashed_pw = hashlib.sha256(password.encode()).hexdigest()
-            cursor.execute('''INSERT OR IGNORE INTO users 
+            if self.use_postgres:
+                cursor.execute('''INSERT INTO users 
+                            (email, password, name, avatar, role) VALUES (?, ?, ?, ?, ?)
+                            ON CONFLICT (email) DO NOTHING''', 
+                         (email, hashed_pw, name, avatar, role))
+            else:
+                cursor.execute('''INSERT OR IGNORE INTO users 
                             (email, password, name, avatar, role) VALUES (?, ?, ?, ?, ?)''', 
                          (email, hashed_pw, name, avatar, role))
             
@@ -550,8 +590,7 @@ class Database:
         hashed_pw = hashlib.sha256(password.encode()).hexdigest()
         try:
             # Check if first_name column exists
-            c.execute("PRAGMA table_info(users)")
-            columns = [col[1] for col in c.fetchall()]
+            columns = self.get_table_columns("users", cursor=c)
             
             if 'first_name' in columns:
                 c.execute('INSERT INTO users (email, password, name, role, first_name, last_name, manager_id) VALUES (?, ?, ?, ?, ?, ?, ?)', 
@@ -564,9 +603,15 @@ class Database:
             conn.commit()
             conn.close()
             return user_id
-        except sqlite3.IntegrityError:
+        except Exception as e:
+            # Catch both sqlite3.IntegrityError and psycopg2.IntegrityError (wrapped or direct)
             conn.close()
-            raise Exception('Email already exists')
+            if "UNIQUE constraint failed" in str(e) or "duplicate key" in str(e):
+                raise Exception('Email already exists')
+            # Check if it is actually an Integrity Error class name
+            if "IntegrityError" in type(e).__name__:
+                raise Exception('Email already exists')
+            raise e
     
     def get_user_by_email(self, email):
         conn = self.get_connection()
@@ -735,7 +780,7 @@ class Database:
         c.execute('''SELECT s.id, s.name, s.description, s.steps, s.conditions, 
                            s.status, s.created_at, w.name as workspace_name
                     FROM scenarios s
-                    JOIN workspaces w ON s.workspace_id = w.id
+                    JOIN workspaces w ON s.workspace_id = CAST(w.id AS VARCHAR)
                     WHERE w.user_id = ?
                     ORDER BY s.created_at DESC''', (user_id,))
         scenarios = []
@@ -760,7 +805,7 @@ class Database:
         c.execute('''SELECT s.id, s.name, s.description, s.steps, s.conditions, 
                            s.status, s.created_at, w.name as workspace_name
                     FROM scenarios s
-                    JOIN workspaces w ON s.workspace_id = w.id
+                    JOIN workspaces w ON s.workspace_id = CAST(w.id AS VARCHAR)
                     WHERE s.id = ? AND w.user_id = ?''', (scenario_id, user_id))
         row = c.fetchone()
         conn.close()
@@ -818,7 +863,7 @@ class Database:
         
         # Verify ownership
         c.execute('''SELECT s.id FROM scenarios s
-                    JOIN workspaces w ON s.workspace_id = w.id
+                    JOIN workspaces w ON s.workspace_id = CAST(w.id AS VARCHAR)
                     WHERE s.id = ? AND w.user_id = ?''', (scenario_id, user_id))
         
         if not c.fetchone():
@@ -864,7 +909,7 @@ class Database:
         # We check if the scenario belongs to a workspace owned by the user
         c.execute('''DELETE FROM scenarios 
                     WHERE id = ? AND workspace_id IN 
-                    (SELECT id FROM workspaces WHERE user_id = ?)''', 
+                    (SELECT CAST(id AS VARCHAR) FROM workspaces WHERE user_id = ?)''', 
                   (scenario_id, user_id))
         
         if c.rowcount == 0:
@@ -890,10 +935,21 @@ class Database:
         conn = self.get_connection()
         c = conn.cursor()
         try:
-            c.execute('''INSERT OR REPLACE INTO user_permissions 
+            if self.use_postgres:
+                c.execute('''INSERT INTO user_permissions 
                         (user_id, permission_type, granted_by, granted_at, revoked) 
-                        VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)''', 
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)
+                        ON CONFLICT (user_id, permission_type) DO UPDATE SET 
+                        granted_by = excluded.granted_by,
+                        granted_at = CURRENT_TIMESTAMP,
+                        revoked = 0
+                        ''', 
                      (user_id, permission_type, granted_by))
+            else:
+                c.execute('''INSERT OR REPLACE INTO user_permissions 
+                            (user_id, permission_type, granted_by, granted_at, revoked) 
+                            VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)''', 
+                        (user_id, permission_type, granted_by))
             conn.commit()
             return True
         except Exception as e:
@@ -1072,8 +1128,9 @@ class Database:
         c = conn.cursor()
         
         # Check if google_token column exists once
-        c.execute("PRAGMA table_info(users)")
-        columns = [col[1] for col in c.fetchall()]
+        # c.execute("PRAGMA table_info(users)")
+        # columns = [col[1] for col in c.fetchall()]
+        columns = self.get_table_columns("users", cursor=c)
         has_google_token = 'google_token' in columns
         
         # Simplified and more robust query
@@ -1090,11 +1147,16 @@ class Database:
             
         activities = []
         for row in c.fetchall():
+            # Handle datetime objects (Postgres) or strings (SQLite)
+            created_at = row[3]
+            if hasattr(created_at, 'isoformat'):
+                created_at = created_at.isoformat()
+            
             activities.append({
                 'id': row[0],
                 'action': row[1],
                 'details': row[2],
-                'created_at': row[3],
+                'created_at': created_at,
                 'user_name': row[4] or 'System',
                 'user_email': row[5],
                 'is_google_user': bool(row[6]) if has_google_token else False

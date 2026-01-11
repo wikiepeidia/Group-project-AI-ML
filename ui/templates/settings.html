@@ -90,6 +90,25 @@
                                             </select>
                                         </div>
 
+                                        {% elif key == 'appearance' %}
+                                        <div class="mb-3">
+                                            <label class="form-label d-block">Theme Preferences</label>
+                                            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                                                <button type="button" class="btn btn-outline-primary theme-option flex-grow-1" data-theme-option="system">
+                                                    <i class="fas fa-desktop me-2"></i> System (Auto)
+                                                </button>
+                                                <button type="button" class="btn btn-outline-dark theme-option flex-grow-1" data-theme-option="dark">
+                                                    <i class="fas fa-moon me-2"></i> Dark Mode
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning theme-option flex-grow-1" data-theme-option="light">
+                                                    <i class="fas fa-sun me-2"></i> Light Mode
+                                                </button>
+                                            </div>
+                                            <div class="form-text mt-2">
+                                                Choose how the application looks to you. System mode automatically switches based on your device settings.
+                                            </div>
+                                        </div>
+
                                         {% elif key == 'system' %}
                                         <div class="mb-3">
                                             <label class="form-label">Backup Frequency</label>

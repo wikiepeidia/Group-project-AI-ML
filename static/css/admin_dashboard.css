@@ -103,6 +103,15 @@
 .action-card:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     transform: translateY(-3px);
+    text-decoration: none; /* Prevent underline */
+}
+
+/* Fix for dark mode hover status */
+.action-card:hover .action-content h4 {
+    color: var(--gray-900);
+}
+.action-card:hover .action-content p {
+    color: var(--gray-600);
 }
 
 .action-icon {

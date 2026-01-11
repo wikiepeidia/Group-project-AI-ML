@@ -7,7 +7,7 @@ test/
 tests/
 # C extensions
 token.json
-
+ai_agent_service/
 *.so
 examples/
 example/
@@ -277,6 +277,8 @@ evaluate_models.py
 # Development database files (keep structure files, ignore runtime DBs)
 #fun_work_hub.db
 #workspace_management.db
+
+
 
 # Database files
 *.db

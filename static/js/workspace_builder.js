@@ -687,6 +687,109 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Data Validation Logic ---
+    function getDataStatus(node) {
+        if (!node || !node.dataset.config) return 'missing';
+        
+        const config = JSON.parse(node.dataset.config);
+        const type = node.dataset.type;
+        const nodeId = node.dataset.nodeId;
+        // Helper: Check connections
+        const hasInput = builderState.connections.some(c => c.target === nodeId);
+        
+        // --- GOOGLE ---
+        if (type === 'google_sheet_read') {
+            if (!config.sheetId) return 'missing';
+            if (!config.range) return 'partial'; 
+            return 'full';
+        }
+        if (type === 'google_sheet_write') {
+            if (!config.sheetId) return 'missing';
+            // Needs SheetID + Range + Data
+            // If data is placeholder {{...}}, it might be OK if input connected
+            if (!config.range || (!config.data && !hasInput)) return 'partial';
+            return 'full';
+        }
+        if (type === 'google_doc_read') {
+            if (!config.docId) return 'missing';
+            return 'full';
+        }
+        if (type === 'gmail_send') {
+            if (!config.recipient && !config.to) return 'missing';
+            if (!config.subject || !config.body) return 'partial';
+            return 'full';
+        }
+
+        // --- RETAIL AI ---
+        if (type === 'ai_service' || type === 'invoice_ocr') {
+            // Need a file or input connection
+            if (!config.fileUrl && !config.file_path && !hasInput) return 'missing'; 
+            return 'full';
+        }
+        if (type === 'invoice_forecast') {
+            // Needs data
+            if (!config.data && !hasInput) return 'missing';
+            return 'full';
+        }
+
+        // --- INTEGRATIONS ---
+        if (type === 'make_webhook') {
+            if (!config.url) return 'missing';
+            if (!config.body) return 'partial'; // Can send empty body but usually not useful
+            return 'full';
+        }
+        if (type === 'slack_notify' || type === 'discord_notify') {
+             if (!config.url && !config.webhookUrl) return 'missing';
+             if (!config.message) return 'partial';
+             return 'full';
+        }
+
+        // --- LOGIC / TRIGGERS ---
+        if (type === 'schedule_trigger') {
+            // Always full usually, unless we add cron config later
+            return 'full'; 
+        }
+        if (type === 'manual_trigger' || type === 'webhook_trigger') {
+            return 'full';
+        }
+        if (type === 'filter') {
+            if (!config.keyword && !config.condition) return 'missing';
+            return 'full';
+        }
+        
+        // Default for unknown nodes
+        return 'full'; 
+    }
+
+    function updateNodeStatusIcon(node) {
+        if (!node) return;
+        const status = getDataStatus(node);
+        const header = node.querySelector('.node-header');
+        
+        let statusIcon = header.querySelector('.node-status-icon');
+        if (!statusIcon) {
+            statusIcon = document.createElement('div');
+            statusIcon.className = 'node-status-icon';
+            statusIcon.style.marginLeft = 'auto'; // Push to right
+            statusIcon.style.marginRight = '8px';
+            // Insert before menu
+            const menu = header.querySelector('.node-menu');
+            header.insertBefore(statusIcon, menu);
+        }
+
+        statusIcon.innerHTML = '';
+        
+        if (status === 'full') {
+            statusIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#4CAF50; font-size:14px;" title="Full Data"></i>';
+        } else if (status === 'partial') {
+            statusIcon.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#FF9800; font-size:14px;" title="Partial Data"></i>';
+        } else {
+            statusIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#F44336; font-size:14px;" title="Missing Data"></i>';
+        }
+    }
+    
+    // Call this when config updates or node created
+
     function bindPropertyInputs() {
         let isComposing = false;
 
@@ -705,7 +808,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const value = event.target.value || 'Untitled block';
                 const titleEl = builderState.selectedNode.querySelector('.node-title');
                 if (titleEl) {
-                    titleEl.textContent = value;
+                    // Preserve the badge if it exists
+                    const badge = titleEl.querySelector('.node-id-badge');
+                    if (badge) {
+                        // Cloning badge to re-insert safely
+                        titleEl.innerHTML = ''; // Clear text
+                        titleEl.appendChild(badge.cloneNode(true));
+                        titleEl.append(document.createTextNode(' ' + value));
+                    } else {
+                        // Fallback: Try to get ID from data-node-id if badge is missing
+                        const nodeId = builderState.selectedNode.dataset.nodeId || '';
+                        const numId = nodeId.replace('node-', '');
+                        if (numId) {
+                             const newBadge = document.createElement('span');
+                             newBadge.className = 'node-id-badge';
+                             newBadge.style.cssText = 'font-size:0.85em; font-weight:bold; color:#444; margin-right:6px; background:rgba(0,0,0,0.08); padding:0px 5px; border-radius:4px;';
+                             newBadge.textContent = `#${numId}`;
+                             titleEl.innerHTML = '';
+                             titleEl.appendChild(newBadge);
+                             titleEl.append(document.createTextNode(' ' + value));
+                        } else {
+                             titleEl.textContent = value;
+                        }
+                    }
                 }
                 builderState.selectedNode.dataset.title = value;
                 if (selectedNodeTitle) {
@@ -763,7 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <i class="${toolData.icon}"></i>
                 </div>
                 <div class="node-title">
-                    <span class="node-id-badge" style="font-size:0.8em; opacity:0.6; margin-right:4px;">#${builderState.nodeCounter}</span>
+                    <span class="node-id-badge" style="font-size:0.85em; font-weight:bold; color:#444; margin-right:6px; background:rgba(0,0,0,0.08); padding:0px 5px; border-radius:4px;">#${builderState.nodeCounter}</span>
                     ${toolData.name}
                 </div>
                 <div class="node-menu">
@@ -783,6 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pushHistory({ type: 'create', nodeId: node.dataset.nodeId });
         updateDropZoneVisibility();
         selectNode(node);
+        updateNodeStatusIcon(node); // Initial status check
         warnIfGoogleNode(toolData.type);
         return node;
     }
@@ -853,91 +979,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isConnecting: false,
         connectionStart: null
     };
-
-    document.querySelectorAll('.toolbar-btn').forEach((btn) => {
-        btn.setAttribute('role', 'button');
-        btn.setAttribute('aria-pressed', 'false');
-        btn.style.display = 'none'; // Hide buttons as modes are removed
-        btn.addEventListener('click', function () {
-            const action = this.dataset.action;
-            document.querySelectorAll('.toolbar-btn').forEach((item) => {
-                item.classList.remove('active');
-                item.setAttribute('aria-pressed', 'false');
-            });
-            this.classList.add('active');
-            this.setAttribute('aria-pressed', 'true');
-            builderMode.current = action;
-
-            if (action === 'cursor') {
-                if (canvas) {
-                    canvas.classList.remove('zoom-mode');
-                    canvas.classList.add('cursor-mode');
-                }
-                resetConnectionState();
-                showNotification('Select mode activated', 'info');
-            } else if (action === 'connect') {
-                // Legacy connect button - now just informs user
-                showNotification('Click the big circles on nodes to connect!', 'info');
-            } else if (action === 'zoom') {
-                if (canvas) {
-                    canvas.classList.remove('cursor-mode', 'connect-mode');
-                    canvas.classList.add('zoom-mode');
-                }
-                resetConnectionState();
-                showNotification('Zoom mode activated - Use mouse wheel to zoom in/out', 'info');
-                showZoomControls();
-            } else {
-                hideZoomControls();
-            }
-        });
-    });
-
-    // Zoom control panel
-    function createZoomControls() {
-        const toolbar = document.querySelector('.floating-toolbar');
-        if (!toolbar) return null;
-        let wrapper = document.querySelector('.zoom-controls');
-        if (wrapper) return wrapper;
-        wrapper = document.createElement('div');
-        wrapper.className = 'zoom-controls';
-        wrapper.innerHTML = `
-            <button class="zoom-btn zoom-in" aria-label="Zoom in">+</button>
-            <button class="zoom-btn zoom-out" aria-label="Zoom out">−</button>
-            <button class="zoom-btn zoom-reset" aria-label="Reset zoom">Reset</button>
-        `;
-        toolbar.appendChild(wrapper);
-        wrapper.querySelector('.zoom-in').addEventListener('click', () => {
-            builderMode.scale = Math.min(2.0, builderMode.scale + 0.1);
-            if (canvas) {
-                canvas.style.transform = `scale(${builderMode.scale})`;
-                canvas.style.transformOrigin = 'center center';
-            }
-        });
-        wrapper.querySelector('.zoom-out').addEventListener('click', () => {
-            builderMode.scale = Math.max(0.5, builderMode.scale - 0.1);
-            if (canvas) {
-                canvas.style.transform = `scale(${builderMode.scale})`;
-                canvas.style.transformOrigin = 'center center';
-            }
-        });
-        wrapper.querySelector('.zoom-reset').addEventListener('click', () => {
-            builderMode.scale = 1.0;
-            if (canvas) {
-                canvas.style.transform = `scale(${builderMode.scale})`;
-            }
-        });
-        return wrapper;
-    }
-
-    function showZoomControls() {
-        const wrapper = createZoomControls();
-        if (wrapper) wrapper.style.display = 'flex';
-    }
-
-    function hideZoomControls() {
-        const wrapper = document.querySelector('.zoom-controls');
-        if (wrapper) wrapper.style.display = 'none';
-    }
 
     if (canvas) {
         canvas.addEventListener('wheel', (event) => {
@@ -1128,10 +1169,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerSaveBtn = document.querySelector('.canvas-header .canvas-actions [data-action="save-workflow"]');
     const headerClearBtn = document.querySelector('.canvas-header .canvas-actions [data-action="clear-canvas"]');
     const headerRunBtn = document.querySelector('.canvas-header .canvas-actions [data-action="run-workflow"]');
+    const headerPauseBtn = document.querySelector('.canvas-header .canvas-actions [data-action="pause-workflow"]');
+    const headerCancelBtn = document.querySelector('.canvas-header .canvas-actions [data-action="cancel-workflow"]');
 
     if (headerUndoBtn) headerUndoBtn.addEventListener('click', () => undo());
     if (headerSaveBtn) headerSaveBtn.addEventListener('click', () => saveWorkflow());
     if (headerRunBtn) headerRunBtn.addEventListener('click', () => runWorkflow());
+    if (headerPauseBtn) headerPauseBtn.addEventListener('click', () => pauseWorkflow());
+    if (headerCancelBtn) headerCancelBtn.addEventListener('click', () => cancelWorkflow());
     if (headerClearBtn) headerClearBtn.addEventListener('click', () => clearCanvas());
 
     // Load Workflow Logic - DEPRECATED (Replaced by new Scenario Loader below)
@@ -1257,15 +1302,64 @@ document.addEventListener('DOMContentLoaded', () => {
             builderState.connections = [];
             builderState.history = [];
             builderState.redo = [];
+            builderState.nodeCounter = 0;
             updateDropZoneVisibility();
             showNotification('Canvas cleared', 'info');
         }
     }
 
+    let executionController = null;
+
+    function setExecutionState(isRunning) {
+        const runBtn = document.querySelector('.canvas-header .canvas-actions [data-action="run-workflow"]');
+        const pauseBtn = document.querySelector('.canvas-header .canvas-actions [data-action="pause-workflow"]');
+        const cancelBtn = document.querySelector('.canvas-header .canvas-actions [data-action="cancel-workflow"]');
+
+        if (isRunning) {
+            // Run disabled
+            if (runBtn) {
+                runBtn.style.opacity = '0.5';
+                runBtn.style.pointerEvents = 'none';
+            }
+            // Pause/Cancel enabled
+            if (pauseBtn) {
+                pauseBtn.style.opacity = '1';
+                pauseBtn.style.pointerEvents = 'auto';
+            }
+            if (cancelBtn) {
+                cancelBtn.style.opacity = '1';
+                cancelBtn.style.pointerEvents = 'auto';
+            }
+        } else {
+            // Run enabled
+            if (runBtn) {
+                runBtn.style.opacity = '1';
+                runBtn.style.pointerEvents = 'auto';
+            }
+            // Pause/Cancel disabled
+            if (pauseBtn) {
+                pauseBtn.style.opacity = '0.5';
+                pauseBtn.style.pointerEvents = 'none';
+            }
+            if (cancelBtn) {
+                cancelBtn.style.opacity = '0.5';
+                cancelBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+
+    // Initialize buttons
+    setExecutionState(false);
+
     async function runWorkflow() {
+        if (executionController) return; // Prevent double run
+
         showNotification('Executing workflow...', 'info');
         if (window.ConsoleManager) window.ConsoleManager.log('Starting workflow execution...', 'system');
         
+        executionController = new AbortController();
+        setExecutionState(true);
+
         const nodes = [];
         let missingData = false;
 
@@ -1323,7 +1417,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: executionController.signal
             });
 
             const result = await response.json();
@@ -1343,9 +1438,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.ConsoleManager) window.ConsoleManager.log(`Error details: ${result.message || 'Unknown error'}`, 'error');
             }
         } catch (error) {
-            console.error('Error executing workflow:', error);
-            showNotification('Network error executing workflow', 'error');
-            if (window.ConsoleManager) window.ConsoleManager.log(`Network error: ${error.message}`, 'error');
+            if (error.name === 'AbortError') {
+                if (window.ConsoleManager) window.ConsoleManager.log('Workflow execution aborted.', 'warning');
+            } else {
+                console.error('Error executing workflow:', error);
+                showNotification('Network error executing workflow', 'error');
+                if (window.ConsoleManager) window.ConsoleManager.log(`Network error: ${error.message}`, 'error');
+            }
+        } finally {
+            executionController = null;
+            setExecutionState(false);
+        }
+    }
+
+    function pauseWorkflow() {
+        // Placeholder pause
+        console.log('Pause Workflow Triggered');
+        if (window.ConsoleManager) {
+            window.ConsoleManager.log('Pause not fully supported on backend yet.', 'warning');
+            // We don't abort, just log.
+        }
+    }
+
+    function cancelWorkflow() {
+        if (executionController) {
+            executionController.abort(); // This triggers the catch(AbortError) in runWorkflow
+            showNotification('Cancelling workflow...', 'info');
+            // State reset handled in finally block of runWorkflow
         }
     }
 
@@ -1932,6 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
             node.dataset.nodeId = `node-${builderState.nodeCounter}`;
         }
         attachNodeInteractions(node);
+        updateNodeStatusIcon(node); // Initial check for existing nodes
     });
 
     bindPropertyInputs();
@@ -1952,7 +2072,30 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save basic info
             node.dataset.title = newTitle;
             const titleEl = node.querySelector('.node-title');
-            if (titleEl) titleEl.textContent = newTitle;
+            if (titleEl) {
+                 // Preserve badge logic (replicated)
+                 const badge = titleEl.querySelector('.node-id-badge');
+                 if (badge) {
+                    titleEl.innerHTML = ''; 
+                    titleEl.appendChild(badge.cloneNode(true));
+                    titleEl.append(document.createTextNode(' ' + newTitle));
+                 } else {
+                     // Check if we can restore it from ID
+                    const nodeId = node.dataset.nodeId || '';
+                    const numId = nodeId.replace('node-', '');
+                    if (numId) {
+                         const newBadge = document.createElement('span');
+                         newBadge.className = 'node-id-badge';
+                         newBadge.style.cssText = 'font-size:0.85em; font-weight:bold; color:#444; margin-right:6px; background:rgba(0,0,0,0.08); padding:0px 5px; border-radius:4px;';
+                         newBadge.textContent = `#${numId}`;
+                         titleEl.innerHTML = '';
+                         titleEl.appendChild(newBadge);
+                         titleEl.append(document.createTextNode(' ' + newTitle));
+                    } else {
+                        titleEl.textContent = newTitle;
+                    }
+                 }
+            }
             const contentEl = node.querySelector('.node-content');
             if (contentEl) contentEl.textContent = newDescription;
 
@@ -1974,6 +2117,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 config.to = document.getElementById('cfg-to')?.value;
                 config.subject = document.getElementById('cfg-subject')?.value;
                 config.body = document.getElementById('cfg-body')?.value;
+                // Fix: map 'to' to 'recipient' for validation
+                config.recipient = config.to; 
             } else if (type === 'make_webhook') {
                 config.url = document.getElementById('cfg-url')?.value;
                 config.body = document.getElementById('cfg-message')?.value;
@@ -1989,6 +2134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             node.dataset.config = JSON.stringify(config);
+            updateNodeStatusIcon(node); // Update Status Icon after save
 
             pushHistory({ type: 'edit', nodeId: node.dataset.nodeId, from: { title: oldTitle, description: oldDescription }, to: { title: newTitle, description: newDescription } });
             showNotification('Node updated', 'success');

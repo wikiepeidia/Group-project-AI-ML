@@ -1841,3 +1841,43 @@ The request is not supported.
         width: 100%;
     }
 }
+
+/* =========================================
+   GLOBAL DARK MODE FIXES
+   ========================================= */
+
+/* Fix Bootstrap Modals in Dark Mode */
+body.dark-mode .modal-content {
+    background-color: var(--surface-200); /* Dark blue/grey background */
+    color: var(--gray-900);               /* Light text */
+    border: 1px solid var(--border-soft);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: var(--border-soft);
+}
+
+body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Fix Hover text readability in Dark Mode */
+/* Forces links and common interactive elements to stay light on hover */
+body.dark-mode a:hover,
+body.dark-mode .btn:hover,
+body.dark-mode .nav-link:hover,
+body.dark-mode .dropdown-item:hover,
+body.dark-mode .list-group-item-action:hover {
+    color: #ffffff !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    color: #ffffff !important;
+    background-color: rgba(255,255,255, 0.1) !important;
+}
+
+/* Specific fix for OCR Import Modal progress text */
+body.dark-mode #ocrStatusText {
+    color: #a5b4cb !important; /* Light blue-grey */
+}
