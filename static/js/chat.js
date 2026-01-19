@@ -1,112 +1,223 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("🚀 Chat System v3.0 (File-Based) Loaded");
+    console.log("🚀 Chat Script v4.0 (Stop Generation) Loaded");
     
-    const input = document.getElementById('ai-chat-input');
-    const sendBtn = document.getElementById('ai-chat-send');
-    const messagesContainer = document.getElementById('ai-chat-messages');
-    const toggleBtn = document.getElementById('ai-chat-toggle');
-    const chatWindow = document.getElementById('ai-chat-window');
-    const closeBtn = document.getElementById('ai-chat-minimize');
+    // DOM Elements
+    const elements = {
+        input: document.getElementById('ai-chat-input'),
+        sendBtn: document.getElementById('ai-chat-send'),
+        messagesContainer: document.getElementById('ai-chat-messages'),
+        toggleBtn: document.getElementById('ai-chat-toggle'),
+        chatWindow: document.getElementById('ai-chat-window'),
+        closeBtn: document.getElementById('ai-chat-minimize'),
+        fileInput: document.getElementById('ai-chat-file-input'),
+        attachBtn: document.getElementById('ai-chat-attach-btn'),
+        filePreview: document.getElementById('ai-chat-file-preview'),
+        fileNameDisplay: document.getElementById('ai-chat-file-name'),
+        clearFileBtn: document.getElementById('ai-chat-clear-file')
+    };
 
+    // State
     let isProcessing = false;
+    let currentFile = null;
+    let pollInterval = null;
+    let abortController = null; // Used to cancel requests
+    let activeUiId = null;
 
-    // Toggle
+    // --- TOGGLE CHAT ---
     function toggleChat() {
-        if(!chatWindow) return;
-        chatWindow.hasAttribute('hidden') ? chatWindow.removeAttribute('hidden') : chatWindow.setAttribute('hidden', '');
+        if(!elements.chatWindow) return;
+        const isHidden = elements.chatWindow.hasAttribute('hidden');
+        if (isHidden) {
+            elements.chatWindow.removeAttribute('hidden');
+            setTimeout(() => { if(elements.input) elements.input.focus(); }, 100);
+        } else {
+            elements.chatWindow.setAttribute('hidden', '');
+        }
     }
-    if(toggleBtn) toggleBtn.addEventListener('click', toggleChat);
-    if(closeBtn) closeBtn.addEventListener('click', toggleChat);
+    if(elements.toggleBtn) elements.toggleBtn.addEventListener('click', toggleChat);
+    if(elements.closeBtn) elements.closeBtn.addEventListener('click', toggleChat);
 
-    // Helper: Scroll
+    // --- FILE UPLOAD ---
+    if (elements.attachBtn && elements.fileInput) {
+        elements.attachBtn.addEventListener('click', () => elements.fileInput.click());
+        elements.fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            elements.filePreview.style.display = 'flex';
+            elements.fileNameDisplay.innerHTML = '⏳ Uploading...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch('/api/ai/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    currentFile = data.filename;
+                    elements.fileNameDisplay.innerHTML = '✅ ' + file.name;
+                } else {
+                    elements.fileNameDisplay.innerHTML = '❌ Failed';
+                }
+            } catch (e) {
+                elements.fileNameDisplay.innerHTML = '❌ Error';
+            }
+        });
+        if (elements.clearFileBtn) elements.clearFileBtn.addEventListener('click', () => {
+            elements.fileInput.value = '';
+            elements.filePreview.style.display = 'none';
+            currentFile = null;
+        });
+    }
+
+    // --- UI HELPERS ---
     function scrollToBottom() {
-        if(messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if(elements.messagesContainer) elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
     }
 
-    // Helper: Add Message
     function addMessage(text, role) {
         const div = document.createElement('div');
         div.className = `ai-message ai-message-${role}`;
         div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
-        messagesContainer.appendChild(div);
+        elements.messagesContainer.appendChild(div);
         scrollToBottom();
     }
 
-    // Polling
-    async function pollJob(jobId, uiId) {
-        console.log(`⏳ [Polling] Starting for Job ${jobId}...`);
+    // --- STOP LOGIC ---
+    function setProcessingState(processing) {
+        isProcessing = processing;
+        if (processing) {
+            // Change Send Button to Stop Button
+            elements.sendBtn.innerHTML = '<i class="fas fa-square"></i>'; // Stop Icon
+            elements.sendBtn.classList.add('stop');
+            elements.sendBtn.title = "Stop Generating";
+            elements.input.disabled = true;
+        } else {
+            // Revert to Send Button
+            elements.sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            elements.sendBtn.classList.remove('stop');
+            elements.sendBtn.title = "Send";
+            elements.input.disabled = false;
+            elements.input.focus();
+        }
+    }
+
+    function stopGeneration() {
+        console.log("🛑 User stopped generation.");
         
-        const pollInterval = setInterval(async () => {
+        // 1. Cancel Network Request
+        if (abortController) abortController.abort();
+        
+        // 2. Stop Polling
+        if (pollInterval) clearInterval(pollInterval);
+        
+        // 3. Remove UI Bubble
+        if (activeUiId) {
+            const el = document.getElementById(activeUiId);
+            if (el) {
+                el.innerHTML = '<span style="color:#ef4444; font-size:12px;">⛔ Stopped by user</span>';
+                setTimeout(() => el.remove(), 1000);
+            }
+        }
+
+        // 4. Reset State
+        setProcessingState(false);
+    }
+
+    // --- POLLING ---
+    async function pollJob(jobId, uiId) {
+        activeUiId = uiId;
+        pollInterval = setInterval(async () => {
             try {
                 const res = await fetch(`/api/ai/status/${jobId}`);
                 const data = await res.json();
-                console.log(`🔄 [Polling] Status:`, data.status);
 
                 if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     document.getElementById(uiId)?.remove();
-                    isProcessing = false;
                     
-                    console.log("✅ [Polling] Success!", data);
                     if (data.action && data.action.action === 'workflow_created') {
-                        addMessage(`✅ **Workflow Created!**\n[Open Builder](/workspace/builder?load=${data.action.id})`, 'bot');
+                        // Render Success Card
+                        const div = document.createElement('div');
+                        div.className = 'ai-message ai-message-bot';
+                        div.innerHTML = `
+                            <div class="workflow-card">
+                                <div class="wf-title">✅ Automation Created</div>
+                                <div class="wf-desc">${data.response}</div>
+                                <a href="/workspace/builder?load=${data.action.id}" class="wf-btn">Open Builder</a>
+                            </div>`;
+                        elements.messagesContainer.appendChild(div);
+                        scrollToBottom();
                     } else {
                         addMessage(data.response, 'bot');
                     }
-                    input.disabled = false;
-                    input.focus();
+                    setProcessingState(false);
                 } 
                 else if (data.status === 'failed') {
                     clearInterval(pollInterval);
                     document.getElementById(uiId)?.remove();
-                    isProcessing = false;
-                    input.disabled = false;
-                    addMessage(`❌ Error: ${data.error}`, 'bot');
+                    addMessage(`❌ AI Error: ${data.error}`, 'bot');
+                    setProcessingState(false);
                 }
             } catch (e) {
-                console.error("Polling Network Error:", e);
+                console.error("Polling Error:", e);
             }
         }, 1000);
     }
 
-    // Send
+    // --- SEND MESSAGE ---
     async function sendMessage() {
-        const text = input.value.trim();
-        if (!text) return;
-        if (isProcessing) return;
+        // If already processing, clicking the button means STOP
+        if (isProcessing) {
+            stopGeneration();
+            return;
+        }
 
-        addMessage(text, 'user');
-        input.value = '';
-        input.disabled = true;
-        isProcessing = true;
+        const text = elements.input.value.trim();
+        if (!text && !currentFile) return;
+
+        addMessage(text || (currentFile ? '[Sent File]' : ''), 'user');
+        elements.input.value = '';
+        
+        // Clear file
+        if(elements.fileInput) elements.fileInput.value = '';
+        if(elements.filePreview) elements.filePreview.style.display = 'none';
+
+        // Set State & Abort Controller
+        setProcessingState(true);
+        abortController = new AbortController();
+        const signal = abortController.signal;
 
         // Show UI
         const uiId = 'thinking-' + Date.now();
+        activeUiId = uiId;
         const uiDiv = document.createElement('div');
         uiDiv.id = uiId;
         uiDiv.className = 'agent-process-container';
         uiDiv.style.display = 'block';
-        uiDiv.innerHTML = `<div class="process-header"><div class="spinner-ring"></div><span>Project A is working...</span></div>`;
-        messagesContainer.appendChild(uiDiv);
+        uiDiv.innerHTML = `
+            <div class="process-header">
+                <div class="spinner-ring"></div>
+                <span>Analyzing Request...</span>
+            </div>
+            <div class="process-steps"></div>`;
+        elements.messagesContainer.appendChild(uiDiv);
         scrollToBottom();
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            console.log("📤 Sending Request...");
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text }),
+                signal: signal // Attach abort signal
             });
             const data = await res.json();
-            console.log("📥 Initial Response:", data);
 
             if (data.status === 'completed') {
                 document.getElementById(uiId)?.remove();
                 addMessage(data.response, 'bot');
-                isProcessing = false;
-                input.disabled = false;
+                setProcessingState(false);
             } else if (data.job_id) {
                 pollJob(data.job_id, uiId);
             } else {
@@ -114,13 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
         } catch (e) {
-            document.getElementById(uiId)?.remove();
-            isProcessing = false;
-            input.disabled = false;
-            addMessage(`❌ Error: ${e.message}`, 'bot');
-        }
-    }
-
-    if(sendBtn) sendBtn.addEventListener('click', sendMessage);
-    if(input) input.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
-});
+            if (e.name === 'AbortError') {
+                // Handled in stopGeneration
+            } else {
