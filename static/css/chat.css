@@ -258,3 +258,87 @@ body.dark-mode .ai-input-bar {
     font-family: monospace;
     font-size: 0.9em;
 }
+ /* Deep Research UI Styles */
+    .agent-process-container {
+        background: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 10px 0;
+        font-family: 'Segoe UI', monospace;
+        display: none; /* Hidden by default */
+    }
+
+    .process-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+
+    .spinner-ring {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #0084ff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .process-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #888;
+        opacity: 0.5;
+        transition: all 0.3s ease;
+    }
+
+    .step-item.active {
+        opacity: 1;
+        color: #00d4aa; /* Active Green */
+    }
+
+    .step-item.pending {
+        opacity: 1;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .step-icon { width: 14px; text-align: center; }
+
+    /* Success Card */
+    .workflow-card {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .wf-title { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+    .wf-desc { font-size: 13px; opacity: 0.9; margin-bottom: 10px; }
+    .wf-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.4);
+        padding: 6px 12px;
+        border-radius: 6px;
+        color: white;
+        text-decoration: none;
+        font-size: 12px;
+        display: inline-block;
+        transition: background 0.2s;
+    }
+    .wf-btn:hover { background: rgba(255,255,255,0.3); }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

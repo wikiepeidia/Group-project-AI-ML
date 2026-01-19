@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 from flask_talisman import Talisman 
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from core.database import Database
+import uuid
+import time
+import requests
 from core.auth import AuthManager
 from core.config import Config
 from core.utils import Utils
@@ -15,6 +19,7 @@ from core.services.analytics_service import analytics_service
 from core.automation_engine import AutomationEngine
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
+from core.agent_middleware import AgentMiddleware 
 import secrets
 import os
 import json
@@ -28,6 +33,10 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Update template folder to use ui/templates
 app = Flask(__name__, template_folder='ui/templates')
+
+# Apply ProxyFix for correct IP/Scheme behind reverse proxies (Nginx, Heroku, etc.)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_me_to_a_secure_random_value')
 app.config['WTF_CSRF_ENABLED'] = True
 app.secret_key = app.config['SECRET_KEY']
@@ -113,6 +122,7 @@ def login_unauthorized():
 # Initialize core components
 db_manager = Database()
 db = db_manager  # Alias for convenience
+agent_middleware = AgentMiddleware(db_manager)
 auth_manager = AuthManager(db_manager)
 automation_engine = AutomationEngine(db_manager)
 config = Config()
@@ -120,6 +130,10 @@ utils = Utils()
 
 # Store database manager in app extensions for permission decorator
 app.extensions['database'] = db_manager
+
+# In-Memory Job Store (For Async AI Tasks)
+# Structure: { job_id: { "status": "processing", "result": None, "start_time": timestamp } }
+AI_JOBS = {}
 
 # Central subscription plans (used in wallet/subscription logic)
 SUBSCRIPTION_PLANS = {
@@ -3354,87 +3368,116 @@ def ai_upload():
         return jsonify({'error': str(e)}), 500
 
 # AI Chat Integration
+# --- ASYNC AI WORKER ---
+# --- UPDATED AI WORKER WITH MEMORY ---
+# --- ROBUST FILE-BASED JOB SYSTEM ---
+JOBS_DIR = os.path.join(os.getcwd(), 'jobs')
+os.makedirs(JOBS_DIR, exist_ok=True)
+
+def save_job(job_id, data):
+    """Saves job data to a JSON file."""
+    with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'w') as f:
+        json.dump(data, f)
+
+def load_job(job_id):
+    """Loads job data from a JSON file."""
+    try:
+        with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
+def background_ai_task(job_id, user_id, message):
+    print(f"🧵 [Job {job_id}] Processing...")
+    
+    # Update status to processing
+    save_job(job_id, {"status": "processing", "start_time": time.time()})
+
+    try:
+        # 1. Config
+        with open('secrets/ai_config.json') as f:
+            config = json.load(f)
+            hf_token = config.get('HF_TOKEN')
+            hf_base_url = config.get('HF_BASE_URL')
+
+        # 2. Context
+        # Re-init middleware inside thread to ensure DB connection is fresh
+        db_thread = Database()
+        mw_thread = AgentMiddleware(db_thread)
+        system_context = mw_thread.get_system_context()
+        
+        full_payload = f"[SYSTEM CONTEXT]\n{system_context}\n[USER REQUEST]\n{message}"
+
+        # 3. Request
+        target_url = f"{hf_base_url.rstrip('/')}/chat"
+        headers = {"Content-Type": "application/json"}
+        if hf_token: headers["Authorization"] = f"Bearer {hf_token}"
+        
+        response = requests.post(target_url, headers=headers, json={
+            "user_id": user_id, "store_id": 1, "message": full_payload
+        }, timeout=300)
+
+        if response.status_code == 200:
+            data = response.json()
+            ai_text = data.get('response', '')
+            
+            # 4. Actions
+            final_response, action_meta = mw_thread.process_ai_response(ai_text, user_id)
+            
+            # 5. SAVE SUCCESS
+            save_job(job_id, {
+                "status": "completed",
+                "response": final_response,
+                "action": action_meta
+            })
+            print(f"✅ [Job {job_id}] Finished.")
+        else:
+            save_job(job_id, {"status": "failed", "error": f"AI Error: {response.text}"})
+
+    except Exception as e:
+        print(f"❌ [Job {job_id}] Crash: {e}")
+        save_job(job_id, {"status": "failed", "error": str(e)})
+
 @app.route('/api/ai/chat', methods=['POST'])
 @login_required
 def ai_chat():
-    """
-    Endpoint to handle chat messages from the frontend widget.
-    Forwards the message to the Hugging Face AI Space.
-    """
-    try:
-        data = request.get_json()
-        user_message = data.get('message')
-        
-        if not user_message:
-            return jsonify({'error': 'Message is required'}), 400
+    data = request.get_json()
+    message = data.get('message', '').strip()
+    if not message: return jsonify({'error': 'Message required'}), 400
 
-        # Load AI Config
-        try:
-            with open('secrets/ai_config.json') as f:
-                ai_config = json.load(f)
-                hf_token = ai_config.get('HF_TOKEN', '')
-                hf_base_url = ai_config.get('HF_BASE_URL')
-        except FileNotFoundError:
-            return jsonify({'error': 'AI Configuration not found'}), 500
+    job_id = str(uuid.uuid4())
 
-        if not hf_base_url:
-             return jsonify({'error': 'AI Configuration incomplete (Base URL missing)'}), 500
+    # 1. LOCAL REFLEX
+    greetings = ["xin chào", "hello", "hi", "chào"]
+    if any(message.lower().startswith(g) for g in greetings) and len(message) < 20:
+        return jsonify({
+            "status": "completed",
+            "response": "Xin chào! Tôi có thể giúp gì cho bạn hôm nay?",
+            "action": None
+        })
 
-        # Prepare payload for AI Service
-        # We send the current user's ID to maintain context if needed
-        payload = {
-            "user_id": current_user.id,
-            "store_id": 1, # Default store ID
-            "message": user_message
-        }
+    # 2. ASYNC START
+    save_job(job_id, {"status": "processing", "start_time": time.time()})
+    
+    thread = threading.Thread(target=background_ai_task, args=(job_id, current_user.id, message))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({"status": "processing", "job_id": job_id})
 
-        headers = {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true"
-        }
-        if hf_token:
-            headers["Authorization"] = f"Bearer {hf_token}"
+@app.route('/api/ai/status/<job_id>', methods=['GET'])
+@login_required
+def ai_job_status(job_id):
+    job = load_job(job_id)
+    if not job:
+        return jsonify({"status": "failed", "error": "Job file not found"}), 404
+    return jsonify(job)
 
-        # Call AI Service
-        import requests
-        response = requests.post(
-            f"{hf_base_url}/chat",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-
-        if response.status_code == 200:
-            ai_response = response.json()
-            return jsonify(ai_response)
-        else:
-            print(f"AI Service Error: {response.status_code} - {response.text}")
-            return jsonify({'error': 'Failed to get response from AI service'}), 502
-
-    except Exception as e:
-        print(f"AI Chat Exception: {str(e)}")
-        return jsonify({'error': 'Internal Server Error'}), 500
 
 if __name__ == '__main__':
-    import sys
-    import os
-    
-    print("[Main] Starting application...", flush=True)
-    
-    # Only start DL service from the main process, not the reloader child
-    # if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-    #     print("[Main] Main process - DL Service integrated directly (Lazy Loading).", flush=True)
-    # else:
-    #     print("[Main] Reloader child process", flush=True)
-    #     # Start Automation Engine in the worker process
-    #     automation_engine.start()
-
-    # FORCE DISABLE RELOADER TO PREVENT RELOAD LOOPS ON UPLOAD
-    # This means code changes require manual restart, but uploads won't crash the server
-    print("[Main] Starting Automation Engine...", flush=True)
-    automation_engine.start()
-
-    db_manager.init_database()
-    print("[Main] Starting Flask on port 5000...", flush=True)
-    
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False, threaded=True)
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=False,
+        use_reloader=False
+    )

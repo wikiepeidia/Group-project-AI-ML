@@ -1,181 +1,126 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elements
-    const chatWidget = document.getElementById('ai-chat-widget');
-    const toggleBtn = document.getElementById('ai-chat-toggle');
-    const chatWindow = document.getElementById('ai-chat-window');
-    const closeBtn = document.getElementById('ai-chat-minimize');
+    console.log("🚀 Chat System v3.0 (File-Based) Loaded");
+    
     const input = document.getElementById('ai-chat-input');
     const sendBtn = document.getElementById('ai-chat-send');
     const messagesContainer = document.getElementById('ai-chat-messages');
-    const typingIndicator = document.getElementById('ai-chat-typing');
-    
-    // File Upload Elements
-    const fileInput = document.getElementById('ai-chat-file-input');
-    const attachBtn = document.getElementById('ai-chat-attach-btn');
-    const filePreview = document.getElementById('ai-chat-file-preview');
-    const fileNameDisplay = document.getElementById('ai-chat-file-name');
-    const clearFileBtn = document.getElementById('ai-chat-clear-file');
+    const toggleBtn = document.getElementById('ai-chat-toggle');
+    const chatWindow = document.getElementById('ai-chat-window');
+    const closeBtn = document.getElementById('ai-chat-minimize');
 
-    // State
-    let currentFile = null;
+    let isProcessing = false;
 
-    // Toggle Chat Window
+    // Toggle
     function toggleChat() {
-        const isHidden = chatWindow.hasAttribute('hidden');
-        if (isHidden) {
-            chatWindow.removeAttribute('hidden');
-            setTimeout(() => input.focus(), 100);
-        } else {
-            chatWindow.setAttribute('hidden', '');
-        }
+        if(!chatWindow) return;
+        chatWindow.hasAttribute('hidden') ? chatWindow.removeAttribute('hidden') : chatWindow.setAttribute('hidden', '');
+    }
+    if(toggleBtn) toggleBtn.addEventListener('click', toggleChat);
+    if(closeBtn) closeBtn.addEventListener('click', toggleChat);
+
+    // Helper: Scroll
+    function scrollToBottom() {
+        if(messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    if (toggleBtn) toggleBtn.addEventListener('click', toggleChat);
-    if (closeBtn) closeBtn.addEventListener('click', toggleChat);
-
-    // File Upload Logic
-    if (attachBtn) {
-        attachBtn.addEventListener('click', () => fileInput.click());
+    // Helper: Add Message
+    function addMessage(text, role) {
+        const div = document.createElement('div');
+        div.className = `ai-message ai-message-${role}`;
+        div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
+        messagesContainer.appendChild(div);
+        scrollToBottom();
     }
 
-    if (fileInput) {
-        fileInput.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // Show loading state
-            filePreview.style.display = 'flex';
-            fileNameDisplay.innerHTML = '⏳ Uploading...';
-            currentFile = null; // Clear prev file until uploaded
-
-            const formData = new FormData();
-            formData.append('file', file);
-            
+    // Polling
+    async function pollJob(jobId, uiId) {
+        console.log(`⏳ [Polling] Starting for Job ${jobId}...`);
+        
+        const pollInterval = setInterval(async () => {
             try {
-                // Get CSRF Token
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                
-                const response = await fetch('/api/ai/upload', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken || ''
-                    },
-                    body: formData
-                });
+                const res = await fetch(`/api/ai/status/${jobId}`);
+                const data = await res.json();
+                console.log(`🔄 [Polling] Status:`, data.status);
 
-                const data = await response.json();
-                
-                if (response.ok && (data.success || data.status === 'success' || data.filename)) {
-                    currentFile = data.filename;
-                    fileNameDisplay.innerHTML = '✅ ' + (file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name);
-                } else {
-                    fileNameDisplay.innerHTML = '❌ Upload Failed';
-                    console.error('Upload error:', data);
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    document.getElementById(uiId)?.remove();
+                    isProcessing = false;
+                    
+                    console.log("✅ [Polling] Success!", data);
+                    if (data.action && data.action.action === 'workflow_created') {
+                        addMessage(`✅ **Workflow Created!**\n[Open Builder](/workspace/builder?load=${data.action.id})`, 'bot');
+                    } else {
+                        addMessage(data.response, 'bot');
+                    }
+                    input.disabled = false;
+                    input.focus();
+                } 
+                else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    document.getElementById(uiId)?.remove();
+                    isProcessing = false;
+                    input.disabled = false;
+                    addMessage(`❌ Error: ${data.error}`, 'bot');
                 }
-            } catch (error) {
-                fileNameDisplay.innerHTML = '❌ Network Error';
-                console.error('Upload error:', error);
+            } catch (e) {
+                console.error("Polling Network Error:", e);
             }
-        });
+        }, 1000);
     }
 
-    if (clearFileBtn) {
-        clearFileBtn.addEventListener('click', () => {
-            fileInput.value = '';
-            filePreview.style.display = 'none';
-            currentFile = null;
-        });
-    }
-
-    // Send Message Logic
+    // Send
     async function sendMessage() {
         const text = input.value.trim();
-        if (!text && !currentFile) return;
+        if (!text) return;
+        if (isProcessing) return;
 
-        // Add User Message
-        const tempMsg = text || (currentFile ? '[Sent File]' : '');
-        addMessage(tempMsg, 'user');
-        
+        addMessage(text, 'user');
         input.value = '';
-        input.disabled = true; 
-        
-        // Clear file preview UI
-        fileInput.value = '';
-        filePreview.style.display = 'none';
-        
-        if (typingIndicator) typingIndicator.style.display = 'block';
+        input.disabled = true;
+        isProcessing = true;
+
+        // Show UI
+        const uiId = 'thinking-' + Date.now();
+        const uiDiv = document.createElement('div');
+        uiDiv.id = uiId;
+        uiDiv.className = 'agent-process-container';
+        uiDiv.style.display = 'block';
+        uiDiv.innerHTML = `<div class="process-header"><div class="spinner-ring"></div><span>Project A is working...</span></div>`;
+        messagesContainer.appendChild(uiDiv);
         scrollToBottom();
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-            const payload = {
-                message: text
-            };
-
-            const response = await fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken || ''
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
             
-            if (typingIndicator) typingIndicator.style.display = 'none';
+            console.log("📤 Sending Request...");
+            const res = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            console.log("📥 Initial Response:", data);
 
-            if (response.ok) {
-                const responseText = data.response || data.message || 'I received your message.';
-                addMessage(responseText, 'bot');
+            if (data.status === 'completed') {
+                document.getElementById(uiId)?.remove();
+                addMessage(data.response, 'bot');
+                isProcessing = false;
+                input.disabled = false;
+            } else if (data.job_id) {
+                pollJob(data.job_id, uiId);
             } else {
-                addMessage('❌ Error: ' + (data.error || 'Unknown server error'), 'bot');
+                throw new Error("Invalid Server Response");
             }
 
-        } catch (error) {
-            if (typingIndicator) typingIndicator.style.display = 'none';
-            addMessage('❌ Network error. Please try again later.', 'bot');
-            console.error('Network Error:', error);
-        } finally {
+        } catch (e) {
+            document.getElementById(uiId)?.remove();
+            isProcessing = false;
             input.disabled = false;
-            input.focus();
-            scrollToBottom();
+            addMessage(`❌ Error: ${e.message}`, 'bot');
         }
     }
 
-    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
-    if (input) {
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
-    function addMessage(text, sender) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'ai-message ai-message-' + sender;
-        
-        // Use marked if available, else plain text
-        let htmlContent = text;
-        if (typeof marked !== 'undefined' && marked.parse) {
-            try {
-                htmlContent = marked.parse(text);
-            } catch (e) {
-                console.error('Markdown parse error:', e);
-                htmlContent = text;
-            }
-        }
-
-        msgDiv.innerHTML = htmlContent;
-        messagesContainer.appendChild(msgDiv);
-        scrollToBottom();
-    }
-
-    function scrollToBottom() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    if(sendBtn) sendBtn.addEventListener('click', sendMessage);
+    if(input) input.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 });

@@ -1,43 +1,62 @@
-// moduleCatalog replaced with English descriptions below
-const moduleCatalog = [
-    { id: 'shopify-new-order', name: 'Shopify - New Order', vendor: 'Shopify', group: 'trigger', color: '#ec4899', icon: 'fas fa-shopping-bag', info: 'Triggered when a new order is created' },
-    { id: 'stripe-payment', name: 'Stripe - Payment Succeeded', vendor: 'Stripe', group: 'trigger', color: '#6366f1', icon: 'fas fa-credit-card', info: 'Track successful payments' },
-    { id: 'gmail-send', name: 'Gmail - Send Email', vendor: 'Google', group: 'action', color: '#f97316', icon: 'fas fa-envelope', info: 'Send personalized email' },
-    { id: 'notion-create', name: 'Notion - Create Record', vendor: 'Notion', group: 'action', color: '#14b8a6', icon: 'fas fa-book', info: 'Create a record in database' },
-    { id: 'slack-message', name: 'Slack - Post Message', vendor: 'Slack', group: 'action', color: '#a855f7', icon: 'fab fa-slack-hash', info: 'Notify a channel' },
-    { id: 'google-sheets', name: 'Google Sheets - Append Row', vendor: 'Google', group: 'data', color: '#22d3ee', icon: 'fas fa-table', info: 'Append data to Google Sheet' },
-    { id: 'airtable-sync', name: 'Airtable - Sync', vendor: 'Airtable', group: 'data', color: '#f59e0b', icon: 'fas fa-database', info: 'Sync CRM table' }
-];
+/* 
+   SAFE WORKSPACE SCENARIO SCRIPT 
+   - Uses 'var' to prevent double-loading crashes
+   - Checks for existing data before initializing
+*/
 
-const APP_CONFIG = window.APP_CONFIG || { projectName: (document.body && document.body.dataset && document.body.dataset.projectName) || 'Project Store', locale: 'en-US', currency: 'VND' };
-const PROJECT_NAME = APP_CONFIG.projectName || 'Project Store';
+// 1. CONFIGURATION & CATALOG
+if (typeof moduleCatalog === 'undefined') {
+    var moduleCatalog = [
+        { id: 'shopify-new-order', name: 'Shopify - New Order', vendor: 'Shopify', group: 'trigger', color: '#ec4899', icon: 'fas fa-shopping-bag', info: 'Triggered when a new order is created' },
+        { id: 'stripe-payment', name: 'Stripe - Payment Succeeded', vendor: 'Stripe', group: 'trigger', color: '#6366f1', icon: 'fas fa-credit-card', info: 'Track successful payments' },
+        { id: 'gmail-send', name: 'Gmail - Send Email', vendor: 'Google', group: 'action', color: '#f97316', icon: 'fas fa-envelope', info: 'Send personalized email' },
+        { id: 'notion-create', name: 'Notion - Create Record', vendor: 'Notion', group: 'action', color: '#14b8a6', icon: 'fas fa-book', info: 'Create a record in database' },
+        { id: 'slack-message', name: 'Slack - Post Message', vendor: 'Slack', group: 'action', color: '#a855f7', icon: 'fab fa-slack-hash', info: 'Notify a channel' },
+        { id: 'google-sheets', name: 'Google Sheets - Append Row', vendor: 'Google', group: 'data', color: '#22d3ee', icon: 'fas fa-table', info: 'Append data to Google Sheet' },
+        { id: 'airtable-sync', name: 'Airtable - Sync', vendor: 'Airtable', group: 'data', color: '#f59e0b', icon: 'fas fa-database', info: 'Sync CRM table' }
+    ];
+}
 
-let scenarioNodes = [
+if (typeof APP_CONFIG === 'undefined') {
+    var APP_CONFIG = window.APP_CONFIG || { projectName: (document.body && document.body.dataset && document.body.dataset.projectName) || 'Project Store', locale: 'en-US', currency: 'VND' }; 
+}
+
+var PROJECT_NAME = APP_CONFIG.projectName || 'Project Store';
+
+// 2. STATE VARIABLES (Using var to allow redeclaration safety)
+// We check if they exist to preserve state on double-load
+var scenarioNodes = (typeof scenarioNodes !== 'undefined') ? scenarioNodes : [
     { id: 'node-1', module: 'shopify-new-order', x: 140, y: 180, status: 'trigger', config: { store: PROJECT_NAME, events: ['paid'] } },
     { id: 'node-2', module: 'google-sheets', x: 420, y: 80, status: 'action', config: { sheet: 'CRM Orders' } },
     { id: 'node-3', module: 'notion-create', x: 700, y: 220, status: 'action', config: { database: 'VIP Customers' } },
     { id: 'node-4', module: 'slack-message', x: 980, y: 160, status: 'action', config: { channel: '#sales-alerts' } }
 ];
 
-let scenarioConnections = [
+var scenarioConnections = (typeof scenarioConnections !== 'undefined') ? scenarioConnections : [
     { from: 'node-1', to: 'node-2' },
     { from: 'node-2', to: 'node-3' },
     { from: 'node-3', to: 'node-4' }
 ];
 
-let selectedNodeId = null;
-let moduleFilter = 'all';
-let runHistory = [];
-let canvasScale = 1;
-const dragState = { active: false, nodeId: null, offsetX: 0, offsetY: 0 };
-let draggedModuleId = null;
-let nodeCounter = scenarioNodes.length;
+var selectedNodeId = null;
+var moduleFilter = 'all';
+var runHistory = [];
+var canvasScale = 1;
+var dragState = { active: false, nodeId: null, offsetX: 0, offsetY: 0 };
+var draggedModuleId = null;
+var nodeCounter = scenarioNodes.length;
 
+// 3. INITIALIZATION
 function initScenarioUI() {
+    // Prevent double binding of events if run twice
+    if (window.scenarioUIInitialized) return;
+    window.scenarioUIInitialized = true;
+
     renderModuleLibrary();
     renderCanvas();
     renderInspector();
     renderRunHistory();
+    
     const surface = document.getElementById('canvasSurface');
     if (surface) {
         surface.addEventListener('dragover', handleCanvasDragOver);
@@ -46,10 +65,14 @@ function initScenarioUI() {
     }
 }
 
+// 4. MODULE LIBRARY
 function renderModuleLibrary() {
     const listEl = document.getElementById('moduleLibrary');
     if (!listEl) return;
-    const keyword = (document.getElementById('moduleSearch')?.value || '').toLowerCase();
+    
+    const searchInput = document.getElementById('moduleSearch');
+    const keyword = (searchInput ? searchInput.value : '').toLowerCase();
+    
     listEl.innerHTML = '';
 
     moduleCatalog
@@ -83,9 +106,11 @@ function switchModuleGroup(event, group) {
     renderModuleLibrary();
 }
 
+// 5. CANVAS LOGIC
 function addModuleToCanvas(moduleId, options = {}) {
     const module = moduleCatalog.find(m => m.id === moduleId);
     if (!module) return;
+    
     const lastNode = scenarioNodes[scenarioNodes.length - 1];
     const newNode = {
         id: `node-${++nodeCounter}`,
@@ -95,11 +120,14 @@ function addModuleToCanvas(moduleId, options = {}) {
         status: 'action',
         config: { note: 'Not configured' }
     };
+    
     scenarioNodes.push(newNode);
+    
     const connectFrom = options.connectFromId ? scenarioNodes.find(n => n.id === options.connectFromId) : (lastNode || null);
     if (connectFrom) {
         scenarioConnections.push({ from: connectFrom.id, to: newNode.id });
     }
+    
     selectedNodeId = newNode.id;
     renderCanvas();
     renderInspector();
@@ -108,8 +136,10 @@ function addModuleToCanvas(moduleId, options = {}) {
 
 function handleModuleDragStart(event, moduleId) {
     draggedModuleId = moduleId;
-    event.dataTransfer?.setData('text/plain', moduleId);
-    event.dataTransfer?.setDragImage(new Image(), 0, 0);
+    if(event.dataTransfer) {
+        event.dataTransfer.setData('text/plain', moduleId);
+        event.dataTransfer.setDragImage(new Image(), 0, 0);
+    }
     document.getElementById('scenarioCanvas')?.classList.add('dragging-module');
 }
 
@@ -121,7 +151,7 @@ function handleModuleDragEnd() {
 function handleCanvasDragOver(event) {
     if (!draggedModuleId) return;
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
+    if(event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
 }
 
 function handleCanvasDragLeave(event) {
@@ -208,12 +238,15 @@ function renderCanvas() {
     const surface = document.getElementById('canvasSurface');
     if (!canvas || !surface) return;
 
+    // Calculate canvas size based on nodes
     const maxX = Math.max(0, ...scenarioNodes.map(node => node.x + 260));
     const maxY = Math.max(0, ...scenarioNodes.map(node => node.y + 180));
     surface.style.width = `${Math.max(1600, maxX)}px`;
     surface.style.height = `${Math.max(900, maxY)}px`;
 
     drawConnections();
+    
+    // Clear existing nodes to prevent duplication
     surface.querySelectorAll('.scenario-node').forEach(el => el.remove());
 
     scenarioNodes.forEach(node => {
@@ -228,10 +261,6 @@ function renderCanvas() {
         nodeEl.innerHTML = `
             <div class="node-actions">
                 <button type="button" class="node-action-btn" title="Delete module" onclick="event.stopPropagation(); deleteNode('${node.id}')">
-                        showToast('Module removed from canvas', 'info');
-                        showToast('Canvas is empty', 'info');
-                        if (!confirm('Are you sure you want to delete all modules?')) return;
-                        showToast('All modules removed from canvas', 'info');
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -256,6 +285,7 @@ function renderCanvas() {
     }
 }
 
+// 6. DRAG & DROP LOGIC
 function startNodeDrag(event, nodeId) {
     const surface = document.getElementById('canvasSurface');
     const node = scenarioNodes.find(n => n.id === nodeId);
@@ -317,6 +347,7 @@ function selectNode(nodeId) {
     renderInspector();
 }
 
+// 7. INSPECTOR & SIDEBAR
 function renderInspector(tab = 'properties') {
     const panel = document.getElementById('inspectorContent');
     if (!panel) return;
@@ -325,7 +356,6 @@ function renderInspector(tab = 'properties') {
 
     if (!node) {
         panel.innerHTML = '<p class="text-muted">Select a module to view configuration details.</p>';
-            panel.innerHTML = '<p class="text-muted">Select a module to view configuration details.</p>';
         return;
     }
 
@@ -335,17 +365,14 @@ function renderInspector(tab = 'properties') {
             <p class="text-muted">${module?.info}</p>
             <div class="mb-3">
                 <label class="form-label">Display name</label>
-                            <label class="form-label">Display name</label>
                 <input type="text" class="form-control form-control-sm" value="${module?.name}" readonly>
             </div>
             <div class="mb-3">
                 <label class="form-label">Config note</label>
-                            <label class="form-label">Config note</label>
                 <textarea class="form-control" rows="4" onchange="updateNodeNote('${node.id}', this.value)">${node.config?.note || ''}</textarea>
             </div>
             <div class="mb-3">
                 <label class="form-label">Conditions</label>
-                            <label class="form-label">Conditions</label>
                 <select class="form-select form-select-sm">
                     <option>Run everytime</option>
                     <option>Only if payment > 5M</option>
@@ -379,10 +406,12 @@ function updateNodeNote(nodeId, note) {
     if (node) node.config.note = note;
 }
 
+// 8. RUN HISTORY & UTILS
 function renderRunHistory() {
     const list = document.getElementById('runHistoryList');
     const badge = document.getElementById('runCounter');
     if (!list || !badge) return;
+    
     badge.textContent = `${runHistory.length} runs`;
     if (!runHistory.length) {
         list.innerHTML = '<li class="text-muted">No runs yet</li>';
@@ -408,8 +437,13 @@ function runScenarioNow() {
     logToConsole(`[DONE] Scenario completed in ${duration}`);
     const stamp = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     runHistory.unshift({ time: stamp, status: 'success', duration });
-    document.getElementById('lastRunTime').textContent = stamp;
-    document.getElementById('dataProcessed').textContent = `${Math.floor(Math.random() * 50) + 12} records`;
+    
+    const lastRunTime = document.getElementById('lastRunTime');
+    if(lastRunTime) lastRunTime.textContent = stamp;
+    
+    const dataProcessed = document.getElementById('dataProcessed');
+    if(dataProcessed) dataProcessed.textContent = `${Math.floor(Math.random() * 50) + 12} records`;
+    
     renderRunHistory();
     showToast('Scenario run successful', 'success');
 }
@@ -422,7 +456,8 @@ function logToConsole(message) {
 }
 
 function clearConsole() {
-    document.getElementById('consoleOutput').textContent = 'Ready. Waiting for run...';
+    const consoleEl = document.getElementById('consoleOutput');
+    if(consoleEl) consoleEl.textContent = 'Ready. Waiting for run...';
 }
 
 function saveScenario() {

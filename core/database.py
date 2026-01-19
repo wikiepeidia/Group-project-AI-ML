@@ -530,6 +530,16 @@ class Database:
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         )''')
 
+        # AI Chat History
+        c.execute('''CREATE TABLE IF NOT EXISTS ai_chat_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            role TEXT,
+            content TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )''')
+
         # Seed wallets for existing users
         if self.use_postgres:
             c.execute('''INSERT INTO wallets (user_id, balance, currency)
@@ -1185,3 +1195,41 @@ class Database:
             })
         conn.close()
         return activities
+    
+    def add_ai_message(self, user_id, role, content):
+        """Saves a message to the Cloud DB (Neon)"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        
+        try:
+            c.execute('INSERT INTO ai_chat_history (user_id, role, content, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)', 
+                     (user_id, role, content))
+            conn.commit()
+        except Exception as e:
+            print(f"⚠️ Memory Save Error: {e}")
+        finally:
+            conn.close()
+
+    def get_ai_history(self, user_id, limit=6):
+        """Fetches recent context from Cloud DB (Neon)"""
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            # FIX: Changed 'ORDER BY id' to 'ORDER BY timestamp' for consistency
+            # Note: We select 'content' and 'role'
+            c.execute('''SELECT role, content FROM ai_chat_history 
+                         WHERE user_id = ? 
+                         ORDER BY timestamp DESC LIMIT ?''', (user_id, limit))
+            rows = c.fetchall()
+            
+            history = []
+            for r in reversed(rows):
+                role_name = "User" if r[0] == 'user' else "AI"
+                history.append(f"{role_name}: {r[1]}")
+            
+            return "\n".join(history)
+        except Exception as e:
+            print(f"⚠️ Memory Fetch Error: {e}")
+            return ""
+        finally:
+            conn.close()

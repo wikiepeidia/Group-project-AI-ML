@@ -20,14 +20,20 @@
         </div>
         
         <div id="ai-chat-messages" class="ai-chat-messages">
-            <div class="ai-message ai-message-bot">
-                <div class="ai-message-content">
-                    Xin chào! Tôi là trợ lý ảo của bạn. Tôi có thể giúp gì cho bạn hôm nay?
-                </div>
-            </div>
+            <!-- Messages will appear here -->
         </div>
 
-        <!-- Typing Indicator -->
+        <!-- NEW: DEEP RESEARCH UI CONTAINER -->
+        <div id="agent-process" class="agent-process-container">
+            <div class="process-header">
+                <div class="spinner-ring"></div>
+                <span id="process-status-text">Analyzing Request...</span>
+            </div>
+            <div class="process-steps" id="process-steps"></div>
+        </div>
+        <!-- END NEW -->
+
+        <!-- Typing Indicator (Fallback) -->
         <div id="ai-chat-typing" class="typing-indicator" style="display:none;">
             <span class="dot"></span><span class="dot"></span><span class="dot"></span>
         </div>

@@ -2,6 +2,7 @@
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/wikiepeidia/Group-project-AI-ML)](https://github.com/wikiepeidia/Group-project-AI-ML)
 [![GitHub last commit](https://img.shields.io/github/last-commit/wikiepeidia/Group-project-AI-ML)](https://github.com/wikiepeidia/Group-project-AI-ML/commits)
+![Commit activity](https://img.shields.io/github/commit-activity/w/wikiepeidia/Group-project-AI-ML)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## ⚡ TL;DR

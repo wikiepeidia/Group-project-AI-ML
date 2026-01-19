@@ -5,8 +5,11 @@ __pycache__/
 # test folder
 test/
 tests/
+evaluate/
+jobs/
 # C extensions
 token.json
+DOCUMENTS/reports/main reports
 ai_agent_service/
 *.so
 examples/
