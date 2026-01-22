@@ -252,7 +252,8 @@ class Database:
                     'name': row[1],
                     'description': row[2],
                     'updated_at': row[3],
-                    'data': row[4]
+                    'data': row[4],
+                    'steps': row[4]
                 })
             return scenarios
         except Exception as e:
@@ -261,11 +262,11 @@ class Database:
         finally:
             conn.close()
 
-    def get_scenario(self, scenario_id):
+    def get_scenario(self, scenario_id, user_id):
         conn = self.get_connection()
         c = conn.cursor()
         try:
-            c.execute("SELECT id, name, description, updated_at, data, user_id FROM workflows WHERE id = ?", (scenario_id,))
+            c.execute("SELECT id, name, description, updated_at, data, user_id FROM workflows WHERE id = ? AND user_id = ?", (scenario_id, user_id))
             row = c.fetchone()
             if row:
                 return {
@@ -274,6 +275,7 @@ class Database:
                     'description': row[2],
                     'updated_at': row[3],
                     'data': row[4],
+                    'steps': row[4],
                     'user_id': row[5]
                 }
             return None
