@@ -59,7 +59,7 @@ def process_invoice_image(image):
     table_region = layout_regions.get('table')
     table_image = crop_region(image, tuple(table_region['bbox'])) if table_region else image
 
-    # Run OCR (Paddle -> EasyOCR -> Tesseract) to capture raw invoice text
+    # Run OCR: Brain VLM (Qwen2-VL) → PaddleOCR → EasyOCR → Tesseract
     logger.info("[OCR] Starting OCR extraction attempt...")
     ocr_precision = None
     try:

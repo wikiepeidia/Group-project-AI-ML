@@ -140,23 +140,45 @@ def forecast_quantity(lstm_model, invoice_data_list):
         logger.info(f"[MODEL 2] - Historical IMPORT (Oct 2025): {historical_import} units")
         logger.info(f"[MODEL 2] - Initial stock from dataset: {initial_stock} units")
 
-        # Predict based on sales velocity
-        # If product has high sales, predict higher import
-        if historical_sales > 0:
-            # Sales velocity = sales / 30 days (October data)
-            daily_sales = historical_sales / 30.0
-            # Predict import = 2 weeks of sales (safety stock)
-            predicted_import = int(daily_sales * 14)
-            # Add some buffer based on current quantity
-            predicted_import = max(predicted_import, current_qty)
-            confidence = 0.75 + (min(historical_sales, 100) / 400.0)  # 0.75-1.0
-            logger.info(f"[MODEL 2] - Using REAL sales data: {historical_sales} → daily_sales={daily_sales:.2f}")
-            logger.info(f"[MODEL 2] - Formula: daily_sales * 14 days = {predicted_import} units")
-        else:
-            # No historical sales - use current quantity as baseline
-            predicted_import = max(int(current_qty * 1.5), 5)  # At least 5 units
-            confidence = 0.60
-            logger.info(f"[MODEL 2] - No historical sales found, using fallback: current_qty * 1.5 = {predicted_import}")
+        # ── PRIMARY: Use LSTM model prediction ────────────────────────────
+        lstm_used = False
+        predicted_import = 0
+        confidence = 0.60
+        trend = 'stable'
+
+        if lstm_model is not None and hasattr(lstm_model, 'predict_from_timescale_data'):
+            try:
+                p_info = product_info.get(product_name, {
+                    'initial_stock': initial_stock,
+                    'retail_price': product_info.get(product_name, {}).get('retail_price', 0),
+                })
+                lstm_result = lstm_model.predict_from_timescale_data(
+                    product_name, p_info, imports_dict, sales_dict
+                )
+                if lstm_result.get('success'):
+                    predicted_import = int(lstm_result['predicted_quantity'])
+                    confidence = float(lstm_result.get('confidence', 0.75))
+                    trend = lstm_result.get('trend', 'stable')
+                    lstm_used = True
+                    logger.info(f"[MODEL 2] - LSTM prediction: {predicted_import} units (conf={confidence:.2f})")
+                else:
+                    logger.info(f"[MODEL 2] - LSTM failed for {product_name}: {lstm_result.get('message')}")
+            except Exception as lstm_exc:
+                logger.warning(f"[MODEL 2] - LSTM exception for {product_name}: {lstm_exc}")
+
+        # ── FALLBACK: Heuristic if LSTM unavailable or returned 0 ─────────
+        if not lstm_used or predicted_import <= 0:
+            if historical_sales > 0:
+                daily_sales = historical_sales / 30.0
+                predicted_import = int(daily_sales * 14)
+                predicted_import = max(predicted_import, current_qty)
+                confidence = 0.75 + (min(historical_sales, 100) / 400.0)
+                trend = 'increasing' if historical_sales > historical_import else 'stable'
+                logger.info(f"[MODEL 2] - Heuristic fallback: daily_sales={daily_sales:.2f} → {predicted_import} units")
+            else:
+                predicted_import = max(int(current_qty * 1.5), 5)
+                confidence = 0.60
+                logger.info(f"[MODEL 2] - No data fallback: current_qty * 1.5 = {predicted_import}")
 
         # Clamp predictions to reasonable range
         predicted_import = max(5, min(predicted_import, 500))
@@ -167,7 +189,7 @@ def forecast_quantity(lstm_model, invoice_data_list):
             'predicted_quantity': predicted_import, 
             'confidence': round(confidence, 3),
             'historical_sales': historical_sales,
-            'trend': 'increasing' if historical_sales > historical_import else 'stable'
+            'trend': trend
         })
 
         total_predicted += predicted_import
@@ -181,7 +203,7 @@ def forecast_quantity(lstm_model, invoice_data_list):
         'trend': 'increasing' if total_predicted > 0 else 'stable',
         'confidence': sum(p['confidence'] for p in predicted_products) / len(predicted_products) if predicted_products else 0,
         'historical_mean': total_predicted,
-        'model_type': 'LSTM Time-Series (Heuristic)',
+        'model_type': 'LSTM Time-Series (3-Layer 128→64→32)',
         'timestamp': datetime.now().isoformat()
     }
 

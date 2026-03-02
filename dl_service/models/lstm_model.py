@@ -201,9 +201,14 @@ class ImportForecastLSTM:
                 print(f"[DEBUG]   Raw prediction (normalized): {prediction_normalized}")
             
             # Denormalize (inverse transform for first feature - sale_qty/import prediction)
-            temp = np.zeros((1, 7))  # Changed from 5 to 7 to match features
-            temp[0, 0] = prediction_normalized
-            prediction_denormalized = self.scaler.inverse_transform(temp)[0, 0]
+            # Use target_scaler if available, otherwise fall back to feature scaler column 0
+            if hasattr(self, '_target_scaler') and self._target_scaler is not None:
+                temp_target = np.array([[prediction_normalized]])
+                prediction_denormalized = self._target_scaler.inverse_transform(temp_target)[0, 0]
+            else:
+                temp = np.zeros((1, 7))  # Changed from 5 to 7 to match features
+                temp[0, 0] = prediction_normalized
+                prediction_denormalized = self.scaler.inverse_transform(temp)[0, 0]
             
             if import_qty > 10 or sale_qty > 10:
                 print(f"[DEBUG]   Denormalized prediction: {prediction_denormalized}")
@@ -410,11 +415,26 @@ class ImportForecastLSTM:
         # Load weights
         self.model.load_weights(path)
         
-        # Load scaler
-        scaler_path = path.replace('.h5', '_scaler.pkl')
-        if os.path.exists(scaler_path):
-            with open(scaler_path, 'rb') as f:
-                self.scaler = pickle.load(f)
+        # Load scaler — try multiple naming conventions
+        scaler_candidates = [
+            path.replace('.weights.h5', '.scaler.pkl'),   # import_forecast_lstm.scaler.pkl
+            path.replace('.h5', '_scaler.pkl'),            # import_forecast_lstm.weights_scaler.pkl
+            path.replace('.h5', '.scaler.pkl'),            # legacy
+        ]
+        for scaler_path in scaler_candidates:
+            if os.path.exists(scaler_path):
+                with open(scaler_path, 'rb') as f:
+                    loaded = pickle.load(f)
+                # Handle dict format: {'feature_scaler': ..., 'target_scaler': ..., 'sequence_length': ...}
+                if isinstance(loaded, dict):
+                    self.scaler = loaded.get('feature_scaler', loaded.get('scaler', self.scaler))
+                    self._target_scaler = loaded.get('target_scaler', None)
+                    if 'sequence_length' in loaded:
+                        self.lookback = loaded['sequence_length']
+                else:
+                    self.scaler = loaded
+                print(f"Scaler loaded from {scaler_path}")
+                break
         
         print(f"Model weights loaded from {path}")
 
