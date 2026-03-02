@@ -8,7 +8,7 @@ import requests
 import secrets
 from datetime import datetime, timedelta
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response, stream_with_context
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
@@ -23,7 +23,7 @@ from core.auth import AuthManager
 from core.config import Config
 from core.utils import Utils
 from core import google_integration
-from core.workflow_engine import execute_workflow, stream_workflow
+from core.workflow_engine import execute_workflow
 from core.services.dl_client import DLClient
 from core.services.analytics_service import analytics_service
 from core.automation_engine import AutomationEngine
@@ -49,9 +49,9 @@ app.config['PREFERRED_URL_SCHEME'] = 'http'
 # Load secrets from file
 try:
     with open('secrets/google_oauth.json') as f:
-        oauth_secrets = json.load(f)
-        app.config['GOOGLE_CLIENT_ID'] = oauth_secrets.get('GOOGLE_CLIENT_ID')
-        app.config['GOOGLE_CLIENT_SECRET'] = oauth_secrets.get('GOOGLE_CLIENT_SECRET')
+         oauth_secrets = json.load(f)
+         app.config['GOOGLE_CLIENT_ID'] = oauth_secrets.get('GOOGLE_CLIENT_ID')
+         app.config['GOOGLE_CLIENT_SECRET'] = oauth_secrets.get('GOOGLE_CLIENT_SECRET')
 except FileNotFoundError:
     print("Warning: secrets/google_oauth.json not found. OAuth will not work.")
     app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
@@ -972,29 +972,6 @@ def run_workflow():
         
         result = execute_workflow(workflow_data, token_info)
         return jsonify(result)
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/workflow/execute_stream', methods=['POST'])
-@login_required
-@csrf.exempt
-def run_workflow_stream():
-    try:
-        workflow_data = request.json
-        
-        # Get token from current_user
-        token_info = None
-        if current_user.google_token:
-            try:
-                token_info = json.loads(current_user.google_token)
-            except Exception as e:
-                print(f"Error parsing google_token for user {current_user.id}: {e}")
-        
-        def generate():
-            for event in stream_workflow(workflow_data, token_info):
-                yield json.dumps(event) + "\n"
-                
-        return Response(stream_with_context(generate()), mimetype='application/x-ndjson')
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -3204,6 +3181,23 @@ def delete_workflow(workflow_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/workflows/<int:workflow_id>', methods=['GET'])
+@login_required
+def get_single_workflow(workflow_id):
+    try:
+        conn = db_manager.get_connection()
+        c = conn.cursor()
+        c.execute('SELECT id, name, data FROM workflows WHERE id = ?', (workflow_id,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            raw_data = row[2]
+            # Use standard json here
+            flow_data = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
+            return jsonify({'success': True, 'data': flow_data, 'name': row[1]})
+        return jsonify({'success': False}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
  
 
  
@@ -3349,36 +3343,33 @@ def run_dl_service():
 @login_required
 @csrf.exempt
 def ai_upload():
-    """Forward file uploads to AI Service"""
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-
     try:
-        # Load Config
         with open('secrets/ai_config.json') as f:
             ai_config = json.load(f)
-            hf_base_url = ai_config.get('HF_BASE_URL')
+            hf_base_url = ai_config.get('HF_BASE_URL').rstrip('/')
             
-        if not hf_base_url:
-             return jsonify({'error': 'AI Configuration incomplete'}), 500
-
-        # Forward to AI Service
         files = {'file': (file.filename, file.read(), file.mimetype)}
         data = {'user_id': current_user.id, 'store_id': 1}
         headers = {"ngrok-skip-browser-warning": "true"}
         
-        import requests
-        response = requests.post(
-            f"{hf_base_url}/upload",
-            files=files,
-            data=data,
-            headers=headers,
-            timeout=30
-        )
-        return jsonify(response.json()), response.status_code
+        # Send to Colab
+        response = requests.post(f"{hf_base_url}/upload", files=files, data=data, headers=headers, timeout=60)
+        
+        if response.status_code == 200:
+            resp_data = response.json()
+            analysis = resp_data.get('vision_analysis', 'Uploaded File')
+            
+            # SAVE TO NEON DB
+            # We use the memory manager to save the attachment info + analysis
+            # Ensure your Database class has save_attachment (I'll provide it below if missing)
+            db_manager.save_attachment(current_user.id, 1, file.filename, file.mimetype, analysis)
+            
+            return jsonify(resp_data)
+        else:
+            return jsonify({'error': f"Upload Failed: {response.text}"}), response.status_code
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -3391,23 +3382,29 @@ os.makedirs(JOBS_DIR, exist_ok=True)
 
 # --- JOB HELPERS ---
 def save_job_file(job_id, data):
-    with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'w') as f: json.dump(data, f)
+     with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'w') as f: json.dump(data, f)
 def load_job_file(job_id):
     try:
         with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'r') as f: return json.load(f)
     except: return None
 
 def background_ai_task(job_id, user_id, message):
-    save_job_file(job_id, {"status": "processing", "start_time": time.time()})
+    import json  # Explicitly import in thread context
+    import traceback
     try:
-        # Re-init for thread safety
+        save_job_file(job_id, {"status": "processing", "start_time": time.time()})
+    except Exception as e:
+        print(f"[ERROR] Failed to save initial job file: {e}\n{traceback.format_exc()}")
+    
+    try:
+        # Debug: Verify json module is available
+        print(f"[DEBUG] json module available: {json is not None}")
+        print(f"[DEBUG] json.dumps available: {hasattr(json, 'dumps')}")
+        
         db = Database()
         mw = AgentMiddleware(db)
-        
-        # 1. Fetch History
         history_str = db.get_ai_history(user_id, limit=6)
         
-        # 2. Config & Context
         with open('secrets/ai_config.json') as f:
             conf = json.load(f)
             url = conf.get('HF_BASE_URL').rstrip('/') + '/chat'
@@ -3416,7 +3413,6 @@ def background_ai_task(job_id, user_id, message):
         system_context = mw.get_system_context()
         full_msg = f"[SYSTEM CONTEXT]\n{system_context}\n\n[CONVERSATION HISTORY]\n{history_str}\n\n[USER REQUEST]\n{message}"
         
-        # 3. Request
         headers = {"Content-Type": "application/json"}
         if token: headers["Authorization"] = f"Bearer {token}"
         
@@ -3426,31 +3422,31 @@ def background_ai_task(job_id, user_id, message):
             ai_resp = res.json()
             ai_text = ai_resp.get('response', '')
             
-            # Process Actions FIRST to get clean text/metadata
+            # Process Actions
             final_text, action = mw.process_ai_response(ai_text, user_id)
             
-            # Decide what to save to DB History
-            msg_to_save = final_text
-            if action and action.get('action') == 'workflow_created':
-                # Save structured JSON so chat history can re-render the card
-                structured = {
-                    "action": "create_workflow",
-                    "id": action.get('id'),
-                    "name": action.get('name', 'Workflow'),
-                    "text": final_text
-                }
-                msg_to_save = json.dumps(structured)
-            
-            # Save to DB
-            db.add_ai_message(user_id, 'assistant', msg_to_save)
+            # Save Clean Response to History
+            db.add_ai_message(user_id, 'assistant', final_text)
             
             save_job_file(job_id, {"status": "completed", "response": final_text, "action": action})
         else:
             save_job_file(job_id, {"status": "failed", "error": f"AI Error {res.status_code}"})
             
     except Exception as e:
-        save_job_file(job_id, {"status": "failed", "error": str(e)})
-
+        import traceback
+        import sys
+        full_trace = traceback.format_exc()
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        print(f"[CRITICAL] Bg Thread Error: {e}")
+        print(f"[CRITICAL] Error Type: {exc_type}")
+        print(f"[CRITICAL] Full Traceback:\n{full_trace}")
+        try:
+            save_job_file(job_id, {"status": "failed", "error": str(e), "error_type": str(exc_type), "traceback": full_trace})
+        except Exception as save_err:
+            print(f"[CRITICAL] Failed to save job file: {save_err}")
+            print(f"[CRITICAL] Trying alternate save...")
+            with open(os.path.join(JOBS_DIR, f"{job_id}.json"), 'w') as f:
+                f.write(f'{{"status":"failed","error":"{str(e)}","traceback":"{full_trace.replace(chr(34), chr(39))}"}}')
 # --- ROUTES ---
 
 
@@ -3463,21 +3459,18 @@ def ai_chat():
     msg = data.get('message', '').strip()
     if not msg: return jsonify({'error': 'Empty message'}), 400
 
-    # Save User Message to DB
     db_manager.add_ai_message(current_user.id, 'user', msg)
 
-    # Local Reflex
     greetings = ["xin chào", "hello", "hi", "chào"]
     if any(msg.lower().startswith(g) for g in greetings) and len(msg) < 20:
         reply = "Xin chào! Tôi là trợ lý ảo Project A. Tôi có thể giúp bạn tạo quy trình tự động hóa hoặc tra cứu dữ liệu."
         db_manager.add_ai_message(current_user.id, 'assistant', reply)
         return jsonify({"status": "completed", "response": reply, "action": None})
 
-    # Async Job
     job_id = str(uuid.uuid4())
     save_job_file(job_id, {"status": "pending"})
     threading.Thread(target=background_ai_task, args=(job_id, current_user.id, msg)).start()
-    return jsonify({"status": "processing", "job_id": job_id})
+    return jsonify({"status": "processing", "job_id": job_id}) 
 
 
 @app.route('/api/ai/history', methods=['GET'])
@@ -3502,24 +3495,6 @@ def ai_job_status(job_id):
     if not job: return jsonify({"status": "failed", "error": "Job not found"}), 404
     return jsonify(job)
 
-# 2. GET SINGLE WORKFLOW (For Builder Loading)
-@app.route('/api/workflows/<int:workflow_id>', methods=['GET'])
-@login_required
-def get_single_workflow(workflow_id):
-    try:
-        conn = db_manager.get_connection()
-        c = conn.cursor()
-        c.execute('SELECT id, name, data FROM workflows WHERE id = ?', (workflow_id,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            # Parse JSON safely
-            flow_data = json.loads(row[2]) if row[2] else {}
-            return jsonify({'success': True, 'data': flow_data, 'name': row[1]})
-        return jsonify({'success': False}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
 @app.route('/api/ai/history', methods=['DELETE'])
 @login_required
 def clear_chat_history():

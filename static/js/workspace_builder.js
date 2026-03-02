@@ -247,9 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         googlePickerState.targetInputId = options?.targetInputId || null;
-        googlePickerState.targetNameId = options?.targetNameId || null;
-        googlePickerState.targetDisplayId = options?.targetDisplayId || null;
-        
         if (pickerType && options?.type) pickerType.value = options.type;
         googlePickerState.type = pickerType?.value || 'sheets';
         googlePickerState.selected = null;
@@ -263,25 +260,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pickerSelectBtn.addEventListener('click', () => {
             const selected = googlePickerState.selected;
             if (!selected || !googlePickerState.targetInputId) return;
-            
             const target = document.getElementById(googlePickerState.targetInputId);
             if (target) {
                 target.value = selected.id;
                 target.dataset.displayName = selected.name;
-                // Dispatch input event so any listeners know it changed
-                target.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            
-            if (googlePickerState.targetNameId) {
-                const nameTarget = document.getElementById(googlePickerState.targetNameId);
-                if (nameTarget) nameTarget.value = selected.name;
-            }
-
-             if (googlePickerState.targetDisplayId) {
-                const displayTarget = document.getElementById(googlePickerState.targetDisplayId);
-                if (displayTarget) displayTarget.textContent = selected.id;
-            }
-
             closePicker();
         });
     }
@@ -731,9 +714,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (type === 'google_sheet_write') {
             if (!config.sheetId) return 'missing';
-            // Needs SheetID + Range + Data
-            // If data is placeholder {{...}}, it might be OK if input connected
-            if (!config.range) return 'partial';
+            // useParentData means data comes from connected parent at runtime
+            if (config.useParentData !== false) {
+                if (!config.range) return 'partial';
+                return 'full';
+            }
+            if (!config.range || (!config.data && !hasInput)) return 'partial';
             return 'full';
         }
         if (type === 'google_doc_read') {
@@ -742,11 +728,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (type === 'google_doc_write') {
             if (!config.docId) return 'missing';
-            if (!config.body && !hasInput) return 'partial';
+            if (config.useParentData !== false) return 'full';
+            if (!config.content && !hasInput) return 'partial';
             return 'full';
         }
         if (type === 'gmail_send') {
             if (!config.recipient && !config.to) return 'missing';
+            if (config.useParentData !== false) {
+                if (!config.subject) return 'partial';
+                return 'full';
+            }
             if (!config.subject || !config.body) return 'partial';
             return 'full';
         }
@@ -758,7 +749,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'full';
         }
         if (type === 'invoice_forecast') {
-            // Needs data
+            // useParentData is on by default — data comes at runtime from parent node
+            if (config.useParentData !== false) return 'full';
             if (!config.data && !hasInput) return 'missing';
             return 'full';
         }
@@ -766,12 +758,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- INTEGRATIONS ---
         if (type === 'make_webhook') {
             if (!config.url) return 'missing';
-              if (!config.body && !hasInput) return 'partial'; // Can auto-pass from input
+            if (config.useParentData) return 'full';
+            if (!config.body) return 'partial';
             return 'full';
         }
         if (type === 'slack_notify' || type === 'discord_notify') {
              if (!config.url && !config.webhookUrl) return 'missing';
-               if (!config.message && !hasInput) return 'partial';
+             if (config.useParentData) return 'full';
+             if (!config.message) return 'partial';
              return 'full';
         }
 
@@ -1408,47 +1402,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const title = node.dataset.title || 'Untitled Node';
                 const nodeId = node.dataset.nodeId;
 
-                if (type === 'google_sheet_write') {
-                    const hasInput = builderState.connections.some(c => c.target === nodeId);
-                    if ((!config.data || String(config.data).trim() === '') && hasInput) {
-                        const parentConn = builderState.connections.find(c => c.target === nodeId);
-                        if (parentConn) {
-                            const sourceId = parentConn.source.replace('node-', '');
-                            config.data = `{{${sourceId}}}`;
-                        }
-                    }
-                }
-                if (type === 'google_doc_write') {
-                    const hasInput = builderState.connections.some(c => c.target === nodeId);
-                    if ((!config.body || String(config.body).trim() === '') && hasInput) {
-                        const parentConn = builderState.connections.find(c => c.target === nodeId);
-                        if (parentConn) {
-                            const sourceId = parentConn.source.replace('node-', '');
-                            config.body = `{{${sourceId}}}`;
-                        }
-                    }
-                }
-                if (type === 'make_webhook') {
-                    const hasInput = builderState.connections.some(c => c.target === nodeId);
-                    if ((!config.body || String(config.body).trim() === '') && hasInput) {
-                        const parentConn = builderState.connections.find(c => c.target === nodeId);
-                        if (parentConn) {
-                            const sourceId = parentConn.source.replace('node-', '');
-                            config.body = `{{${sourceId}}}`;
-                        }
-                    }
-                }
-                if (type === 'slack_notify' || type === 'discord_notify') {
-                    const hasInput = builderState.connections.some(c => c.target === nodeId);
-                    if ((!config.message || String(config.message).trim() === '') && hasInput) {
-                        const parentConn = builderState.connections.find(c => c.target === nodeId);
-                        if (parentConn) {
-                            const sourceId = parentConn.source.replace('node-', '');
-                            config.message = `{{${sourceId}}}`;
-                        }
-                    }
-                }
-
                 // Check for missing data
                 if (type === 'google_sheet_read' && !config.sheetId) {
                     missingData = true;
@@ -1459,10 +1412,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Sheet ID. Using mock data.`, 'warning');
                 }
                 if (type === 'google_doc_read' && !config.docId) {
-                    missingData = true;
-                    if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Doc ID. Using mock data.`, 'warning');
-                }
-                if (type === 'google_doc_write' && !config.docId) {
                     missingData = true;
                     if (window.ConsoleManager) window.ConsoleManager.log(`Node '${title}' (${nodeId}) missing Doc ID. Using mock data.`, 'warning');
                 }
@@ -1486,14 +1435,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const edges = [];
             const svg = document.getElementById('connectionLines');
             if (svg) {
-                svg.querySelectorAll('.connection-line').forEach((line) => {
-                    if (line.dataset.source && line.dataset.target) {
+                svg.querySelectorAll('.connection-wrapper').forEach((wrapper) => {
+                    if (wrapper.dataset.source && wrapper.dataset.target) {
                         edges.push({ 
-                            from: line.dataset.source.replace('node-', ''), 
-                            to: line.dataset.target.replace('node-', '') 
+                            from: wrapper.dataset.source.replace('node-', ''), 
+                            to: wrapper.dataset.target.replace('node-', '') 
                         });
                     } else {
-                         console.warn("Connection line missing source or target", line);
+                         console.warn("Connection wrapper missing source or target", wrapper);
                     }
                 });
             }
@@ -1501,13 +1450,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = { nodes, edges };
             console.log("Executing Payload:", payload);
             if (window.ConsoleManager) window.ConsoleManager.log(`Payload prepared: ${nodes.length} nodes, ${edges.length} edges`, 'debug');
-            
-            // Clear previous statuses
-            document.querySelectorAll('.workflow-node').forEach(node => {
-                node.classList.remove('running', 'success', 'error', 'skipped');
-            });
 
-            const response = await fetch('/api/workflow/execute_stream', {
+            const response = await fetch('/api/workflow/execute', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1517,53 +1461,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 signal: executionController.signal
             });
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            let finalStatus = 'completed';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || ''; // Keep the last partial line
-
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    try {
-                        const event = JSON.parse(line);
-                        
-                        if (event.type === 'log') {
-                            if (window.ConsoleManager) window.ConsoleManager.log(event.message, 'info');
-                        } else if (event.type === 'node_update') {
-                            const nodeId = event.node_id;
-                            const nodeElement = document.querySelector(`.workflow-node[data-node-id="node-${nodeId}"]`);
-                            if (nodeElement) {
-                                // Remove previous status classes
-                                nodeElement.classList.remove('running', 'success', 'error', 'skipped');
-                                // Add new status class
-                                if (event.status) nodeElement.classList.add(event.status);
-                            }
-                        } else if (event.type === 'workflow_finish') {
-                            finalStatus = event.status;
-                        } else if (event.type === 'error') {
-                            showNotification(event.message, 'error');
-                            finalStatus = 'failed';
-                        }
-                    } catch (e) {
-                         console.error("Error parsing stream event:", e);
-                    }
-                }
+            const result = await response.json();
+            console.log("Execution Result:", result);
+            
+            // Log server-side logs
+            if (window.ConsoleManager && result.logs) {
+                 result.logs.forEach(log => window.ConsoleManager.log(log, 'info'));
             }
 
-            if (window.ConsoleManager) window.ConsoleManager.log(`Execution finished. Status: ${finalStatus}`, finalStatus === 'completed' ? 'success' : 'error');
+            // Display per-node results in console
+            if (window.ConsoleManager && result.node_results) {
+                window.ConsoleManager.log('─────── Node Results ───────', 'system');
+                for (const [nodeId, nodeResult] of Object.entries(result.node_results)) {
+                    const nodeEl = document.querySelector(`[data-node-id="node-${nodeId}"]`);
+                    const nodeTitle = nodeEl?.dataset?.title || `Node ${nodeId}`;
+                    const nodeType = nodeEl?.dataset?.type || 'unknown';
+                    
+                    const statusIcon = nodeResult.status === 'success' ? '✓' : nodeResult.status === 'error' ? '✗' : '⊘';
+                    const logType = nodeResult.status === 'success' ? 'success' : nodeResult.status === 'error' ? 'error' : 'warning';
+                    
+                    window.ConsoleManager.log(`${statusIcon} [${nodeTitle}] (${nodeType}) — ${nodeResult.status}`, logType);
+                    
+                    if (nodeResult.output) {
+                        const out = nodeResult.output;
+                        if (typeof out === 'object') {
+                            if (out.error) {
+                                window.ConsoleManager.log(`  ⚠ ${out.error}`, 'error');
+                            } else {
+                                // Format key fields in a readable way
+                                const lines = [];
+                                for (const [k, v] of Object.entries(out)) {
+                                    if (v === null || v === undefined) continue;
+                                    if (typeof v === 'object' && !Array.isArray(v)) {
+                                        // Nested object: show compact
+                                        const subParts = [];
+                                        for (const [sk, sv] of Object.entries(v)) {
+                                            subParts.push(`${sk}: ${typeof sv === 'number' ? sv.toFixed ? sv.toFixed(2) : sv : sv}`);
+                                        }
+                                        lines.push(`  ${k}: { ${subParts.join(', ')} }`);
+                                    } else if (Array.isArray(v)) {
+                                        lines.push(`  ${k}: [${v.length} items]`);
+                                        v.slice(0, 5).forEach((item, i) => {
+                                            if (typeof item === 'object') {
+                                                const parts = Object.entries(item).map(([ik,iv]) => `${ik}: ${iv}`).join(', ');
+                                                lines.push(`    [${i}] ${parts}`);
+                                            } else {
+                                                lines.push(`    [${i}] ${item}`);
+                                            }
+                                        });
+                                        if (v.length > 5) lines.push(`    ... and ${v.length - 5} more`);
+                                    } else if (typeof v === 'string' && v.length > 120) {
+                                        lines.push(`  ${k}: "${v.substring(0, 120)}..."`);
+                                    } else {
+                                        lines.push(`  ${k}: ${v}`);
+                                    }
+                                }
+                                lines.forEach(l => window.ConsoleManager.log(l, 'debug'));
+                            }
+                        } else {
+                            let s = String(out);
+                            if (s.length > 500) s = s.substring(0, 500) + '... (truncated)';
+                            window.ConsoleManager.log(`  → ${s}`, 'debug');
+                        }
+                    }
+                    if (nodeResult.error) {
+                        window.ConsoleManager.log(`  ⚠ ${nodeResult.error}`, 'error');
+                    }
+                }
+                window.ConsoleManager.log('────────────────────────────', 'system');
+            }
 
-            if (finalStatus === 'completed') {
+            if (window.ConsoleManager) window.ConsoleManager.log(`Execution finished. Status: ${result.status}`, result.status === 'completed' ? 'success' : 'error');
+
+            if (result.status === 'completed') {
                 showNotification('Workflow completed successfully!', 'success');
             } else {
-                showNotification('Workflow completed with errors or warnings.', 'warning');
+                showNotification('Workflow failed: ' + (result.message || 'Unknown error'), 'error');
+                if (window.ConsoleManager) window.ConsoleManager.log(`Error details: ${result.message || 'Unknown error'}`, 'error');
             }
 
         } catch (error) {
@@ -2149,142 +2123,114 @@ document.addEventListener('DOMContentLoaded', () => {
             let html = '';
             
             if (type === 'google_sheet_read') {
-                const sheet = config.rangeSheet || 'Sheet1';
-                const startCol = config.rangeStartCol || 'A';
-                const startRow = config.rangeStartRow || '1';
-                const endCol = config.rangeEndCol || 'Z';
-                const endRow = config.rangeEndRow || '100';
-                const readAll = config.rangeReadAll ? 'checked' : '';
-
                 html = `
-                    <label>Google Sheet</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="cfg-sheet-name" value="${config.sheetName || 'No file selected'}" readonly placeholder="Select a file..." class="read-only-input" style="flex: 1;">
-                        <input type="hidden" id="cfg-sheet-id" value="${config.sheetId || ''}">
-                        <button type="button" class="action-btn" id="cfg-sheet-picker" style="width: auto; padding: 0 12px;" title="Browse Drive"><i class="fas fa-folder-open"></i></button>
-                    </div>
-                    <div class="meta-text">ID: <span id="cfg-id-display">${config.sheetId || 'None'}</span></div>
-                    
-                    <div style="background: var(--bg-secondary); padding: 10px; border-radius: 4px; margin-top: 10px; border: 1px solid var(--border-color);">
-                        <label style="margin-top:0;">Tab/Sheet Name</label>
-                        <input type="text" id="cfg-range-sheet" value="${sheet}" placeholder="e.g. Sheet1">
-                        
-                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                            <input type="checkbox" id="cfg-range-all" ${readAll} style="width: auto; margin: 0;">
-                            <label for="cfg-range-all" style="margin: 0; font-size: 0.9em; cursor: pointer;">Read Entire Sheet</label>
-                        </div>
-
-                        <div id="cfg-range-inputs" style="display: ${config.rangeReadAll ? 'none' : 'block'};">
-                            <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
-                                <div style="flex: 1;">
-                                    <label style="margin-top:0; font-size: 0.85em;">Start Col</label>
-                                    <input type="text" id="cfg-range-start-col" value="${startCol}" placeholder="A">
-                                </div>
-                                <div style="flex: 1;">
-                                    <label style="margin-top:0; font-size: 0.85em;">Row</label>
-                                    <input type="number" id="cfg-range-start-row" value="${startRow}" placeholder="1">
-                                </div>
-                            </div>
-                            
-                            <div style="display: flex; gap: 10px; margin-top: 5px; align-items: center;">
-                                <div style="flex: 1;">
-                                    <label style="margin-top:0; font-size: 0.85em;">End Col</label>
-                                    <input type="text" id="cfg-range-end-col" value="${endCol}" placeholder="Z">
-                                </div>
-                                <div style="flex: 1;">
-                                    <label style="margin-top:0; font-size: 0.85em;">Row</label>
-                                    <input type="number" id="cfg-range-end-row" value="${endRow}" placeholder="100">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <label>Spreadsheet ID</label>
+                    <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <button type="button" class="action-btn" id="cfg-sheet-picker">Browse Drive</button>
+                    <label>Range</label>
+                    <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1:B10'}">
                 `;
             } else if (type === 'google_sheet_write') {
-                const sheet = config.rangeSheet || 'Sheet1';
-                const startCol = config.rangeStartCol || 'A';
-                const startRow = config.rangeStartRow || '1';
-                
+                const useParentWrite = config.useParentData !== false;
                 html = `
-                    <label>Google Sheet</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="cfg-sheet-name" value="${config.sheetName || 'No file selected'}" readonly placeholder="Select a file..." class="read-only-input" style="flex: 1;">
-                        <input type="hidden" id="cfg-sheet-id" value="${config.sheetId || ''}">
-                        <button type="button" class="action-btn" id="cfg-sheet-picker" style="width: auto; padding: 0 12px;" title="Browse Drive"><i class="fas fa-folder-open"></i></button>
-                    </div>
-                    <div class="meta-text">ID: <span id="cfg-id-display">${config.sheetId || 'None'}</span></div>
-
-                    <div style="background: var(--bg-secondary); padding: 10px; border-radius: 4px; margin-top: 10px; border: 1px solid var(--border-color);">
-                        <label style="margin-top:0;">Tab/Sheet Name</label>
-                        <input type="text" id="cfg-range-sheet" value="${sheet}" placeholder="e.g. Sheet1">
-                        
-                        <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
-                            <div style="flex: 1;">
-                                <label style="margin-top:0; font-size: 0.85em;">Start Col</label>
-                                <input type="text" id="cfg-range-start-col" value="${startCol}" placeholder="A">
-                            </div>
-                            <div style="flex: 1;">
-                                <label style="margin-top:0; font-size: 0.85em;">Row</label>
-                                <input type="number" id="cfg-range-start-row" value="${startRow}" placeholder="1">
-                            </div>
-                        </div>
-                    </div>
-
+                    <label>Spreadsheet ID</label>
+                    <input type="text" id="cfg-sheet-id" value="${config.sheetId || ''}">
+                    <button type="button" class="action-btn" id="cfg-sheet-picker">Browse Drive</button>
+                    <label>Range</label>
+                    <input type="text" id="cfg-range" value="${config.range || 'Sheet1!A1'}">
                     <label>Write Mode</label>
                     <select id="cfg-write-mode">
-                        <option value="json" ${config.writeMode === 'json' ? 'selected' : ''}>JSON (List of Lists)</option>
-                        <option value="row" ${config.writeMode === 'row' ? 'selected' : ''}>Row (Comma Separated)</option>
-                        <option value="column" ${config.writeMode === 'column' ? 'selected' : ''}>Column (Newline Separated)</option>
+                        <option value="json" ${config.writeMode === 'json' ? 'selected' : ''}>Table Data (Rows & Columns)</option>
+                        <option value="row" ${config.writeMode === 'row' ? 'selected' : ''}>Single Row (Comma Separated)</option>
+                        <option value="column" ${config.writeMode === 'column' ? 'selected' : ''}>Single Column (One per line)</option>
                         <option value="cell" ${config.writeMode === 'cell' ? 'selected' : ''}>Single Cell</option>
                     </select>
-                    
-                    <div style="margin-top: 15px; padding: 10px; background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: 6px;">
-                        <label style="margin-top:0; color: var(--text-muted); font-size: 0.9em;"><i class="fas fa-info-circle"></i> Data Source</label>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.4;">
-                            Data will be automatically pulled from connected inputs.
-                        </div>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="checkbox" id="cfg-use-parent-write" ${useParentWrite ? 'checked' : ''}>
+                        <span>Use data from previous node</span>
+                    </label>
+                    <div id="cfg-manual-write-section" style="display:${useParentWrite ? 'none' : 'block'}">
+                        <label>Data</label>
+                        <textarea id="cfg-data" style="height: 80px;" placeholder="Enter data or use {{nodeId}} to reference another node">${config.data || ''}</textarea>
                     </div>
                 `;
+                setTimeout(() => {
+                    const cb = document.getElementById('cfg-use-parent-write');
+                    if (cb) {
+                        cb.addEventListener('change', () => {
+                            document.getElementById('cfg-manual-write-section').style.display = cb.checked ? 'none' : 'block';
+                        });
+                    }
+                }, 0);
             } else if (type === 'google_doc_read') {
                 html = `
-                    <label>Document</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="cfg-doc-name" value="${config.docName || 'No file selected'}" readonly placeholder="Select a file..." class="read-only-input" style="flex: 1;">
-                        <input type="hidden" id="cfg-doc-id" value="${config.docId || ''}">
-                        <button type="button" class="action-btn" id="cfg-doc-picker" style="width: auto; padding: 0 12px;" title="Browse Drive"><i class="fas fa-folder-open"></i></button>
-                    </div>
-                    <div class="meta-text">ID: <span id="cfg-id-display">${config.docId || 'None'}</span></div>
+                    <label>Document ID</label>
+                    <input type="text" id="cfg-doc-id" value="${config.docId || ''}">
+                    <button type="button" class="action-btn" id="cfg-doc-picker">Browse Drive</button>
                 `;
             } else if (type === 'google_doc_write') {
+                const useParentDocW = config.useParentData !== false;
                 html = `
-                    <label>Document</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="cfg-doc-name" value="${config.docName || 'No file selected'}" readonly placeholder="Select a file..." class="read-only-input" style="flex: 1;">
-                        <input type="hidden" id="cfg-doc-id" value="${config.docId || ''}">
-                        <button type="button" class="action-btn" id="cfg-doc-picker" style="width: auto; padding: 0 12px;" title="Browse Drive"><i class="fas fa-folder-open"></i></button>
+                    <label>Document ID</label>
+                    <input type="text" id="cfg-doc-id" value="${config.docId || ''}">
+                    <button type="button" class="action-btn" id="cfg-doc-picker">Browse Drive</button>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="checkbox" id="cfg-use-parent-docw" ${useParentDocW ? 'checked' : ''}>
+                        <span>Use data from previous node</span>
+                    </label>
+                    <div id="cfg-manual-docw-section" style="display:${useParentDocW ? 'none' : 'block'}">
+                        <label>Content</label>
+                        <textarea id="cfg-content" style="height: 100px;" placeholder="Text to write, or use {{nodeId}}">${config.content || ''}</textarea>
                     </div>
-                    <div class="meta-text">ID: <span id="cfg-id-display">${config.docId || 'None'}</span></div>
-
-                    <label>Content</label>
-                    <textarea id="cfg-doc-body" style="height: 100px;" placeholder="Leave empty to use incoming data">${config.body || ''}</textarea>
-                    <small>Supports {{nodeId}} references. If empty, it uses the connected input.</small>
                 `;
+                setTimeout(() => {
+                    const cb = document.getElementById('cfg-use-parent-docw');
+                    if (cb) cb.addEventListener('change', () => {
+                        document.getElementById('cfg-manual-docw-section').style.display = cb.checked ? 'none' : 'block';
+                    });
+                }, 0);
             } else if (type === 'gmail_send') {
+                const useParentEmail = config.useParentData === true;
                 html = `
                     <label>To</label>
                     <input type="text" id="cfg-to" value="${config.to || ''}">
                     <label>Subject</label>
                     <input type="text" id="cfg-subject" value="${config.subject || ''}">
-                    <label>Body</label>
-                    <textarea id="cfg-body" style="height: 100px;">${config.body || ''}</textarea>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="checkbox" id="cfg-use-parent-email" ${useParentEmail ? 'checked' : ''}>
+                        <span>Use data from previous node as body</span>
+                    </label>
+                    <div id="cfg-manual-email-section" style="display:${useParentEmail ? 'none' : 'block'}">
+                        <label>Body</label>
+                        <textarea id="cfg-body" style="height: 100px;">${config.body || ''}</textarea>
+                    </div>
                 `;
+                setTimeout(() => {
+                    const cb = document.getElementById('cfg-use-parent-email');
+                    if (cb) cb.addEventListener('change', () => {
+                        document.getElementById('cfg-manual-email-section').style.display = cb.checked ? 'none' : 'block';
+                    });
+                }, 0);
             } else if (type === 'make_webhook' || type === 'slack_notify' || type === 'discord_notify') {
+                const useParentInteg = config.useParentData === true;
                 html = `
                     <label>Webhook URL</label>
                     <input type="text" id="cfg-url" value="${config.url || ''}">
-                    <label>Message/Body</label>
-                    <textarea id="cfg-message" style="height: 80px;" placeholder="Leave empty to use incoming data">${config.message || config.body || ''}</textarea>
-                    <small>Tip: Connect a previous node to auto-pass its output here.</small>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="checkbox" id="cfg-use-parent-integ" ${useParentInteg ? 'checked' : ''}>
+                        <span>Use data from previous node</span>
+                    </label>
+                    <div id="cfg-manual-integ-section" style="display:${useParentInteg ? 'none' : 'block'}">
+                        <label>Message/Body</label>
+                        <textarea id="cfg-message" style="height: 80px;">${config.message || config.body || ''}</textarea>
+                    </div>
                 `;
+                setTimeout(() => {
+                    const cb = document.getElementById('cfg-use-parent-integ');
+                    if (cb) cb.addEventListener('change', () => {
+                        document.getElementById('cfg-manual-integ-section').style.display = cb.checked ? 'none' : 'block';
+                    });
+                }, 0);
             } else if (type === 'filter') {
                 html = `
                     <label>Contains Keyword</label>
@@ -2298,25 +2244,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button id="cfg-upload-btn" class="action-btn" style="width: auto;" title="Upload Invoice"><i class="fas fa-upload"></i></button>
                     </div>
                     <input type="file" id="cfg-file-input" style="display: none;" accept="image/*,application/pdf">
-                    <small>Leave empty to use parent output automatically</small>
                 `;
             } else if (type === 'invoice_forecast') {
+                const useParent = config.useParentData !== false; // default true
                 html = `
-                    <label>Sales Data (JSON)</label>
-                    <textarea id="cfg-data" style="height: 80px;" placeholder="{{parent.data}}">${config.data || ''}</textarea>
-                    <small>JSON object with "series" array</small>
+                    <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <input type="checkbox" id="cfg-use-parent" ${useParent ? 'checked' : ''}>
+                        <span>Use data from previous node</span>
+                    </label>
+                    <div id="cfg-manual-data-section" style="display:${useParent ? 'none' : 'block'}">
+                        <label>Custom Data (JSON)</label>
+                        <textarea id="cfg-data" style="height: 80px;" placeholder='{"products": [{"name": "Item A", "quantity": 10}]}'>${config.data || ''}</textarea>
+                    </div>
                 `;
+                // Add toggle listener after DOM update
+                setTimeout(() => {
+                    const cb = document.getElementById('cfg-use-parent');
+                    if (cb) {
+                        cb.addEventListener('change', () => {
+                            document.getElementById('cfg-manual-data-section').style.display = cb.checked ? 'none' : 'block';
+                        });
+                    }
+                }, 0);
             }
 
             settingsContainer.innerHTML = html;
-
-            const rangeAllCheckbox = document.getElementById('cfg-range-all');
-            const rangeInputs = document.getElementById('cfg-range-inputs');
-            if (rangeAllCheckbox && rangeInputs) {
-                rangeAllCheckbox.addEventListener('change', (e) => {
-                    rangeInputs.style.display = e.target.checked ? 'none' : 'block';
-                });
-            }
 
             const uploadBtn = document.getElementById('cfg-upload-btn');
             const fileInput = document.getElementById('cfg-file-input');
@@ -2366,22 +2318,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const docPickerBtn = document.getElementById('cfg-doc-picker');
             if (sheetPickerBtn) {
                 sheetPickerBtn.addEventListener('click', () => {
-                    openGooglePicker({ 
-                        type: 'sheets', 
-                        targetInputId: 'cfg-sheet-id', 
-                        targetNameId: 'cfg-sheet-name',
-                        targetDisplayId: 'cfg-id-display'
-                    });
+                    openGooglePicker({ type: 'sheets', targetInputId: 'cfg-sheet-id' });
                 });
             }
             if (docPickerBtn) {
                 docPickerBtn.addEventListener('click', () => {
-                    openGooglePicker({ 
-                        type: 'docs', 
-                        targetInputId: 'cfg-doc-id', 
-                        targetNameId: 'cfg-doc-name',
-                        targetDisplayId: 'cfg-id-display'
-                    });
+                    openGooglePicker({ type: 'docs', targetInputId: 'cfg-doc-id' });
                 });
             }
         }
@@ -2455,93 +2397,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (type === 'google_sheet_read') {
                 config.sheetId = document.getElementById('cfg-sheet-id')?.value;
-                config.sheetName = document.getElementById('cfg-sheet-name')?.value;
-                
-                // Construct Range
-                const sheet = document.getElementById('cfg-range-sheet')?.value || 'Sheet1';
-                const readAll = document.getElementById('cfg-range-all')?.checked;
-                const startCol = document.getElementById('cfg-range-start-col')?.value || 'A';
-                const startRow = document.getElementById('cfg-range-start-row')?.value || '1';
-                const endCol = document.getElementById('cfg-range-end-col')?.value || 'Z';
-                const endRow = document.getElementById('cfg-range-end-row')?.value || '100';
-
-                config.rangeSheet = sheet;
-                config.rangeReadAll = readAll;
-                config.rangeStartCol = startCol;
-                config.rangeStartRow = startRow;
-                config.rangeEndCol = endCol;
-                config.rangeEndRow = endRow;
-
-                // Auto-quote sheet name for safety
-                const safeSheet = `'${sheet.replace(/'/g, "")}'`;
-
-                if (readAll) {
-                   config.range = safeSheet; 
-                } else {
-                   config.range = `${safeSheet}!${startCol}${startRow}:${endCol}${endRow}`;
-                }
-
+                config.range = document.getElementById('cfg-range')?.value;
             } else if (type === 'google_sheet_write') {
                 config.sheetId = document.getElementById('cfg-sheet-id')?.value;
-                config.sheetName = document.getElementById('cfg-sheet-name')?.value;
-                
-                const sheet = document.getElementById('cfg-range-sheet')?.value || 'Sheet1';
-                const startCol = document.getElementById('cfg-range-start-col')?.value || 'A';
-                const startRow = document.getElementById('cfg-range-start-row')?.value || '1';
-                
-                config.rangeSheet = sheet;
-                config.rangeStartCol = startCol;
-                config.rangeStartRow = startRow;
-                
-                const safeSheet = `'${sheet.replace(/'/g, "")}'`;
-                config.range = `${safeSheet}!${startCol}${startRow}`; // Start writing at this cell
-
+                config.range = document.getElementById('cfg-range')?.value;
                 config.writeMode = document.getElementById('cfg-write-mode')?.value;
-                // config.data = document.getElementById('cfg-data')?.value; // Removed manual input
-
-                // Checking for parent connection to auto-fill data template
-                const nodeId = node.dataset.nodeId;
-                const parentConnection = builderState.connections.find(c => c.target === nodeId);
-                if (parentConnection) {
-                    const sourceId = parentConnection.source.replace('node-', '');
-                    config.data = `{{${sourceId}}}`;
-                } else {
-                    config.data = '';
-                }
+                config.useParentData = document.getElementById('cfg-use-parent-write')?.checked ?? true;
+                config.data = document.getElementById('cfg-data')?.value;
             } else if (type === 'google_doc_read') {
                 config.docId = document.getElementById('cfg-doc-id')?.value;
-                config.docName = document.getElementById('cfg-doc-name')?.value;
             } else if (type === 'google_doc_write') {
                 config.docId = document.getElementById('cfg-doc-id')?.value;
-                config.docName = document.getElementById('cfg-doc-name')?.value;
-                config.body = document.getElementById('cfg-doc-body')?.value;
-
-                const nodeId = node.dataset.nodeId;
-                const hasInput = builderState.connections.some(c => c.target === nodeId);
-                if ((!config.body || String(config.body).trim() === '') && hasInput) {
-                    const parentConnection = builderState.connections.find(c => c.target === nodeId);
-                    if (parentConnection) {
-                        const sourceId = parentConnection.source.replace('node-', '');
-                        config.body = `{{${sourceId}}}`;
-                    }
-                }
+                config.useParentData = document.getElementById('cfg-use-parent-docw')?.checked ?? true;
+                config.content = document.getElementById('cfg-content')?.value;
             } else if (type === 'gmail_send') {
                 config.to = document.getElementById('cfg-to')?.value;
                 config.subject = document.getElementById('cfg-subject')?.value;
+                config.useParentData = document.getElementById('cfg-use-parent-email')?.checked ?? false;
                 config.body = document.getElementById('cfg-body')?.value;
-                // Fix: map 'to' to 'recipient' for validation
-                config.recipient = config.to; 
+                config.recipient = config.to;
             } else if (type === 'make_webhook') {
                 config.url = document.getElementById('cfg-url')?.value;
+                config.useParentData = document.getElementById('cfg-use-parent-integ')?.checked ?? false;
                 config.body = document.getElementById('cfg-message')?.value;
             } else if (type === 'slack_notify' || type === 'discord_notify') {
                 config.url = document.getElementById('cfg-url')?.value;
+                config.useParentData = document.getElementById('cfg-use-parent-integ')?.checked ?? false;
                 config.message = document.getElementById('cfg-message')?.value;
             } else if (type === 'filter') {
                 config.keyword = document.getElementById('cfg-keyword')?.value;
             } else if (type === 'invoice_ocr') {
                 config.fileUrl = document.getElementById('cfg-file-url')?.value;
             } else if (type === 'invoice_forecast') {
+                config.useParentData = document.getElementById('cfg-use-parent')?.checked ?? true;
                 config.data = document.getElementById('cfg-data')?.value;
             }
 

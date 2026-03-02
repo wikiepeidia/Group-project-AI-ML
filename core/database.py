@@ -62,11 +62,6 @@ class PGShimConnection:
     def commit(self): self._conn.commit()
     def rollback(self): self._conn.rollback()
     def close(self): self._conn.close()
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type: self.rollback()
-        else: self.commit()
-
 
 class Database:
     def __init__(self):
@@ -228,6 +223,37 @@ class Database:
         except Exception as e:
             print(f"⚠️ Memory Fetch Error: {e}")
             return ""
+        finally:
+            conn.close()
+
+    def save_attachment(self, user_id, workspace_id, filename, filetype, analysis):
+        conn = self.get_connection()
+        c = conn.cursor()
+        try:
+            # Get or Create Session
+            c.execute("SELECT id FROM chat_sessions WHERE user_id = ? ORDER BY last_active DESC LIMIT 1", (user_id,))
+            row = c.fetchone()
+            if row: 
+                sid = row[0]
+            else:
+                if self.use_postgres:
+                    c.execute("INSERT INTO chat_sessions (user_id, workspace_id, title) VALUES (%s, %s, 'New Chat') RETURNING id", (user_id, workspace_id))
+                    sid = c.fetchone()[0]
+                else:
+                    c.execute("INSERT INTO chat_sessions (user_id, workspace_id, title) VALUES (?, ?, 'New Chat')", (user_id, workspace_id))
+                    sid = c.lastrowid
+
+            # Insert Attachment
+            if self.use_postgres:
+                c.execute("INSERT INTO chat_attachments (session_id, file_name, file_type, analysis_summary, created_at) VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)", 
+                         (sid, filename, filetype, analysis))
+            else:
+                c.execute("INSERT INTO chat_attachments (session_id, file_name, file_type, analysis_summary) VALUES (?, ?, ?, ?)", 
+                         (sid, filename, filetype, analysis))
+            
+            conn.commit()
+        except Exception as e:
+            print(f"❌ DB Attachment Error: {e}")
         finally:
             conn.close()
 

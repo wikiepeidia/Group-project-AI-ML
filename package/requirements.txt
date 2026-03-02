@@ -9,7 +9,7 @@ Flask-Limiter>=3.5.0,<3.6
 Werkzeug
 FastAPI
 requests
-
+ultralytics
 
 # ==================================================
 # Authentication & Configuration

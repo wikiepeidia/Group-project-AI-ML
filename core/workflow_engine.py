@@ -1,7 +1,7 @@
 import json
 import re
 import os
-from .google_integration import read_sheet, read_doc, write_sheet, write_doc, send_email
+from .google_integration import read_sheet, read_doc, write_doc, write_sheet, send_email
 from .make_integration import trigger_webhook
 from .services.dl_client import DLClient
 
@@ -70,27 +70,24 @@ def resolve_template(template_str, context):
     # Replace {{...}}
     resolved_str = re.sub(r'\{\{(.*?)\}\}', replacer, template_str)
     
-
     try:
         return json.loads(resolved_str)
     except:
         return resolved_str
 
-def stream_workflow(workflow_data, token_info=None):
+def execute_workflow(workflow_data, token_info=None):
     """
-    Generator that executes the workflow and yields status updates.
+    Executes the workflow defined in the JSON data using a topological sort.
     """
     logs = []
-    
     def log(msg):
-        # Helper to both yield a log event and print it
         print(msg)
-        return {"type": "log", "message": msg}
+        logs.append(msg)
 
     nodes = {str(n['id']): n for n in workflow_data.get('nodes', [])}
     edges = workflow_data.get('edges', [])
     
-    yield log(f"Executing workflow with {len(nodes)} nodes and {len(edges)} edges.")
+    log(f"Executing workflow with {len(nodes)} nodes and {len(edges)} edges.")
     
     # 1. Build Adjacency List and In-Degree Count
     adj_list = {node_id: [] for node_id in nodes}
@@ -120,8 +117,7 @@ def stream_workflow(workflow_data, token_info=None):
                 queue.append(neighbor)
                 
     if len(execution_order) != len(nodes):
-        yield {"type": "error", "message": "Cycle detected in workflow!"}
-        return
+        return {"status": "error", "message": "Cycle detected in workflow!", "logs": logs}
         
     # 3. Execute Nodes in Order
     context = {} # Stores output of each node: {node_id: output_data}
@@ -132,9 +128,6 @@ def stream_workflow(workflow_data, token_info=None):
         node_type = node['type']
         config = node.get('config', {})
         
-        # Notify Start
-        yield {"type": "node_update", "node_id": node_id, "status": "running"}
-
         # --- Flow Control Check ---
         # Check if all parents executed successfully
         parents = parents_map[node_id]
@@ -146,12 +139,11 @@ def stream_workflow(workflow_data, token_info=None):
                 break
         
         if parent_failed:
-            yield log(f"Skipping Node {node_id} because parent failed/skipped.")
+            log(f"Skipping Node {node_id} because parent failed/skipped.")
             node_results[node_id] = {"status": "skipped", "reason": "Parent failed or skipped"}
-            yield {"type": "node_update", "node_id": node_id, "status": "skipped", "reason": "Parent failed"}
             continue
 
-        yield log(f"--- Running Node {node_id} ({node_type}) ---")
+        log(f"--- Running Node {node_id} ({node_type}) ---")
         
         try:
             result = None
@@ -167,19 +159,25 @@ def stream_workflow(workflow_data, token_info=None):
                 range_name = config.get('range', 'A1')
                 data_template = config.get('data', '')
                 write_mode = config.get('writeMode', 'json') # json, row, single
+                use_parent_data = config.get('useParentData', True)
 
-                yield log(f"[Workflow] Node {node_id} Write Mode: {write_mode}")
-                yield log(f"[Workflow] Raw Template: '{data_template}'")
+                log(f"[Workflow] Node {node_id} Write Mode: {write_mode}")
 
-                # AUTO-PASS: If data template is empty, try to use parent output
-                if not data_template and parents:
+                # Resolve data: prefer parent data if configured
+                if (use_parent_data or not data_template) and parents:
                     p_id = parents[0]
-                    yield log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Google Sheet write")
-                    resolved_data = context.get(p_id)
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_data = parent_data
+                        log(f"[Workflow] Using parent node ({p_id}) data for write")
+                    else:
+                        resolved_data = resolve_template(data_template, context)
+                        log(f"[Workflow] Parent data empty, using template")
                 else:
                     resolved_data = resolve_template(data_template, context)
+                    log(f"[Workflow] Raw Template: '{data_template}'")
                 
-                yield log(f"[Workflow] Resolved Data: '{resolved_data}' (Type: {type(resolved_data)})")
+                log(f"[Workflow] Resolved Data: '{resolved_data}' (Type: {type(resolved_data)})")
 
                 data_to_write = []
                 method = 'append' # Default method
@@ -214,7 +212,7 @@ def stream_workflow(workflow_data, token_info=None):
                     # "A\nB\nC" -> [["A"], ["B"], ["C"]]
                     if isinstance(resolved_data, str):
                         # Split by newline
-                        rows = resolved_data.split('\\n')
+                        rows = resolved_data.split('\n')
                         data_to_write = [[x.strip()] for x in rows if x.strip()]
                     elif isinstance(resolved_data, list):
                         # Assume list of strings -> column
@@ -235,8 +233,8 @@ def stream_workflow(workflow_data, token_info=None):
                 elif data_to_write and not isinstance(data_to_write[0], list):
                     data_to_write = [data_to_write]
                 
-                yield log(f"[Workflow] Writing to Sheet {sheet_id} at {range_name}. Mode: {write_mode}, Method: {method}")
-                yield log(f"[Workflow] Payload: {data_to_write}")
+                log(f"[Workflow] Writing to Sheet {sheet_id} at {range_name}. Mode: {write_mode}, Method: {method}")
+                log(f"[Workflow] Payload: {data_to_write}")
 
                 result = write_sheet(sheet_id, range_name, data_to_write, method=method, token_info=token_info)
                 
@@ -246,40 +244,68 @@ def stream_workflow(workflow_data, token_info=None):
 
             elif node_type == 'google_doc_write':
                 doc_id = config.get('docId', 'dummy_doc')
-                body_template = config.get('body', '')
+                content_template = config.get('content', '')
+                use_parent = config.get('useParentData', True)
 
-                # AUTO-PASS: If body is empty, try to use parent output
-                if not body_template and parents:
+                if (use_parent or not content_template) and parents:
                     p_id = parents[0]
-                    yield log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Google Doc write")
-                    resolved_body = context.get(p_id)
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_content = parent_data
+                        log(f"[Workflow] Write Doc: using parent node ({p_id}) data")
+                    else:
+                        resolved_content = resolve_template(content_template, context)
                 else:
-                    resolved_body = resolve_template(body_template, context)
+                    resolved_content = resolve_template(content_template, context)
 
-                result = write_doc(doc_id, resolved_body, token_info)
+                # Convert dicts/lists to readable string
+                if isinstance(resolved_content, (dict, list)):
+                    resolved_content = json.dumps(resolved_content, indent=2, ensure_ascii=False)
+
+                result = write_doc(doc_id, str(resolved_content), token_info)
                 
             elif node_type == 'make_webhook':
                 url = config.get('url', 'http://example.com/webhook')
                 method = config.get('method', 'POST')
                 body_template = config.get('body', '{}')
+                use_parent = config.get('useParentData', False)
                 
-                # Resolve the body template
-                payload = resolve_template(body_template, context)
+                # Resolve payload
+                if use_parent and parents:
+                    p_id = parents[0]
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        payload = parent_data
+                        log(f"[Workflow] Make webhook: using parent node ({p_id}) data")
+                    else:
+                        payload = resolve_template(body_template, context)
+                else:
+                    payload = resolve_template(body_template, context)
                 
-                # If it's a real URL (starts with http), run it. Otherwise mock it.
                 if url.startswith("http"):
                     result = trigger_webhook(url, method, payload)
                 else:
                     result = {"status": "skipped", "reason": "Invalid URL"}
 
             elif node_type == 'slack_notify':
-                # Direct Slack Integration (Incoming Webhook)
                 url = config.get('url', '')
                 message_template = config.get('message', '')
+                use_parent = config.get('useParentData', False)
                 
-                resolved_message = resolve_template(message_template, context)
+                if use_parent and parents:
+                    p_id = parents[0]
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_message = parent_data
+                        log(f"[Workflow] Slack: using parent node ({p_id}) data")
+                    else:
+                        resolved_message = resolve_template(message_template, context)
+                elif not message_template and parents:
+                    p_id = parents[0]
+                    resolved_message = context.get(p_id)
+                else:
+                    resolved_message = resolve_template(message_template, context)
                 
-                # Slack expects {"text": "..."}
                 payload = {"text": str(resolved_message)}
                 
                 if url.startswith("http"):
@@ -288,19 +314,24 @@ def stream_workflow(workflow_data, token_info=None):
                     result = {"status": "error", "message": "Invalid Slack Webhook URL"}
 
             elif node_type == 'discord_notify':
-                # Direct Discord Integration (Incoming Webhook)
                 url = config.get('url', '')
                 message_template = config.get('message', '')
+                use_parent = config.get('useParentData', False)
                 
-                # AUTO-PASS: If template is empty, try to use parent output
-                if not message_template and parents:
+                if use_parent and parents:
                     p_id = parents[0]
-                    yield log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Discord")
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_message = parent_data
+                        log(f"[Workflow] Discord: using parent node ({p_id}) data")
+                    else:
+                        resolved_message = resolve_template(message_template, context)
+                elif not message_template and parents:
+                    p_id = parents[0]
                     resolved_message = context.get(p_id)
                 else:
                     resolved_message = resolve_template(message_template, context)
                 
-                # Discord expects {"content": "..."}
                 payload = {"content": str(resolved_message)}
                 
                 if url.startswith("http"):
@@ -313,19 +344,25 @@ def stream_workflow(workflow_data, token_info=None):
                 subject = config.get('subject', 'Workflow Notification')
                 title = config.get('title', '')
                 body_template = config.get('body', '')
+                use_parent = config.get('useParentData', False)
                 
-                # AUTO-PASS: If body is empty, try to use parent output
-                if not body_template and parents:
+                if use_parent and parents:
                     p_id = parents[0]
-                    yield log(f"[Workflow] Auto-passing output from Parent Node {p_id} to Gmail")
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_body = parent_data
+                        log(f"[Workflow] Gmail: using parent node ({p_id}) data")
+                    else:
+                        resolved_body = resolve_template(body_template, context)
+                elif not body_template and parents:
+                    p_id = parents[0]
                     resolved_body = context.get(p_id)
                 else:
                     resolved_body = resolve_template(body_template, context)
                 
-                # Combine Title and Body
                 final_body = str(resolved_body)
                 if title:
-                    final_body = f"{title}\\n\\n{final_body}"
+                    final_body = f"{title}\n\n{final_body}"
 
                 result = send_email(to, subject, final_body, token_info)
 
@@ -353,7 +390,6 @@ def stream_workflow(workflow_data, token_info=None):
                     # If filter fails, we raise an exception or return a special status?
                     # Let's return a 'stopped' status so children are skipped
                     node_results[node_id] = {"status": "stopped", "reason": "Filter condition failed"}
-                    yield {"type": "node_update", "node_id": node_id, "status": "stopped", "reason": "Filter condition failed"}
                     continue
 
             elif node_type == 'invoice_ocr':
@@ -382,18 +418,43 @@ def stream_workflow(workflow_data, token_info=None):
 
             elif node_type == 'invoice_forecast':
                 # Deep Learning Forecast Node
-                # Config: { "data": ... }
+                # Config: { "data": ..., "useParentData": true/false }
                 data_template = config.get('data', '')
+                use_parent = config.get('useParentData', True)  # Default to using parent data
                 
-                # Auto-pass parent output if it looks like invoice data
-                if not data_template and parents:
+                resolved_data = None
+                
+                # Auto-pass parent output if configured or if no data template
+                if (use_parent or not data_template) and parents:
                     p_id = parents[0]
-                    resolved_data = context.get(p_id)
-                else:
-                    resolved_data = resolve_template(data_template, context)
+                    parent_data = context.get(p_id)
+                    if parent_data is not None:
+                        resolved_data = parent_data
+                        log(f"[Forecast] Using parent node ({p_id}) data: {str(resolved_data)[:200]}")
+                    else:
+                        log(f"[Forecast] Warning: Parent node ({p_id}) returned no data")
                 
-                client = DLClient()
-                result = client.forecast_quantity(resolved_data)
+                # Fallback to template if parent data is empty
+                if resolved_data is None and data_template:
+                    resolved_data = resolve_template(data_template, context)
+                    log(f"[Forecast] Using template data: {str(resolved_data)[:200]}")
+                
+                # Final fallback: try to build from all parent outputs
+                if resolved_data is None and parents:
+                    for p_id in parents:
+                        p_data = context.get(p_id)
+                        if p_data is not None:
+                            resolved_data = p_data
+                            log(f"[Forecast] Fallback: using parent ({p_id}) data")
+                            break
+                
+                if resolved_data is None:
+                    log(f"[Forecast] Error: No data available for forecasting")
+                    result = {"error": "No input data for forecasting. Connect a data source node (OCR, Read Sheet, etc.) or provide data manually.", "status": "failed"}
+                else:
+                    client = DLClient()
+                    result = client.forecast_quantity(resolved_data)
+                    log(f"[Forecast] Result: {str(result)[:300]}")
                 
             else:
                 result = {"status": "skipped", "reason": "Unknown node type"}
@@ -401,48 +462,11 @@ def stream_workflow(workflow_data, token_info=None):
             # Store result
             context[node_id] = result
             node_results[node_id] = {"status": "success", "output": result}
-            yield {"type": "node_update", "node_id": node_id, "status": "success", "output": result}
             
         except Exception as e:
-            yield log(f"Error in Node {node_id}: {str(e)}")
+            log(f"Error in Node {node_id}: {str(e)}")
             node_results[node_id] = {"status": "error", "error": str(e)}
-            yield {"type": "node_update", "node_id": node_id, "status": "error", "error": str(e)}
             # Stop execution on error? For now, yes.
-            yield {"type": "workflow_finish", "status": "failed"}
-            return
+            return {"status": "failed", "node_results": node_results, "error_node": node_id, "logs": logs}
 
-    yield {"type": "workflow_finish", "status": "completed"}
-
-def execute_workflow(workflow_data, token_info=None):
-    """
-    Executes the workflow defined in the JSON data using a topological sort.
-    Backwards compatible wrapper for stream_workflow.
-    """
-    logs = []
-    node_results = {}
-    final_status = "completed"
-    
-    for event in stream_workflow(workflow_data, token_info):
-        if event['type'] == 'log':
-            logs.append(event['message'])
-        elif event['type'] == 'node_update':
-            status = event['status']
-            node_id = event['node_id']
-            # Only record final statuses, not "running"
-            if status in ['success', 'error', 'skipped', 'stopped']:
-                # Reconstruct the result object
-                res = {"status": status}
-                if 'output' in event: res['output'] = event['output']
-                if 'error' in event: res['error'] = event['error']
-                if 'reason' in event: res['reason'] = event['reason']
-                node_results[node_id] = res
-        elif event['type'] == 'workflow_finish':
-            final_status = event['status']
-        elif event['type'] == 'error':
-             logs.append(event['message'])
-             final_status = "error"
-
-    if final_status == 'error':
-         return {"status": "failed", "node_results": node_results, "logs": logs}
-         
-    return {"status": final_status, "node_results": node_results, "logs": logs}
+    return {"status": "completed", "node_results": node_results, "logs": logs}

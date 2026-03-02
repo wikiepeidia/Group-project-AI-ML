@@ -21,6 +21,7 @@ data/generated_invoices/*
 data/generated_invoices_quantung/*
 data/generated_invoices_quanson/*
 validation/*
+DOCUMENTS/
 # Distribution / packaging
 .Python
 build/

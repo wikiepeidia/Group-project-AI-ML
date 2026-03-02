@@ -79,6 +79,19 @@ class DLClient:
         """
         Calls /api/model2/forecast to predict quantities.
         """
+        # Guard: validate data before processing
+        if data is None:
+            return {"error": "No data provided for forecasting. Connect an OCR/data node or provide sales data.", "status": "failed"}
+        if isinstance(data, str):
+            # Try to parse JSON string
+            try:
+                import json as _json
+                data = _json.loads(data)
+            except Exception:
+                return {"error": f"Invalid data format: expected JSON object, got string: '{data[:100]}'", "status": "failed"}
+        if not isinstance(data, dict):
+            return {"error": f"Invalid data format: expected dict, got {type(data).__name__}", "status": "failed"}
+
         if self.use_local:
             try:
                 # Lazy imports to avoid heavy startup cost
@@ -86,6 +99,25 @@ class DLClient:
                 from services.forecast_service import forecast_quantity, format_forecast_response
                 
                 products = data.get('products', [])
+                if not products:
+                    # Try alternative keys from OCR output
+                    if 'invoice_data' in data:
+                        inv = data['invoice_data']
+                        if isinstance(inv, dict) and 'items' in inv:
+                            products = inv['items']
+                        elif isinstance(inv, list):
+                            products = inv
+                    elif 'items' in data:
+                        products = data['items']
+                    elif 'data' in data:
+                        inner = data['data']
+                        if isinstance(inner, list):
+                            products = inner
+                        elif isinstance(inner, dict):
+                            products = inner.get('products', inner.get('items', []))
+                
+                if not products:
+                    return {"error": "No product/item data found in input. Ensure the previous node outputs product data.", "status": "failed"}
                 
                 lstm_model = get_lstm_model()
                 if not lstm_model:
