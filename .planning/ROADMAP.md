@@ -39,7 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 
 - [ ] 01-01-PLAN.md — Create 6 long-lived branches and .gitignore session file exclusions
-- [ ] 01-02-PLAN.md — Create core/extensions.py and core/models.py (circular import prevention)
+- [x] 01-02-PLAN.md — Create core/extensions.py and core/models.py (circular import prevention)
 - [ ] 01-03-PLAN.md — Wrap app.py in create_app() factory; smoke test all routes
 
 ### Phase 2: Service Layer Extraction
@@ -111,7 +111,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Branch Safety | 0/3 | Not started | - |
+| 1. Foundation and Branch Safety | 1/3 | In Progress|  |
 | 2. Service Layer Extraction | 0/TBD | Not started | - |
 | 3. Blueprint Route Extraction | 0/TBD | Not started | - |
 | 4. App Factory Wiring and Tests | 0/TBD | Not started | - |
