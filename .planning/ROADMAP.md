@@ -38,7 +38,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 
-- [ ] 01-01-PLAN.md — Create 6 long-lived branches and .gitignore session file exclusions
+- [x] 01-01-PLAN.md — Create 6 long-lived branches and .gitignore session file exclusions
 - [x] 01-02-PLAN.md — Create core/extensions.py and core/models.py (circular import prevention)
 - [ ] 01-03-PLAN.md — Wrap app.py in create_app() factory; smoke test all routes
 

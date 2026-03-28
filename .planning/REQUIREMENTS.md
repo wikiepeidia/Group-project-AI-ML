@@ -11,8 +11,8 @@ Requirements for the retake milestone. Each maps to roadmap phases.
 
 - [ ] **FOUND-01**: Application uses factory pattern (`create_app()`) instead of module-level Flask instance
 - [x] **FOUND-02**: Shared extensions (db_manager, login_manager, csrf, limiter) live in `core/extensions.py` to prevent circular imports
-- [ ] **FOUND-03**: Git branching strategy established with main, dev, and demo branches
-- [ ] **FOUND-04**: Demo branch protection — frozen 24-48h before jury presentation
+- [x] **FOUND-03**: Git branching strategy established with main, dev, and demo branches
+- [x] **FOUND-04**: Demo branch protection — frozen 24-48h before jury presentation
 
 ### Services
 
@@ -85,8 +85,8 @@ Deferred to after retake. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | FOUND-01 | Phase 1 | Pending |
 | FOUND-02 | Phase 1 | Complete |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
+| FOUND-03 | Phase 1 | Complete |
+| FOUND-04 | Phase 1 | Complete |
 | SRVC-01 | Phase 2 | Pending |
 | SRVC-02 | Phase 2 | Pending |
 | SRVC-03 | Phase 2 | Pending |
